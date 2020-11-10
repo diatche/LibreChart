@@ -107,4 +107,7 @@ dist
 .vscode/.react
 
 # Project
-temp
+.vscode/
+temp/
+tests/
+examples/
