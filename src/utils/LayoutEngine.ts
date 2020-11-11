@@ -7,11 +7,14 @@ import RecyclerGridView, {
     GridLayoutSource,
     GridLayoutSourceProps,
     isAxisType,
+    isPointRangeEmpty,
     LayoutSource,
     zeroPoint,
 } from "recycler-grid-view";
 import DataSource from "./DataSource";
-import { Chart, kAxisReuseIDs, kGridReuseID } from "../internal";
+import { kAxisReuseIDs, kGridReuseID } from '../const';
+import { Chart } from "../internal";
+import { ticks, zeroDecimalPoint } from "./scale";
 
 export interface LayoutEngineProps {
     dataSources?: DataSource[];
@@ -25,11 +28,12 @@ export interface LayoutEngineProps {
 
 export default class LayoutEngine {
     dataSources: DataSource[] = [];
-    gridLayout?: GridLayoutSource;
+    gridLayout: GridLayoutSource;
     axisLayouts: Partial<AxisTypeMapping<FlatLayoutSource>> = {};
 
     gridContainerSize$ = new Animated.ValueXY();
     gridMajorCount = zeroPoint();
+    gridMajorInterval = zeroDecimalPoint();
 
     constructor(props: LayoutEngineProps) {
         this.dataSources = props.dataSources || [];
@@ -50,17 +54,65 @@ export default class LayoutEngine {
         if (!view) {
             return;
         }
+        console.debug('container size: ' + JSON.stringify(view.containerSize));
+        console.debug('scale: ' + JSON.stringify(view.scale));
         this.updateGrid(view);
     }
 
     updateGrid(view: RecyclerGridView) {
-        let {
-            containerSize,
-            scale,
-        } = view;
+        let { scale } = view;
+        let visibleRange = view.getVisibleLocationRange();
+        
+        if (isPointRangeEmpty(visibleRange)) {
+            console.debug('empty chart update')
+            this.gridMajorInterval = zeroDecimalPoint();
+            this.gridMajorCount = zeroPoint();
+            this.gridContainerSize$.setValue(zeroPoint());
+            return;
+        }
 
         // Work out tick mark distance
-        
+        let xTicks = ticks(
+            visibleRange[0].x,
+            visibleRange[1].x,
+            {
+                padding: 40 * scale.x,
+                expand: true,
+            }
+        );
+        let yTicks = ticks(
+            visibleRange[0].y,
+            visibleRange[1].y,
+            {
+                padding: 40 * scale.y,
+                expand: true,
+            }
+        );
+
+        this.gridMajorInterval = {
+            x: xTicks[Math.max(1, xTicks.length - 1)]
+                .sub(xTicks[0]),
+            y: yTicks[Math.max(1, yTicks.length - 1)]
+                .sub(yTicks[0]),
+        }
+        this.gridMajorCount = {
+            x: xTicks.length - 1,
+            y: yTicks.length - 1,
+        };
+        this.gridContainerSize$.setValue({
+            x: xTicks[xTicks.length - 1]
+                .sub(xTicks[0]).toNumber(),
+            y: yTicks[yTicks.length - 1]
+                .sub(yTicks[0]).toNumber(),
+        });
+
+        console.debug('gridMajorInterval x: ' + this.gridMajorInterval.x);
+        console.debug('gridMajorCount x: ' + this.gridMajorCount.x);
+
+        this.gridLayout.setNeedsUpdate(view);
+        for (let axisLayout of Object.values(this.axisLayouts)) {
+            axisLayout?.setNeedsUpdate(view);
+        }
     }
 
     getLayoutSources(): LayoutSource[] {
@@ -80,9 +132,6 @@ export default class LayoutEngine {
     }
 
     private _createGridLayoutSource(props: LayoutEngineProps) {
-        if (!props.grid?.show) {
-            return undefined;
-        }
         return new GridLayoutSource({
             itemSize: this.gridContainerSize$,
             ...props.grid,

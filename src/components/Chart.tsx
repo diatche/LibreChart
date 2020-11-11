@@ -1,24 +1,20 @@
 import React from 'react';
-import {
-    View,
-    StyleSheet,
-    Animated,
-} from 'react-native';
 import RecyclerGridView, {
     RecyclerGridViewProps,
     LayoutSource,
     IItem,
 } from 'recycler-grid-view';
-import { kGridReuseID } from '../const';
+import { kPointReuseID, kGridReuseID } from '../const';
 import {
-    kPointReuseID,
     LayoutEngine,
     LayoutEngineProps
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 
-export interface ChartProps extends RecyclerGridViewProps, LayoutEngineProps {
+type ForwardRecyclerGridViewProps = Partial<RecyclerGridViewProps>;
+
+export interface ChartProps extends ForwardRecyclerGridViewProps, LayoutEngineProps {
 
 }
 
@@ -48,7 +44,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     getLayoutSources(): LayoutSource[] {
         return [
             ...this.layout.getLayoutSources(),
-            ...this.props.layoutSources,
+            ...this.props.layoutSources || [],
         ];
     }
 
@@ -64,7 +60,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 ref={this.gridViewRef}
                 layoutSources={this.getLayoutSources()}
                 renderItem={(item: IItem<any>) => this.renderItem(item)}
-                style={styles.container}
                 onViewportSizeChanged={() => this.updateLayout()}
                 onScaleChanged={() => this.updateLayout()}
             />
@@ -111,10 +106,3 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
     }
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'white',
-    },
-});

@@ -1,5 +1,3 @@
-export * from './const';
-
 export { default as Chart } from './components/Chart';
 export * from './components/Chart';
 
