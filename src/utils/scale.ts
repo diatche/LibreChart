@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import { IDecimalPoint } from '../types';
 
 const kMantissas = [1, 2, 5, 10].map(x => new Decimal(x));
 const k10 = new Decimal(10);
@@ -76,7 +77,7 @@ export const ticks = (
     return ticks;
 };
 
-export const zeroDecimalPoint = () => ({
+export const zeroDecimalPoint = (): IDecimalPoint => ({
     x: new Decimal(0),
     y: new Decimal(0),
 });

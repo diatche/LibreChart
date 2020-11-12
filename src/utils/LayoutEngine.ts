@@ -8,6 +8,7 @@ import RecyclerGridView, {
     GridLayoutSourceProps,
     IAnimationBaseOptions,
     IItemUpdateOptions,
+    IPoint,
     isAxisType,
     isPointRangeEmpty,
     LayoutSource,
@@ -17,6 +18,10 @@ import DataSource from "./DataSource";
 import { kAxisReuseIDs, kGridReuseID } from '../const';
 import { Chart } from "../internal";
 import { ticks, zeroDecimalPoint } from "./scale";
+import debounce from 'lodash.debounce';
+import Decimal from "decimal.js";
+import { IDecimalPoint } from "../types";
+import { isMatch } from "./comp";
 
 export interface LayoutEngineProps {
     dataSources?: DataSource[];
@@ -28,17 +33,24 @@ export interface LayoutEngineProps {
     } & FlatLayoutSourceProps>;
 }
 
+interface IGridLayoutInfo {
+    /** Number of major grid intervals per grid container. */
+    majorCount: IPoint;
+    /** Major grid interval distance in content coordinates. */
+    majorInterval: IDecimalPoint;
+    /** Grid container size in content coordinates. */
+    containerSize: IPoint;
+    /** Animated grid container size in content coordinates. */
+    readonly containerSize$: Animated.ValueXY;
+}
+
 export default class LayoutEngine {
     dataSources: DataSource[] = [];
     gridLayout: GridLayoutSource;
     axisLayouts: Partial<AxisTypeMapping<FlatLayoutSource>> = {};
 
-    /** Grid container size in content coordinates. */
-    gridContainerSize$ = new Animated.ValueXY();
-    /** Number of major grid intervals per grid container. */
-    gridMajorCount = zeroPoint();
-    /** Major grid interval distance in content coordinates. */
-    gridMajorInterval = zeroDecimalPoint();
+    /** Grid layout info. */
+    readonly gridInfo = LayoutEngine._createGridInfo();
 
     constructor(props: LayoutEngineProps) {
         this.dataSources = props.dataSources || [];
@@ -54,6 +66,15 @@ export default class LayoutEngine {
 
     }
 
+    scheduleUpdate(chart: Chart) {
+        this._debouncedUpdate(chart);
+    }
+    
+    private _debouncedUpdate = debounce(
+        (chart: Chart) => this.update(chart),
+        100,
+    );
+
     update(chart: Chart) {
         let view = chart.innerView;
         if (!view) {
@@ -65,11 +86,11 @@ export default class LayoutEngine {
     updateGrid(view: RecyclerGridView) {
         let { scale } = view;
         let visibleRange = view.getVisibleLocationRange();
-        
+        console.debug('scale: ' + JSON.stringify(scale));
+        console.debug('visibleRange: ' + JSON.stringify(visibleRange));
+
         if (isPointRangeEmpty(visibleRange)) {
-            this.gridMajorInterval = zeroDecimalPoint();
-            this.gridMajorCount = zeroPoint();
-            this.gridContainerSize$.setValue(zeroPoint());
+            this._resetGridInfo();
             return;
         }
 
@@ -91,27 +112,39 @@ export default class LayoutEngine {
             }
         );
 
-        this.gridMajorInterval = {
-            x: xTicks[Math.min(1, xTicks.length - 1)]
-                .sub(xTicks[0]),
-            y: yTicks[Math.min(1, yTicks.length - 1)]
-                .sub(yTicks[0]),
+        let gridInfo = {
+            majorInterval: {
+                x: xTicks[Math.min(1, xTicks.length - 1)]
+                    .sub(xTicks[0]),
+                y: yTicks[Math.min(1, yTicks.length - 1)]
+                    .sub(yTicks[0]),
+            },
+            majorCount: {
+                x: xTicks.length - 1,
+                y: yTicks.length - 1,
+            },
+            containerSize: {
+                x: xTicks[xTicks.length - 1]
+                    .sub(xTicks[0])
+                    // .div(scale.x)
+                    .toNumber(),
+                y: yTicks[yTicks.length - 1]
+                    .sub(yTicks[0])
+                    // .div(scale.y)
+                    .toNumber(),
+            },
+        };
+        if (isMatch(this.gridInfo, gridInfo)) {
+            // No changes
+            console.debug('no changes');
+            return;
         }
-        this.gridMajorCount = {
-            x: xTicks.length - 1,
-            y: yTicks.length - 1,
-        };
-        let gridContainerSize = {
-            x: xTicks[xTicks.length - 1]
-                .sub(xTicks[0])
-                // .div(scale.x)
-                .toNumber(),
-            y: yTicks[yTicks.length - 1]
-                .sub(yTicks[0])
-                // .div(scale.y)
-                .toNumber(),
-        };
-        this.gridContainerSize$.setValue(gridContainerSize);
+        
+        Object.assign(this.gridInfo, gridInfo);
+        this.gridInfo.containerSize$.setValue(gridInfo.containerSize);
+        console.debug('gridMajorInterval: ' + JSON.stringify(this.gridInfo.majorInterval, (k, v) => v instanceof Decimal ? String(v) : v));
+        console.debug('gridMajorCount: ' + JSON.stringify(this.gridInfo.majorCount));
+        console.debug('gridContainerSize: ' + JSON.stringify(this.gridInfo.containerSize));
 
         let updateOptions: IItemUpdateOptions = {
             visible: true,
@@ -124,6 +157,22 @@ export default class LayoutEngine {
         for (let axisLayout of Object.values(this.axisLayouts)) {
             axisLayout?.updateItems(view, updateOptions);
         }
+    }
+
+    private static _createGridInfo(): IGridLayoutInfo {
+        return {
+            majorInterval: zeroDecimalPoint(),
+            majorCount: zeroPoint(),
+            containerSize: zeroPoint(),
+            containerSize$: new Animated.ValueXY(),
+        };
+    }
+
+    private _resetGridInfo() {
+        this.gridInfo.majorInterval = zeroDecimalPoint();
+        this.gridInfo.majorCount = zeroPoint();
+        this.gridInfo.containerSize = zeroPoint();
+        this.gridInfo.containerSize$.setValue(zeroPoint());
     }
 
     getLayoutSources(): LayoutSource[] {
@@ -144,7 +193,7 @@ export default class LayoutEngine {
 
     private _createGridLayoutSource(props: LayoutEngineProps) {
         return new GridLayoutSource({
-            itemSize: this.gridContainerSize$,
+            itemSize: this.gridInfo.containerSize$,
             ...props.grid,
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
@@ -173,11 +222,11 @@ export default class LayoutEngine {
         switch (axis) {
             case 'bottomAxis':
                 return new FlatLayoutSource({
-                    itemSize: this.gridContainerSize$,
+                    itemSize: this.gridInfo.containerSize$,
                     ...axisProps,
                     getItemViewLayout: () => ({
                         size: {
-                            x: this.gridContainerSize$.x,
+                            x: this.gridInfo.containerSize$.x,
                             y: 60,
                         }
                     }),

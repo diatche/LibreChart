@@ -49,7 +49,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     updateLayout() {
-        this.layout.update(this);
+        this.layout.scheduleUpdate(this);
     }
 
     render() {
@@ -73,8 +73,8 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             case kGridReuseID:
                 return (
                     <ChartGrid
-                        majorCountX={this.layout.gridMajorCount.x}
-                        majorCountY={this.layout.gridMajorCount.y}
+                        majorCountX={this.layout.gridInfo.majorCount.x}
+                        majorCountY={this.layout.gridInfo.majorCount.y}
                     />
                 );
             // case 'bottomAxis':
