@@ -28,6 +28,13 @@ export const ticks = (
 
     let padding = new Decimal(options?.padding || 0);
     let hasPadding = !!options?.padding;
+    if (hasPadding) {
+        if (padding.eq(0)) {
+            hasPadding = false;
+        } else if (padding.lt(0) || padding.isNaN() || !padding.isFinite()) {
+            throw new Error('Invalid padding');
+        }
+    }
 
     let bestRank = 0;
     let bestBase: Base | undefined;

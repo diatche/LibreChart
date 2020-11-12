@@ -64,7 +64,6 @@ export default class LayoutEngine {
         let visibleRange = view.getVisibleLocationRange();
         
         if (isPointRangeEmpty(visibleRange)) {
-            console.debug('empty chart update')
             this.gridMajorInterval = zeroDecimalPoint();
             this.gridMajorCount = zeroPoint();
             this.gridContainerSize$.setValue(zeroPoint());
@@ -72,11 +71,12 @@ export default class LayoutEngine {
         }
 
         // Work out tick mark distance
+        console.debug('visibleRange: ' + JSON.stringify(visibleRange, null, 2));
         let xTicks = ticks(
             visibleRange[0].x,
             visibleRange[1].x,
             {
-                padding: 40 * scale.x,
+                padding: Math.abs(50 / scale.x),
                 expand: true,
             }
         );
@@ -84,34 +84,44 @@ export default class LayoutEngine {
             visibleRange[0].y,
             visibleRange[1].y,
             {
-                padding: 40 * scale.y,
+                padding: Math.abs(50 / scale.y),
                 expand: true,
             }
         );
+        console.debug('xTicks: ' + JSON.stringify(xTicks.map(String)));
+        console.debug('yTicks: ' + JSON.stringify(yTicks.map(String)));
 
         this.gridMajorInterval = {
-            x: xTicks[Math.max(1, xTicks.length - 1)]
+            x: xTicks[Math.min(1, xTicks.length - 1)]
                 .sub(xTicks[0]),
-            y: yTicks[Math.max(1, yTicks.length - 1)]
+            y: yTicks[Math.min(1, yTicks.length - 1)]
                 .sub(yTicks[0]),
         }
         this.gridMajorCount = {
             x: xTicks.length - 1,
             y: yTicks.length - 1,
         };
-        this.gridContainerSize$.setValue({
+        let gridContainerSize = {
             x: xTicks[xTicks.length - 1]
-                .sub(xTicks[0]).toNumber(),
+                .sub(xTicks[0])
+                // .div(scale.x)
+                .toNumber(),
             y: yTicks[yTicks.length - 1]
-                .sub(yTicks[0]).toNumber(),
-        });
+                .sub(yTicks[0])
+                // .div(scale.y)
+                .toNumber(),
+        };
+        this.gridContainerSize$.setValue(gridContainerSize);
 
         console.debug('gridMajorInterval x: ' + this.gridMajorInterval.x);
+        console.debug('gridMajorInterval y: ' + this.gridMajorInterval.y);
         console.debug('gridMajorCount x: ' + this.gridMajorCount.x);
+        console.debug('gridMajorCount y: ' + this.gridMajorCount.y);
+        console.debug('gridContainerSize: ' + JSON.stringify(gridContainerSize, null, 2));
 
-        this.gridLayout.setNeedsUpdate(view);
+        this.gridLayout.updateItems(view, { visible: true });
         for (let axisLayout of Object.values(this.axisLayouts)) {
-            axisLayout?.setNeedsUpdate(view);
+            axisLayout?.updateItems(view, { visible: true });
         }
     }
 
