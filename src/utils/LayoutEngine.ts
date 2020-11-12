@@ -6,6 +6,8 @@ import RecyclerGridView, {
     FlatLayoutSourceProps,
     GridLayoutSource,
     GridLayoutSourceProps,
+    IAnimationBaseOptions,
+    IItemUpdateOptions,
     isAxisType,
     isPointRangeEmpty,
     LayoutSource,
@@ -31,8 +33,11 @@ export default class LayoutEngine {
     gridLayout: GridLayoutSource;
     axisLayouts: Partial<AxisTypeMapping<FlatLayoutSource>> = {};
 
+    /** Grid container size in content coordinates. */
     gridContainerSize$ = new Animated.ValueXY();
+    /** Number of major grid intervals per grid container. */
     gridMajorCount = zeroPoint();
+    /** Major grid interval distance in content coordinates. */
     gridMajorInterval = zeroDecimalPoint();
 
     constructor(props: LayoutEngineProps) {
@@ -54,8 +59,6 @@ export default class LayoutEngine {
         if (!view) {
             return;
         }
-        console.debug('container size: ' + JSON.stringify(view.containerSize));
-        console.debug('scale: ' + JSON.stringify(view.scale));
         this.updateGrid(view);
     }
 
@@ -71,12 +74,11 @@ export default class LayoutEngine {
         }
 
         // Work out tick mark distance
-        console.debug('visibleRange: ' + JSON.stringify(visibleRange, null, 2));
         let xTicks = ticks(
             visibleRange[0].x,
             visibleRange[1].x,
             {
-                padding: Math.abs(50 / scale.x),
+                minDistance: Math.abs(50 / scale.x),
                 expand: true,
             }
         );
@@ -84,12 +86,10 @@ export default class LayoutEngine {
             visibleRange[0].y,
             visibleRange[1].y,
             {
-                padding: Math.abs(50 / scale.y),
+                minDistance: Math.abs(50 / scale.y),
                 expand: true,
             }
         );
-        console.debug('xTicks: ' + JSON.stringify(xTicks.map(String)));
-        console.debug('yTicks: ' + JSON.stringify(yTicks.map(String)));
 
         this.gridMajorInterval = {
             x: xTicks[Math.min(1, xTicks.length - 1)]
@@ -113,15 +113,16 @@ export default class LayoutEngine {
         };
         this.gridContainerSize$.setValue(gridContainerSize);
 
-        console.debug('gridMajorInterval x: ' + this.gridMajorInterval.x);
-        console.debug('gridMajorInterval y: ' + this.gridMajorInterval.y);
-        console.debug('gridMajorCount x: ' + this.gridMajorCount.x);
-        console.debug('gridMajorCount y: ' + this.gridMajorCount.y);
-        console.debug('gridContainerSize: ' + JSON.stringify(gridContainerSize, null, 2));
-
-        this.gridLayout.updateItems(view, { visible: true });
+        let updateOptions: IItemUpdateOptions = {
+            visible: true,
+            // animated: true,
+            // timing: {
+            //     duration: 200,
+            // }
+        };
+        this.gridLayout.updateItems(view, updateOptions);
         for (let axisLayout of Object.values(this.axisLayouts)) {
-            axisLayout?.updateItems(view, { visible: true });
+            axisLayout?.updateItems(view, updateOptions);
         }
     }
 

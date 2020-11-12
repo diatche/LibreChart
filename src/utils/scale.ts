@@ -6,8 +6,8 @@ const k10 = new Decimal(10);
 export const ticks = (
     start: Decimal.Value,
     end: Decimal.Value,
-    options?: {
-        padding?: Decimal.Value;
+    options: {
+        minDistance: Decimal.Value;
         expand?: boolean;
     }
 ): Decimal[] => {
@@ -16,24 +16,19 @@ export const ticks = (
     if (b.lte(a) || a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
         throw new Error('Interval must be finite and with a positive length');
     }
-    let ab = b.sub(a);
-    let exponent = k10.pow(Decimal.log10(ab).floor());
+
+    let minDistance = new Decimal(options?.minDistance || 0);
+    if (minDistance.lt(0) || minDistance.isNaN() || !minDistance.isFinite()) {
+        throw new Error('Minimum tick distance must be finite and with a positive length');
+    }
+
+    let exponent = k10.pow(Decimal.log10(minDistance).floor());
 
     type Base = {
         start: Decimal;
         end: Decimal;
         interval: Decimal;
         count: number;
-    }
-
-    let padding = new Decimal(options?.padding || 0);
-    let hasPadding = !!options?.padding;
-    if (hasPadding) {
-        if (padding.eq(0)) {
-            hasPadding = false;
-        } else if (padding.lt(0) || padding.isNaN() || !padding.isFinite()) {
-            throw new Error('Invalid padding');
-        }
     }
 
     let bestRank = 0;
@@ -47,7 +42,7 @@ export const ticks = (
         let mLength = mEnd.sub(mStart);
         let tickCount = mLength.div(mantissa);
         let mInterval = mLength.div(tickCount);
-        if (hasPadding && mInterval.mul(exponent).lt(padding) && !mantissa.eq(k10)) {
+        if (mInterval.mul(exponent).lt(minDistance) && !mantissa.eq(k10)) {
             continue;
         }
         let rank = mInterval.toString().length;
