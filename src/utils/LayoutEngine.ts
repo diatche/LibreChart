@@ -141,6 +141,7 @@ export default class LayoutEngine {
 
         let updateOptions: IItemUpdateManyOptions = {
             visible: true,
+            queued: true,
             forceRender: true,
             // animated: true,
             // timing: {
