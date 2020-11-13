@@ -4,6 +4,7 @@ import {
     IPoint,
     isPointInRange,
 } from 'evergrid';
+import { kPointReuseID } from '../const';
 
 const kDefaultPointViewDiameter = 8;
 const kDefaultPointViewSize = {
@@ -51,6 +52,7 @@ export default class DataSource {
 
     private _createLayoutSource(props: DataSourceProps) {
         return new CustomLayoutSource({
+            reuseID: kPointReuseID,
             // itemSize: { x: kDefaultPointRadius * 2, y: kDefaultPointRadius * 2 },
             itemOrigin: { x: 0.5, y: 0.5 },
             ...props,
