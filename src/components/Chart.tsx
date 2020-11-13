@@ -1,9 +1,9 @@
 import React from 'react';
-import RecyclerGridView, {
-    RecyclerGridViewProps,
+import Evergrid, {
+    EvergridProps,
     LayoutSource,
     IItem,
-} from 'recycler-grid-view';
+} from 'evergrid'
 import { kPointReuseID, kGridReuseID } from '../const';
 import {
     LayoutEngine,
@@ -12,16 +12,16 @@ import {
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 
-type ForwardRecyclerGridViewProps = Partial<RecyclerGridViewProps>;
+type ForwardEvergridProps = Partial<EvergridProps>;
 
-export interface ChartProps extends ForwardRecyclerGridViewProps, LayoutEngineProps {
+export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps {
 
 }
 
 interface ChartState {}
 
 export default class Chart extends React.PureComponent<ChartProps, ChartState> {
-    gridViewRef = React.createRef<RecyclerGridView>();
+    gridViewRef = React.createRef<Evergrid>();
     layout: LayoutEngine;
 
     constructor(props: ChartProps) {
@@ -54,7 +54,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
     render() {
         return (
-            <RecyclerGridView
+            <Evergrid
                 anchor={{ x: 0.5, y: 0.5 }}
                 {...this.props}
                 ref={this.gridViewRef}

@@ -15,8 +15,7 @@
     "clean": "rm -rf dist",
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "prepack": "yarn run clean && yarn build",
-    "watch:recycler-grid-view": "echo 'Watching recycler-grid-view for changes and applying automatically...' && HERE=\"$(pwd)\"; pushd ../recycler-grid-view && yarn watch --copy \"$HERE/node_modules/recycler-grid-view/dist\"; popd"
+    "prepack": "yarn run clean && yarn build"
   },
   "repository": {
     "type": "git",
@@ -39,7 +38,7 @@
   "peerDependencies": {
     "react": ">=16.11.0",
     "react-native": ">=0.62.0 <1.0.0",
-    "recycler-grid-view": "*"
+    "evergrid": "*"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.1",
@@ -52,7 +51,7 @@
     "acorn-jsx": "^5.3.1",
     "jest": "^26.5.2",
     "react-remove-scroll": "^2.4.0",
-    "recycler-grid-view": "file:../recycler-grid-view",
+    "evergrid": "file:../evergrid",
     "rollup": "^2.28.2",
     "rollup-plugin-copy": "^3.3.0",
     "ts-jest": "^26.4.1",

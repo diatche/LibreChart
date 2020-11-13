@@ -3,7 +3,7 @@ import {
     IItemCustomLayout,
     IPoint,
     isPointInRange,
-} from 'recycler-grid-view';
+} from 'evergrid';
 
 const kDefaultPointViewDiameter = 8;
 const kDefaultPointViewSize = {

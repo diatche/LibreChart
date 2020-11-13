@@ -3138,7 +3138,7 @@ read-pkg@^5.2.0:
     parse-json "^5.0.0"
     type-fest "^0.6.0"
 
-"recycler-grid-view@file:../recycler-grid-view":
+"evergrid@file:../evergrid":
   version "0.0.1"
 
 regex-not@^1.0.0, regex-not@^1.0.2:

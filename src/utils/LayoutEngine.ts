@@ -1,5 +1,5 @@
 import { Animated } from "react-native";
-import RecyclerGridView, {
+import Evergrid, {
     AxisType,
     AxisTypeMapping,
     FlatLayoutSource,
@@ -13,7 +13,7 @@ import RecyclerGridView, {
     isPointRangeEmpty,
     LayoutSource,
     zeroPoint,
-} from "recycler-grid-view";
+} from "evergrid";
 import DataSource from "./DataSource";
 import { kAxisReuseIDs, kGridReuseID } from '../const';
 import { Chart } from "../internal";
@@ -83,7 +83,7 @@ export default class LayoutEngine {
         this.updateGrid(view);
     }
 
-    updateGrid(view: RecyclerGridView) {
+    updateGrid(view: Evergrid) {
         let { scale } = view;
         let visibleRange = view.getVisibleLocationRange();
         console.debug('scale: ' + JSON.stringify(scale));

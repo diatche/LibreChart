@@ -1,4 +1,4 @@
-import { AxisTypeMapping } from "recycler-grid-view";
+import { AxisTypeMapping } from "evergrid";
 
 export const kPointReuseID = 'point';
 export const kGridReuseID = 'grid';
