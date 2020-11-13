@@ -21,7 +21,7 @@ export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps {
 interface ChartState {}
 
 export default class Chart extends React.PureComponent<ChartProps, ChartState> {
-    gridViewRef = React.createRef<Evergrid>();
+    innerRef = React.createRef<Evergrid>();
     layout: LayoutEngine;
 
     constructor(props: ChartProps) {
@@ -30,7 +30,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     get innerView() {
-        return this.gridViewRef.current;
+        return this.innerRef.current;
     }
 
     componentDidMount() {
@@ -57,7 +57,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             <Evergrid
                 anchor={{ x: 0.5, y: 0.5 }}
                 {...this.props}
-                ref={this.gridViewRef}
+                ref={this.innerRef}
                 layoutSources={this.getLayoutSources()}
                 renderItem={(item: IItem<any>) => this.renderItem(item)}
                 onViewportSizeChanged={() => this.updateLayout()}

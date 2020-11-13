@@ -6,8 +6,7 @@ import Evergrid, {
     FlatLayoutSourceProps,
     GridLayoutSource,
     GridLayoutSourceProps,
-    IAnimationBaseOptions,
-    IItemUpdateOptions,
+    IItemUpdateManyOptions,
     IPoint,
     isAxisType,
     isPointRangeEmpty,
@@ -86,8 +85,6 @@ export default class LayoutEngine {
     updateGrid(view: Evergrid) {
         let { scale } = view;
         let visibleRange = view.getVisibleLocationRange();
-        console.debug('scale: ' + JSON.stringify(scale));
-        console.debug('visibleRange: ' + JSON.stringify(visibleRange));
 
         if (isPointRangeEmpty(visibleRange)) {
             this._resetGridInfo();
@@ -136,18 +133,15 @@ export default class LayoutEngine {
         };
         if (isMatch(this.gridInfo, gridInfo)) {
             // No changes
-            console.debug('no changes');
             return;
         }
         
         Object.assign(this.gridInfo, gridInfo);
         this.gridInfo.containerSize$.setValue(gridInfo.containerSize);
-        console.debug('gridMajorInterval: ' + JSON.stringify(this.gridInfo.majorInterval, (k, v) => v instanceof Decimal ? String(v) : v));
-        console.debug('gridMajorCount: ' + JSON.stringify(this.gridInfo.majorCount));
-        console.debug('gridContainerSize: ' + JSON.stringify(this.gridInfo.containerSize));
 
-        let updateOptions: IItemUpdateOptions = {
+        let updateOptions: IItemUpdateManyOptions = {
             visible: true,
+            forceRender: true,
             // animated: true,
             // timing: {
             //     duration: 200,
