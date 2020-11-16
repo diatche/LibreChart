@@ -110,6 +110,32 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
      */
     getInnerContainerStyle() {
         // TODO: cache style until prop change
+        return [
+            styles.innerContainer,
+            axisStyles[this.props.type].innerContainer,
+        ];
+    }
+
+    /**
+     * The tick container style.
+     * 
+     * Holds ticks.
+     */
+    getTickContainerStyle() {
+        // TODO: cache style until prop change
+        return [
+            styles.tickContainer,
+            axisStyles[this.props.type].tickContainer,
+        ];
+    }
+
+    /**
+     * The label container style.
+     * 
+     * Holds inner label containers.
+     */
+    getLabelContainerStyle() {
+        // TODO: cache style until prop change
         let style: ViewStyle = {};
         if (this.props.isInverted) {
             // Reverse label order
@@ -131,56 +157,22 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
             }
         }
         return [
-            styles.innerContainer,
-            axisStyles[this.props.type].innerContainer,
+            styles.labelContainer,
+            axisStyles[this.props.type].labelContainer,
             style,
         ];
     }
 
     /**
-     * The tick and label container style.
+     * The label inner container style.
      * 
-     * Holds the inner tick and label container.
+     * Holds labels.
      */
-    getTickContainerStyle() {
-        // TODO: cache style until prop change
-        let style: ViewStyle = {};
-        if (this.props.isInverted) {
-            // Reverse tick alignment
-            switch (this.props.type) {
-                case 'topAxis':
-                case 'bottomAxis':
-                    style = {
-                        ...style,
-                        flexDirection: 'row-reverse',
-                    };
-                    break;
-                case 'leftAxis':
-                case 'rightAxis':
-                    style = {
-                        ...style,
-                        flexDirection: 'column-reverse',
-                    };
-                    break;
-            }
-        }
-        return [
-            styles.tickContainer,
-            axisStyles[this.props.type].tickContainer,
-            style,
-        ];
-    }
-
-    /**
-     * The tick and label inner container style.
-     * 
-     * Holds the tick and labels.
-     */
-    getTickInnerContainerStyle() {
+    getLabelInnerContainerStyle() {
         // TODO: cache style until prop change
         return [
-            styles.tickInnerContainer,
-            axisStyles[this.props.type].tickInnerContainer,
+            styles.labelInnerContainer,
+            axisStyles[this.props.type].labelInnerContainer,
         ];
     }
 
@@ -254,25 +246,25 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
     }
 
     render() {
-        let tickContainerStyle = this.getTickContainerStyle();
-        let tickInnerContainerStyle = this.getTickInnerContainerStyle();
+        let labelInnerContainerStyle = this.getLabelInnerContainerStyle();
         let tickStyle = this.getTickStyle();
         let labelStyle = this.getLabelStyle();
         let labels = this.getLabels();
 
-        let tickInnerContainers: React.ReactNode[] = [];
+        let ticks: React.ReactNode[] = [];
+        let labelInnerContainers: React.ReactNode[] = [];
+
         for (let i = 0; i < labels.length; i++) {
-            tickInnerContainers.push((
+            ticks.push(<View key={i} style={tickStyle} />);
+
+            labelInnerContainers.push((
                 <View
-                    key={i}
-                    style={tickContainerStyle}
+                    key={labels[i]}
+                    style={labelInnerContainerStyle}
                 >
-                    <View style={tickInnerContainerStyle}>
-                        <View style={tickStyle} />
-                        <Text style={labelStyle}>
-                            {labels[i]}
-                        </Text>
-                    </View>
+                    <Text style={labelStyle}>
+                        {labels[i]}
+                    </Text>
                 </View>
             ));
         }
@@ -283,7 +275,12 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                     style={this.getInnerContainerStyle()}
                     onLayout={event => this.onInnerContainerLayout(event)}
                 >
-                    {tickInnerContainers}
+                    <View style={this.getTickContainerStyle()}>
+                        {ticks}
+                    </View>
+                    <View style={this.getLabelContainerStyle()}>
+                        {labelInnerContainers}
+                    </View>
                 </View>
             </View>
         );
@@ -302,11 +299,18 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
     tickContainer: {
+        // flex: 1,
+        justifyContent: 'space-around',
+        // borderWidth: 2,
+        // borderColor: 'rgba(150, 70, 230, 0.5)',
+    },
+    labelContainer: {
         flex: 1,
         // borderWidth: 2,
         // borderColor: 'rgba(100, 110, 230, 0.5)',
     },
-    tickInnerContainer: {
+    labelInnerContainer: {
+        flex: 1,
         alignSelf: 'center',
         alignItems: 'center',
         // borderWidth: 2,
@@ -324,14 +328,15 @@ const axisStyles: AxisTypeMapping<any> = {
             flexDirection: 'column-reverse',
         },
         innerContainer: {
-            width: '100%',
-            flexDirection: 'row',
-            alignSelf: 'flex-end',
+            flexDirection: 'column-reverse',
         },
         tickContainer: {
-            alignSelf: 'flex-end',
+            flexDirection: 'row',
         },
-        tickInnerContainer: {
+        labelContainer: {
+            flexDirection: 'row',
+        },
+        labelInnerContainer: {
             flexDirection: 'column-reverse',
         },
     }),
@@ -340,48 +345,51 @@ const axisStyles: AxisTypeMapping<any> = {
             flexDirection: 'column',
         },
         innerContainer: {
-            width: '100%',
-            flexDirection: 'row',
-            alignSelf: 'flex-start',
+            flexDirection: 'column',
         },
         tickContainer: {
-            alignSelf: 'flex-start',
+            flexDirection: 'row',
         },
-        tickInnerContainer: {
+        labelContainer: {
+            flexDirection: 'row',
+        },
+        labelInnerContainer: {
             flexDirection: 'column',
         },
     }),
     leftAxis: StyleSheet.create({
         container: {
-            flexDirection: 'column-reverse',
+            flexDirection: 'row-reverse',
         },
         innerContainer: {
-            height: '100%',
-            flexDirection: 'column',
-            alignSelf: 'flex-end',
+            flexDirection: 'row-reverse',
         },
         tickContainer: {
-            alignSelf: 'flex-end',
+            flexDirection: 'column',
+        },
+        labelContainer: {
+            flexDirection: 'column',
             justifyContent: 'center',
         },
-        tickInnerContainer: {
+        labelInnerContainer: {
             flexDirection: 'row-reverse',
         },
     }),
     rightAxis: StyleSheet.create({
         container: {
-            flexDirection: 'column',
+            flexDirection: 'row',
         },
         innerContainer: {
-            height: '100%',
-            flexDirection: 'column',
-            alignSelf: 'flex-start',
+            flexDirection: 'row',
         },
         tickContainer: {
-            alignSelf: 'flex-start',
+            flexDirection: 'column',
+        },
+        labelContainer: {
+            flexDirection: 'column',
             justifyContent: 'center',
         },
-        tickInnerContainer: {
+        labelInnerContainer: {
             flexDirection: 'row',
         },
     }),
