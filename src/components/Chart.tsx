@@ -4,17 +4,26 @@ import Evergrid, {
     LayoutSource,
     IItem,
 } from 'evergrid'
-import { kPointReuseID, kGridReuseID } from '../const';
+import {
+    kPointReuseID,
+    kGridReuseID,
+    kAxisDirection,
+    kAxisReuseIDs,
+    kReuseIDAxes,
+    kAxisStyleLightDefaults,
+} from '../const';
 import {
     LayoutEngine,
     LayoutEngineProps
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
+import ChartAxis from './ChartAxis';
+import { IChartStyle } from '../types';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
-export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps {
+export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps, IChartStyle {
 
 }
 
@@ -48,6 +57,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         ];
     }
 
+    getChartStyle(): Required<IChartStyle> {
+        // TODO: cache labels until prop change
+        return {
+            ...kAxisStyleLightDefaults,
+            ...this.props,
+        };
+    }
+
     updateLayout() {
         this.layout.scheduleUpdate(this);
     }
@@ -66,10 +83,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         );
     }
 
-    renderItem({ index, animated, reuseID }: IItem<any>) {
-        switch (reuseID) {
+    renderItem(item: IItem<any>) {
+        switch (item.reuseID) {
             case kPointReuseID:
-                return <ChartPoint diameter={animated.viewLayout.size.x} />;
+                return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
             case kGridReuseID:
                 return (
                     <ChartGrid
@@ -77,32 +94,31 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                         majorCountY={this.layout.gridInfo.majorCount.y}
                     />
                 );
-            // case 'bottomAxis':
-            //     return <View style={styles.bottomAxis} />
-            // case 'bottomAxisMajor':
-            //     return (
-            //         <View style={styles.bottomAxisMajorContainer}>
-            //             <View style={styles.bottomAxisMajorTick} />
-            //             <Text style={styles.bottomAxisMajorLabel}>{index}</Text>
-            //         </View>
-            //     );
-            // case 'rightAxis':
-            //     return <View style={styles.rightAxis} />
-            // case 'rightAxisMajor':
-            //     return (
-            //         <View style={styles.rightAxisMajorContainer}>
-            //             <View style={styles.rightAxisMajorTick} />
-            //             <View style={styles.rightAxisMajorLabelContainer}>
-            //                 <Text style={styles.rightAxisMajorLabel}>{index}</Text>
-            //             </View>
-            //         </View>
-            //     );
-            // case 'horizontalGrid':
-            //     return <View style={styles.horizontalGrid} />
-            // case 'verticalGrid':
-            //     return <View style={styles.verticalGrid} />
+            case kAxisReuseIDs['topAxis']:
+            case kAxisReuseIDs['rightAxis']:
+            case kAxisReuseIDs['bottomAxis']:
+            case kAxisReuseIDs['leftAxis']:
+                return this.renderAxis(item);
             default: 
                 return null;
         }
+    }
+
+    renderAxis({ index, reuseID }: IItem<any>) {
+        if (!reuseID) {
+            return null;
+        }
+        let axisType = kReuseIDAxes[reuseID];
+        let chartStyle = this.getChartStyle();
+        let direction = kAxisDirection[axisType];
+        let range = this.layout.getGridContainerRangeAtIndex(index, direction);
+        let tickLocations = this.layout.getTickLocations(range[0], range[1], direction);
+        return (
+            <ChartAxis
+                {...chartStyle}
+                type={axisType}
+                tickLocations={tickLocations}
+            />
+        );
     }
 }

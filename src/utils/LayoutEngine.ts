@@ -6,6 +6,7 @@ import Evergrid, {
     FlatLayoutSourceProps,
     GridLayoutSource,
     GridLayoutSourceProps,
+    IAnimatedPoint,
     IItemUpdateManyOptions,
     IPoint,
     isAxisType,
@@ -22,14 +23,16 @@ import Decimal from "decimal.js";
 import { IDecimalPoint } from "../types";
 import { isMatch } from "./comp";
 
+const k0 = new Decimal(0);
+
 export interface LayoutEngineProps {
     dataSources?: DataSource[];
     grid?: {
         show?: boolean;
     } & GridLayoutSourceProps;
-    axes?: AxisTypeMapping<{
+    axes?: Partial<AxisTypeMapping<{
         show?: boolean;
-    } & FlatLayoutSourceProps>;
+    } & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>>>;
 }
 
 interface IGridLayoutInfo {
@@ -50,6 +53,10 @@ export default class LayoutEngine {
 
     /** Grid layout info. */
     readonly gridInfo = LayoutEngine._createGridInfo();
+    readonly axes = LayoutEngine._createGridInfo();
+
+    /** Animated grid container size in view coordinates. */
+    private _containerViewSize$?: IAnimatedPoint;
 
     constructor(props: LayoutEngineProps) {
         this.dataSources = props.dataSources || [];
@@ -58,6 +65,7 @@ export default class LayoutEngine {
     }
     
     configure(chart: Chart) {
+        this._containerViewSize$ = chart.innerView?.scaleVector$(this.gridInfo.containerSize$);
         this.update(chart);
     }
 
@@ -186,6 +194,81 @@ export default class LayoutEngine {
         ].filter(s => !!s) as LayoutSource[];
     }
 
+    /**
+     * Returns the grid container's range at the
+     * specified 
+     * @param location The location.
+     * @param direction The axis direction.
+     * @returns The grid container's range in content coordinates.
+     */
+    getGridContainerRangeAtIndex(index: number, direction: 'x' | 'y'): [Decimal, Decimal] {
+        let interval = this.gridInfo.majorInterval[direction];
+        let count = this.gridInfo.majorCount[direction];
+        if (count === 0 || interval.lte(0)) {
+            return [k0, k0];
+        }
+        let len = interval.mul(count);
+        let origin = new Decimal(this.gridLayout.origin[direction]);
+        let start = new Decimal(index).mul(len).add(origin);
+        return [start, start.add(len)];
+    }
+
+    /**
+     * Returns the grid container's range, which
+     * contains the specified point in content coordinates.
+     * @param location The location.
+     * @param direction The axis direction.
+     * @returns The grid container's range in content coordinates.
+     */
+    getGridContainerRangeAtLocation(location: Decimal.Value, direction: 'x' | 'y'): [Decimal, Decimal] {
+        let interval = this.gridInfo.majorInterval[direction];
+        let count = this.gridInfo.majorCount[direction];
+        if (count === 0 || interval.lte(0)) {
+            return [k0, k0];
+        }
+        let len = interval.mul(count);
+        let origin = new Decimal(this.gridLayout.origin[direction]);
+        let p = new Decimal(location).sub(origin);
+        let start = p.div(len).floor().mul(len).add(origin);
+        return [start, start.add(len)];
+    }
+
+    /**
+     * Returns all ticks in the specified interval.
+     * @param start Inclusive start of interval.
+     * @param end Exclusive end of interval.
+     * @param direction {'x' | 'y'} The axis direction.
+     * @returns Tick locations.
+     */
+    getTickLocations(start: Decimal.Value, end: Decimal.Value, direction: 'x' | 'y'): Decimal[] {
+        let a = new Decimal(start);
+        let b = new Decimal(end);
+
+        if (a.gte(b)) {
+            return [];
+        }
+        let interval = this.gridInfo.majorInterval[direction];
+        let count = this.gridInfo.majorCount[direction];
+        if (count === 0 || interval.lte(0)) {
+            return [];
+        }
+
+        // Get all ticks in interval
+        let ticks: Decimal[] = [];
+        let len = interval.mul(count);
+        let tick = a.div(len).floor().mul(len);
+        if (tick.gte(a)) {
+            ticks.push(tick);
+        }
+        tick = tick.add(interval);
+        while (tick.lt(b)) {
+            ticks.push(tick);
+            tick = tick.add(interval);
+        }
+
+        return ticks;
+    }
+
     private _createGridLayoutSource(props: LayoutEngineProps) {
         return new GridLayoutSource({
             itemSize: this.gridInfo.containerSize$,
@@ -210,8 +293,8 @@ export default class LayoutEngine {
     }
 
     private _createAxisLayoutSource(axis: AxisType, props: LayoutEngineProps): FlatLayoutSource | undefined {
-        let axisProps = props.axes![axis];
-        if (!axisProps.show) {
+        let axisProps = props.axes?.[axis];
+        if (!axisProps?.show) {
             return undefined;
         }
         switch (axis) {
@@ -221,10 +304,13 @@ export default class LayoutEngine {
                     ...axisProps,
                     getItemViewLayout: () => ({
                         size: {
-                            x: this.gridInfo.containerSize$.x,
+                            x: this._containerViewSize$?.x || 0,
                             y: 60,
                         }
                     }),
+                    insets: { bottom: 60 },
+                    horizontal: true,
+                    stickyEdge: 'bottom',
                     shouldRenderItem: () => true,
                     reuseID: kAxisReuseIDs[axis],
                 });
