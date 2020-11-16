@@ -10,6 +10,7 @@ export interface IAxisStyle {
     axisBackgroundColor?: ColorValue;
     axisColor?: ColorValue;
     axisThickness?: number;
+    axisResizeAnimationDuration?: number;
 
     majorTickLength?: number;
     majorTickThickness?: number;

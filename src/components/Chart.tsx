@@ -119,6 +119,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 type={axisType}
                 tickLocations={tickLocations}
                 thickness$={this.layout.axisInfo[axisType].thickness$}
+                resizeAnimationDuration={chartStyle.axisResizeAnimationDuration}
             />
         );
     }

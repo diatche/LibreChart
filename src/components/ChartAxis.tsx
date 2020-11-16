@@ -14,13 +14,13 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { kAxisCrossDirection } from '../const';
 import { IAxisStyle } from '../types';
 
 export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     tickLocations: Decimal[];
     thickness$: Animated.Value;
+    resizeAnimationDuration: number;
 }
 
 interface ChartAxisState {}
@@ -191,7 +191,16 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                 thickness = event.nativeEvent.layout.width;
                 break;
         }
-        this.props.thickness$.setValue(thickness);
+        let duration = this.props.resizeAnimationDuration;
+        if (duration > 0) {
+            Animated.timing(this.props.thickness$, {
+                toValue: thickness,
+                duration,
+                useNativeDriver: false,
+            }).start();
+        } else {
+            this.props.thickness$.setValue(thickness);
+        }
     }
 
     render() {

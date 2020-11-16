@@ -35,6 +35,7 @@ export const kAxisCrossDirection: AxisTypeMapping<'x' | 'y'> = {
 
 export const kAxisStyleBaseDefaults: IAxisStyle = {
     axisThickness: 1,
+    axisResizeAnimationDuration: 200,
 
     majorTickLength: 3,
     majorTickThickness: 1,
