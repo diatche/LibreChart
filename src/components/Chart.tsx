@@ -3,6 +3,7 @@ import Evergrid, {
     EvergridProps,
     LayoutSource,
     IItem,
+    isAxisType,
 } from 'evergrid'
 import {
     kPointReuseID,
@@ -84,6 +85,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     renderItem(item: IItem<any>) {
+        if (item.reuseID && isAxisType(kReuseIDAxes[item.reuseID])) {
+            return this.renderAxis(item);
+        }
+
         switch (item.reuseID) {
             case kPointReuseID:
                 return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
@@ -94,11 +99,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                         majorCountY={this.layout.gridInfo.majorCount.y}
                     />
                 );
-            case kAxisReuseIDs['topAxis']:
-            case kAxisReuseIDs['rightAxis']:
-            case kAxisReuseIDs['bottomAxis']:
-            case kAxisReuseIDs['leftAxis']:
-                return this.renderAxis(item);
             default: 
                 return null;
         }
@@ -112,7 +112,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         let chartStyle = this.getChartStyle();
         let direction = kAxisDirection[axisType];
         let range = this.layout.getGridContainerRangeAtIndex(index, direction);
-        let tickLocations = this.layout.getTickLocations(range[0], range[1], direction);
+        let tickLocations = this.layout.getTickLocations(range[0], range[1], direction, this);
         return (
             <ChartAxis
                 {...chartStyle}

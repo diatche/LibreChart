@@ -191,6 +191,9 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                 thickness = event.nativeEvent.layout.width;
                 break;
         }
+        thickness += this.props.axisThickness;
+        console.debug('thickness: ' + thickness);
+        // return;
         let duration = this.props.resizeAnimationDuration;
         if (duration > 0) {
             Animated.timing(this.props.thickness$, {
@@ -262,7 +265,8 @@ const styles = StyleSheet.create({
 
 const axisStyles: AxisTypeMapping<any> = {
     topAxis: StyleSheet.create({
-        returns: {
+        innerContainer: {
+            width: '100%',
             flexDirection: 'row',
             // justifyContent: 
         },
@@ -273,19 +277,9 @@ const axisStyles: AxisTypeMapping<any> = {
             flexDirection: 'column-reverse',
         },
     }),
-    rightAxis: StyleSheet.create({
-        innerContainer: {
-            flexDirection: 'column',
-        },
-        tickContainer: {
-            left: 0,
-        },
-        tickInnerContainer: {
-            flexDirection: 'row',
-        },
-    }),
     bottomAxis: StyleSheet.create({
         innerContainer: {
+            width: '100%',
             flexDirection: 'row',
         },
         tickContainer: {
@@ -297,6 +291,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     leftAxis: StyleSheet.create({
         innerContainer: {
+            height: '100%',
             flexDirection: 'column',
         },
         tickContainer: {
@@ -304,6 +299,18 @@ const axisStyles: AxisTypeMapping<any> = {
         },
         tickInnerContainer: {
             flexDirection: 'row-reverse',
+        },
+    }),
+    rightAxis: StyleSheet.create({
+        innerContainer: {
+            height: '100%',
+            flexDirection: 'column',
+        },
+        tickContainer: {
+            left: 0,
+        },
+        tickInnerContainer: {
+            flexDirection: 'row',
         },
     }),
 };

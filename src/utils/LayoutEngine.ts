@@ -75,7 +75,7 @@ export default class LayoutEngine {
     }
     
     configure(chart: Chart) {
-        this._containerViewSize$ = chart.innerView?.scaleVector$(this.gridInfo.containerSize$);
+        this._containerViewSize$ = chart.innerView?.scaleSize$(this.gridInfo.containerSize$);
         this.update(chart);
     }
 
@@ -194,7 +194,7 @@ export default class LayoutEngine {
 
     private static _createAxisInfo(type: AxisType): IAxisLayoutInfo {
         return {
-            thickness$: new Animated.Value(0),
+            thickness$: new Animated.Value(50),
         };
     }
 
@@ -228,28 +228,7 @@ export default class LayoutEngine {
             return [k0, k0];
         }
         let len = interval.mul(count);
-        let origin = new Decimal(this.gridLayout.origin[direction]);
-        let start = new Decimal(index).mul(len).add(origin);
-        return [start, start.add(len)];
-    }
-
-    /**
-     * Returns the grid container's range, which
-     * contains the specified point in content coordinates.
-     * @param location The location.
-     * @param direction The axis direction.
-     * @returns The grid container's range in content coordinates.
-     */
-    getGridContainerRangeAtLocation(location: Decimal.Value, direction: 'x' | 'y'): [Decimal, Decimal] {
-        let interval = this.gridInfo.majorInterval[direction];
-        let count = this.gridInfo.majorCount[direction];
-        if (count === 0 || interval.lte(0)) {
-            return [k0, k0];
-        }
-        let len = interval.mul(count);
-        let origin = new Decimal(this.gridLayout.origin[direction]);
-        let p = new Decimal(location).sub(origin);
-        let start = p.div(len).floor().mul(len).add(origin);
+        let start = new Decimal(index).mul(len);
         return [start, start.add(len)];
     }
 
@@ -260,7 +239,12 @@ export default class LayoutEngine {
      * @param direction {'x' | 'y'} The axis direction.
      * @returns Tick locations.
      */
-    getTickLocations(start: Decimal.Value, end: Decimal.Value, direction: 'x' | 'y'): Decimal[] {
+    getTickLocations(
+        start: Decimal.Value,
+        end: Decimal.Value,
+        direction: 'x' | 'y',
+        chart: Chart,
+    ): Decimal[] {
         let a = new Decimal(start);
         let b = new Decimal(end);
 
@@ -286,6 +270,9 @@ export default class LayoutEngine {
             tick = tick.add(interval);
         }
 
+        if ((chart.innerView?.scale[direction] || 0) < 0) {
+            ticks = ticks.reverse();
+        }
         return ticks;
     }
 
@@ -325,37 +312,65 @@ export default class LayoutEngine {
                     getItemViewLayout: () => ({
                         size: {
                             x: this._containerViewSize$?.x || 0,
-                            y: this.axisInfo.bottomAxis.thickness$,
+                            y: this.axisInfo[axis].thickness$,
                         }
                     }),
-                    insets: {
-                        bottom: this.axisInfo.bottomAxis.thickness$
-                    },
                     horizontal: true,
                     stickyEdge: 'bottom',
                     shouldRenderItem: () => true,
                     reuseID: kAxisReuseIDs[axis],
                 });
-                // return new FlatLayoutSource({
-                //     reuseID: 'bottomAxisMajor',
-                //     itemSize: kStep,
-                //     getItemViewLayout: () => ({
-                //         size: {
-                //             x: 60,
-                //             y: kXAxisHeight,
-                //         }
-                //     }),
-                //     horizontal: true,
-                //     stickyEdge: 'bottom',
-                //     itemOrigin: { x: 0.5, y: 1 },
-                //     shouldRenderItem: () => true,
-                // });
-            case 'leftAxis':
-                throw new Error('Not Implemented');
-            case 'rightAxis':
-                throw new Error('Not Implemented');
             case 'topAxis':
-                throw new Error('Not Implemented');
+                return new FlatLayoutSource({
+                    itemSize: this.gridInfo.containerSize$,
+                    ...axisProps,
+                    getItemViewLayout: () => ({
+                        size: {
+                            x: this._containerViewSize$?.x || 0,
+                            y: this.axisInfo[axis].thickness$,
+                        }
+                    }),
+                    insets: {
+                        top: this.axisInfo[axis].thickness$,
+                    },
+                    horizontal: true,
+                    stickyEdge: 'top',
+                    shouldRenderItem: () => true,
+                    reuseID: kAxisReuseIDs[axis],
+                });
+            case 'leftAxis':
+                return new FlatLayoutSource({
+                    itemSize: this.gridInfo.containerSize$,
+                    ...axisProps,
+                    getItemViewLayout: () => ({
+                        size: {
+                            x: this.axisInfo[axis].thickness$,
+                            y: this._containerViewSize$?.y || 0,
+                        }
+                    }),
+                    horizontal: false,
+                    stickyEdge: 'left',
+                    shouldRenderItem: () => true,
+                    reuseID: kAxisReuseIDs[axis],
+                });
+            case 'rightAxis':
+                return new FlatLayoutSource({
+                    itemSize: this.gridInfo.containerSize$,
+                    ...axisProps,
+                    getItemViewLayout: () => ({
+                        size: {
+                            x: this.axisInfo[axis].thickness$,
+                            y: this._containerViewSize$?.y || 0,
+                        }
+                    }),
+                    insets: {
+                        right: this.axisInfo[axis].thickness$,
+                    },
+                    horizontal: false,
+                    stickyEdge: 'right',
+                    shouldRenderItem: () => true,
+                    reuseID: kAxisReuseIDs[axis],
+                });
         }
     }
 }
