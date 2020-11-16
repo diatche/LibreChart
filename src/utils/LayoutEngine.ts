@@ -48,6 +48,13 @@ interface IGridLayoutInfo {
     containerSize: IPoint;
     /** Animated grid container size in content coordinates. */
     readonly containerSize$: Animated.ValueXY;
+    /**
+     * Animated major grid interval negative half-distance
+     * in content coordinates.
+     * 
+     * This is used to syncronize axes with the grid.
+     **/
+    readonly negHalfMajorInterval$: Animated.ValueXY;
 }
 
 interface IAxisLayoutInfo {
@@ -156,6 +163,10 @@ export default class LayoutEngine {
         
         Object.assign(this.gridInfo, gridInfo);
         this.gridInfo.containerSize$.setValue(gridInfo.containerSize);
+        this.gridInfo.negHalfMajorInterval$.setValue({
+            x: gridInfo.majorInterval.x.div(2).neg().toNumber(),
+            y: gridInfo.majorInterval.y.div(2).neg().toNumber(),
+        });
 
         let updateOptions: IItemUpdateManyOptions = {
             visible: true,
@@ -178,6 +189,7 @@ export default class LayoutEngine {
             majorCount: zeroPoint(),
             containerSize: zeroPoint(),
             containerSize$: new Animated.ValueXY(),
+            negHalfMajorInterval$: new Animated.ValueXY(),
         };
     }
 
@@ -243,7 +255,6 @@ export default class LayoutEngine {
         start: Decimal.Value,
         end: Decimal.Value,
         direction: 'x' | 'y',
-        chart: Chart,
     ): Decimal[] {
         let a = new Decimal(start);
         let b = new Decimal(end);
@@ -269,11 +280,16 @@ export default class LayoutEngine {
             ticks.push(tick);
             tick = tick.add(interval);
         }
-
-        if ((chart.innerView?.scale[direction] || 0) < 0) {
-            ticks = ticks.reverse();
-        }
         return ticks;
+    }
+
+    /**
+     * Returns `true` if the axis has a negative scale.
+     * @param direction 
+     * @param chart 
+     */
+    isAxisInverted(direction: 'x' | 'y', chart: Chart) {
+        return (chart.innerView?.scale[direction] || 0) < 0;
     }
 
     private _createGridLayoutSource(props: LayoutEngineProps) {
@@ -315,6 +331,11 @@ export default class LayoutEngine {
                             y: this.axisInfo[axis].thickness$,
                         }
                     }),
+                    itemOrigin: { x: 0, y: 0 },
+                    origin: {
+                        x: this.gridInfo.negHalfMajorInterval$.x,
+                        y: 0,
+                    },
                     horizontal: true,
                     stickyEdge: 'bottom',
                     shouldRenderItem: () => true,
@@ -330,8 +351,10 @@ export default class LayoutEngine {
                             y: this.axisInfo[axis].thickness$,
                         }
                     }),
-                    insets: {
-                        top: this.axisInfo[axis].thickness$,
+                    itemOrigin: { x: 0, y: 1 },
+                    origin: {
+                        x: this.gridInfo.negHalfMajorInterval$.x,
+                        y: 0,
                     },
                     horizontal: true,
                     stickyEdge: 'top',
@@ -348,6 +371,11 @@ export default class LayoutEngine {
                             y: this._containerViewSize$?.y || 0,
                         }
                     }),
+                    itemOrigin: { x: 0, y: 0 },
+                    origin: {
+                        x: 0,
+                        y: this.gridInfo.negHalfMajorInterval$.y,
+                    },
                     horizontal: false,
                     stickyEdge: 'left',
                     shouldRenderItem: () => true,
@@ -363,8 +391,10 @@ export default class LayoutEngine {
                             y: this._containerViewSize$?.y || 0,
                         }
                     }),
-                    insets: {
-                        right: this.axisInfo[axis].thickness$,
+                    itemOrigin: { x: 1, y: 0 },
+                    origin: {
+                        x: 0,
+                        y: this.gridInfo.negHalfMajorInterval$.y,
                     },
                     horizontal: false,
                     stickyEdge: 'right',

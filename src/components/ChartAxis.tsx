@@ -18,7 +18,10 @@ import { IAxisStyle } from '../types';
 
 export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
+    /** Tick locations in ascending order in content coordinates. */
     tickLocations: Decimal[];
+    /** Set to `true` if the axis scale is negative. */
+    isInverted: boolean;
     thickness$: Animated.Value;
     resizeAnimationDuration: number;
 }
@@ -26,6 +29,7 @@ export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
 interface ChartAxisState {}
 
 export default class ChartAxis extends React.PureComponent<ChartAxisProps, ChartAxisState> {
+    private _layoutThickness = 0;
 
     getLabel(value: Decimal): string {
         // TODO: cache labels until prop change
@@ -49,6 +53,10 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
      */
     getContainerStyle() {
         // TODO: cache style until prop change
+        const {
+            axisThickness,
+        } = this.props;
+
         let style: ViewStyle = {
             borderColor: this.props.axisColor,
             backgroundColor: this.props.axisBackgroundColor,
@@ -58,42 +66,35 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
             case 'topAxis':
                 style = {
                     ...style,
-                    // top: 0,
-                    // left: 0,
-                    // width: '100%',
-                    borderBottomWidth: this.props.axisThickness,
+                    borderBottomWidth: axisThickness,
+                    marginBottom: -axisThickness,
                 };
             case 'bottomAxis':
                 style = {
                     ...style,
-                    // bottom: 0,
-                    // left: 0,
-                    // width: '100%',
-                    borderTopWidth: this.props.axisThickness,
+                    borderTopWidth: axisThickness,
+                    marginTop: -axisThickness,
                 };
                 break;
             case 'leftAxis':
                 style = {
                     ...style,
-                    // top: 0,
-                    // left: 0,
-                    // height: '100%',
-                    borderRightWidth: this.props.axisThickness,
+                    borderRightWidth: axisThickness,
+                    marginRight: -axisThickness,
                 };
                 break;
             case 'rightAxis':
                 style = {
                     ...style,
-                    // top: 0,
-                    // right: 0,
-                    // height: '100%',
-                    borderLeftWidth: this.props.axisThickness,
+                    borderLeftWidth: axisThickness,
+                    marginLeft: -axisThickness,
                 };
                 break;
         }
 
         return [
             styles.container,
+            axisStyles[this.props.type].container,
             style,
         ];
     }
@@ -109,9 +110,30 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
      */
     getInnerContainerStyle() {
         // TODO: cache style until prop change
+        let style: ViewStyle = {};
+        if (this.props.isInverted) {
+            // Reverse label order
+            switch (this.props.type) {
+                case 'topAxis':
+                case 'bottomAxis':
+                    style = {
+                        ...style,
+                        flexDirection: 'row-reverse',
+                    };
+                    break;
+                case 'leftAxis':
+                case 'rightAxis':
+                    style = {
+                        ...style,
+                        flexDirection: 'column-reverse',
+                    };
+                    break;
+            }
+        }
         return [
             styles.innerContainer,
             axisStyles[this.props.type].innerContainer,
+            style,
         ];
     }
 
@@ -122,9 +144,30 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
      */
     getTickContainerStyle() {
         // TODO: cache style until prop change
+        let style: ViewStyle = {};
+        if (this.props.isInverted) {
+            // Reverse tick alignment
+            switch (this.props.type) {
+                case 'topAxis':
+                case 'bottomAxis':
+                    style = {
+                        ...style,
+                        flexDirection: 'row-reverse',
+                    };
+                    break;
+                case 'leftAxis':
+                case 'rightAxis':
+                    style = {
+                        ...style,
+                        flexDirection: 'column-reverse',
+                    };
+                    break;
+            }
+        }
         return [
             styles.tickContainer,
             axisStyles[this.props.type].tickContainer,
+            style,
         ];
     }
 
@@ -169,13 +212,14 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
         return style;
     }
 
-    getLabelStyle(): TextStyle {
+    getLabelStyle() {
         // TODO: cache style until prop change
-        return {
+        let style: TextStyle = {
             fontSize: this.props.labelFontSize,
             color: this.props.labelColor,
             margin: this.props.labelMargin,
         };
+        return [styles.label, style];
     }
 
     onInnerContainerLayout(event: LayoutChangeEvent) {
@@ -191,7 +235,10 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                 thickness = event.nativeEvent.layout.width;
                 break;
         }
-        thickness += this.props.axisThickness;
+        if (Math.abs(thickness - this._layoutThickness) < 2) {
+            return;
+        }
+        this._layoutThickness = thickness;
         console.debug('thickness: ' + thickness);
         // return;
         let duration = this.props.resizeAnimationDuration;
@@ -246,68 +293,93 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        // margin: -2,
+        // borderWidth: 2,
+        // borderColor: 'rgba(200, 210, 130, 0.5)',
     },
     innerContainer: {
-        // backgroundColor: 'red',
+        // borderWidth: 2,
+        // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
     tickContainer: {
         flex: 1,
+        // borderWidth: 2,
+        // borderColor: 'rgba(100, 110, 230, 0.5)',
     },
     tickInnerContainer: {
-        // alignContent: 'center',
-        // justifyContent: 'center',
-        // backgroundColor: 'red',
+        alignSelf: 'center',
+        alignItems: 'center',
+        // borderWidth: 2,
+        // borderColor: 'rgba(100, 210, 130, 0.5)',
     },
     label: {
-        textAlign: 'center',
+        // borderWidth: 2,
+        // borderColor: 'rgba(200, 110, 130, 0.5)',
     }
 });
 
 const axisStyles: AxisTypeMapping<any> = {
     topAxis: StyleSheet.create({
+        container: {
+            flexDirection: 'column-reverse',
+        },
         innerContainer: {
             width: '100%',
             flexDirection: 'row',
-            // justifyContent: 
+            alignSelf: 'flex-end',
         },
         tickContainer: {
-            bottom: 0,
+            alignSelf: 'flex-end',
         },
         tickInnerContainer: {
             flexDirection: 'column-reverse',
         },
     }),
     bottomAxis: StyleSheet.create({
+        container: {
+            flexDirection: 'column',
+        },
         innerContainer: {
             width: '100%',
             flexDirection: 'row',
+            alignSelf: 'flex-start',
         },
         tickContainer: {
-            top: 0,
+            alignSelf: 'flex-start',
         },
         tickInnerContainer: {
             flexDirection: 'column',
         },
     }),
     leftAxis: StyleSheet.create({
+        container: {
+            flexDirection: 'column-reverse',
+        },
         innerContainer: {
             height: '100%',
             flexDirection: 'column',
+            alignSelf: 'flex-end',
         },
         tickContainer: {
-            right: 0,
+            alignSelf: 'flex-end',
+            justifyContent: 'center',
         },
         tickInnerContainer: {
             flexDirection: 'row-reverse',
         },
     }),
     rightAxis: StyleSheet.create({
+        container: {
+            flexDirection: 'column',
+        },
         innerContainer: {
             height: '100%',
             flexDirection: 'column',
+            alignSelf: 'flex-start',
         },
         tickContainer: {
-            left: 0,
+            alignSelf: 'flex-start',
+            justifyContent: 'center',
         },
         tickInnerContainer: {
             flexDirection: 'row',

@@ -112,12 +112,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         let chartStyle = this.getChartStyle();
         let direction = kAxisDirection[axisType];
         let range = this.layout.getGridContainerRangeAtIndex(index, direction);
-        let tickLocations = this.layout.getTickLocations(range[0], range[1], direction, this);
+        let tickLocations = this.layout.getTickLocations(range[0], range[1], direction);
+        let isInverted = this.layout.isAxisInverted(direction, this);
         return (
             <ChartAxis
                 {...chartStyle}
                 type={axisType}
                 tickLocations={tickLocations}
+                isInverted={isInverted}
                 thickness$={this.layout.axisInfo[axisType].thickness$}
                 resizeAnimationDuration={chartStyle.axisResizeAnimationDuration}
             />
