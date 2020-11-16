@@ -14,6 +14,7 @@ import Evergrid, {
     isPointRangeEmpty,
     LayoutSource,
     zeroPoint,
+    isRangeEmpty,
 } from "evergrid";
 import DataSource from "./DataSource";
 import {
@@ -27,6 +28,11 @@ import Decimal from "decimal.js";
 import { IDecimalPoint } from "../types";
 import { isMatch } from "./comp";
 
+const kGridUpdateDebounceInterval = 100;
+const kAxisUpdateDebounceInterval = 100;
+const kAxisResizeDuration = 200;
+const kDefaultAxisThicknessStep = 10;
+
 const k0 = new Decimal(0);
 
 export interface LayoutEngineProps {
@@ -39,13 +45,16 @@ export interface LayoutEngineProps {
     } & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>>>;
 }
 
-interface IGridLayoutInfo {
+interface IGridLayoutBaseInfo {
     /** Number of major grid intervals per grid container. */
     majorCount: IPoint;
     /** Major grid interval distance in content coordinates. */
     majorInterval: IDecimalPoint;
     /** Grid container size in content coordinates. */
     containerSize: IPoint;
+}
+
+interface IGridLayoutInfo extends IGridLayoutBaseInfo {
     /** Animated grid container size in content coordinates. */
     readonly containerSize$: Animated.ValueXY;
     /**
@@ -58,10 +67,29 @@ interface IGridLayoutInfo {
 }
 
 interface IAxisLayoutInfo {
+    /** The axis thickness. */
+    thickness: number;
+    /**
+     * To reduce the number of layout updates,
+     * snap thickness to this step size.
+     **/
+    thicknessStep: number;
+    /** The animated axis thickness. */
     readonly thickness$: Animated.Value;
+    /**
+     * Each axis container works out what thickness
+     * is optimal. Based on these values, the final
+     * thickness is calculated.
+     */
+    optimalThicknesses: { [index: number]: number };
+    /**
+     * Called by the axis container view, after a
+     * view layout, with the new optimal thickness.
+     */
+    onOptimalThicknessChange: (thickness: number, index: number, chart: Chart) => void;
 }
 
-export default class LayoutEngine {
+export default class LayoutEngine { 
     dataSources: DataSource[] = [];
     gridLayout: GridLayoutSource;
     axisLayouts: Partial<AxisTypeMapping<FlatLayoutSource>> = {};
@@ -70,7 +98,7 @@ export default class LayoutEngine {
     readonly gridInfo = LayoutEngine._createGridInfo();
 
     /** Axis layout info. */
-    readonly axisInfo = LayoutEngine._createAxisInfos();
+    readonly axisInfo: AxisTypeMapping<IAxisLayoutInfo>;
 
     /** Animated grid container size in view coordinates. */
     private _containerViewSize$?: IAnimatedPoint;
@@ -79,6 +107,7 @@ export default class LayoutEngine {
         this.dataSources = props.dataSources || [];
         this.gridLayout = this._createGridLayoutSource(props);
         this.axisLayouts = this._createAxisLayoutSources(props);
+        this.axisInfo = this._createAxisInfos();
     }
     
     configure(chart: Chart) {
@@ -96,7 +125,7 @@ export default class LayoutEngine {
     
     private _debouncedUpdate = debounce(
         (chart: Chart) => this.update(chart),
-        100,
+        kGridUpdateDebounceInterval,
     );
 
     update(chart: Chart) {
@@ -104,10 +133,118 @@ export default class LayoutEngine {
         if (!view) {
             return;
         }
+
         this.updateGrid(view);
     }
 
     updateGrid(view: Evergrid) {
+        let gridInfo = this._getGridInfo(view);
+        if (!gridInfo || isMatch(this.gridInfo, gridInfo)) {
+            // No changes
+            return;
+        }
+
+        Object.assign(this.gridInfo, gridInfo);
+        this.gridInfo.containerSize$.setValue(gridInfo.containerSize);
+        this.gridInfo.negHalfMajorInterval$.setValue({
+            x: gridInfo.majorInterval.x.div(2).neg().toNumber(),
+            y: gridInfo.majorInterval.y.div(2).neg().toNumber(),
+        });
+
+        let updateOptions: IItemUpdateManyOptions = {
+            visible: true,
+            queued: true,
+            forceRender: true,
+            // animated: true,
+            // timing: {
+            //     duration: 200,
+            // }
+        };
+        this.gridLayout.updateItems(view, updateOptions);
+        for (let axisLayout of Object.values(this.axisLayouts)) {
+            axisLayout?.updateItems(view, updateOptions);
+        }
+    }
+
+    onOptimalAxisThicknessChange(
+        thickness: number,
+        index: number,
+        axisType: AxisType,
+        chart: Chart,
+    ) {
+        // Save optimal thicknesses until an
+        // update is triggered.
+        const axis = this.axisInfo[axisType];
+        axis.optimalThicknesses[index] = thickness;
+        this.scheduleAxisUpdate(axisType, chart);
+    }
+
+    scheduleAxisUpdate(axisType: AxisType, chart: Chart) {
+        this._debouncedAxisUpdate[axisType](chart);
+    }
+    
+    private _debouncedAxisUpdate = axisTypeMap(axisType => debounce(
+        (chart: Chart) => this.updateAxisThickness(axisType, chart),
+        kAxisUpdateDebounceInterval,
+    ));
+
+    updateAxisThickness(axisType: AxisType, chart: Chart) {
+        let view = chart.innerView;
+        if (!view) {
+            return;
+        }
+
+        // Get optimal axis thickness
+        const axis = this.axisInfo[axisType];
+
+        let axisThickness = 0;
+        for (let thickness of Object.values(axis.optimalThicknesses)) {
+            if (thickness > axisThickness) {
+                axisThickness = thickness;
+            }
+        }
+
+        axisThickness = Math.ceil(axisThickness / axis.thicknessStep) * axis.thicknessStep;
+
+        if (axisThickness !== axis.thickness) {
+            // Thickness changed
+            axis.thickness = axisThickness;
+
+            let duration = kAxisResizeDuration;
+            if (duration > 0) {
+                Animated.timing(axis.thickness$, {
+                    toValue: axisThickness,
+                    duration,
+                    useNativeDriver: false,
+                }).start();
+            } else {
+                axis.thickness$.setValue(axisThickness);
+            }
+        }
+    }
+
+    private _cleanAxisThicknessInfo(axisType: AxisType, visibleRange: [number, number]) {
+        if (!this.axisLayouts[axisType]) {
+            return;
+        }
+
+        // Remove hidden axis container indexes
+        const axis = this.axisInfo[axisType];
+
+        if (isRangeEmpty(visibleRange)) {
+            axis.optimalThicknesses = {};
+            return;
+        }
+
+        for (let key of Object.keys(axis.optimalThicknesses)) {
+            let index = parseInt(key);
+            if (index < visibleRange[0] || index >= visibleRange[1]) {
+                delete axis.optimalThicknesses[index];
+            }
+        }
+    }
+
+    private _getGridInfo(view: Evergrid): IGridLayoutBaseInfo | undefined {
         let { scale } = view;
         let visibleRange = view.getVisibleLocationRange();
 
@@ -134,7 +271,7 @@ export default class LayoutEngine {
             }
         );
 
-        let gridInfo = {
+        return {
             majorInterval: {
                 x: xTicks[Math.min(1, xTicks.length - 1)]
                     .sub(xTicks[0]),
@@ -156,31 +293,6 @@ export default class LayoutEngine {
                     .toNumber(),
             },
         };
-        if (isMatch(this.gridInfo, gridInfo)) {
-            // No changes
-            return;
-        }
-        
-        Object.assign(this.gridInfo, gridInfo);
-        this.gridInfo.containerSize$.setValue(gridInfo.containerSize);
-        this.gridInfo.negHalfMajorInterval$.setValue({
-            x: gridInfo.majorInterval.x.div(2).neg().toNumber(),
-            y: gridInfo.majorInterval.y.div(2).neg().toNumber(),
-        });
-
-        let updateOptions: IItemUpdateManyOptions = {
-            visible: true,
-            queued: true,
-            forceRender: true,
-            // animated: true,
-            // timing: {
-            //     duration: 200,
-            // }
-        };
-        this.gridLayout.updateItems(view, updateOptions);
-        for (let axisLayout of Object.values(this.axisLayouts)) {
-            axisLayout?.updateItems(view, updateOptions);
-        }
     }
 
     private static _createGridInfo(): IGridLayoutInfo {
@@ -200,13 +312,19 @@ export default class LayoutEngine {
         this.gridInfo.containerSize$.setValue(zeroPoint());
     }
 
-    private static _createAxisInfos(): AxisTypeMapping<IAxisLayoutInfo> {
+    private _createAxisInfos(): AxisTypeMapping<IAxisLayoutInfo> {
         return axisTypeMap(a => this._createAxisInfo(a));
     }
 
-    private static _createAxisInfo(type: AxisType): IAxisLayoutInfo {
+    private _createAxisInfo(type: AxisType): IAxisLayoutInfo {
         return {
-            thickness$: new Animated.Value(50),
+            thickness: 0,
+            thicknessStep: kDefaultAxisThicknessStep,
+            thickness$: new Animated.Value(0),
+            optimalThicknesses: {},
+            onOptimalThicknessChange: (thickness, index, chart) => (
+                this.onOptimalAxisThicknessChange(thickness, index, type, chart)
+            ),
         };
     }
 
@@ -292,12 +410,22 @@ export default class LayoutEngine {
         return (chart.innerView?.scale[direction] || 0) < 0;
     }
 
+    onVisibleGridContainerRangeChange(visibleRange: [IPoint, IPoint]) {
+        let xRange: [number, number] = [visibleRange[0].x, visibleRange[1].x];
+        let yRange: [number, number] = [visibleRange[0].y, visibleRange[1].y];
+        this._cleanAxisThicknessInfo('topAxis', xRange);
+        this._cleanAxisThicknessInfo('bottomAxis', xRange);
+        this._cleanAxisThicknessInfo('leftAxis', yRange);
+        this._cleanAxisThicknessInfo('rightAxis', yRange);
+    }
+
     private _createGridLayoutSource(props: LayoutEngineProps) {
         return new GridLayoutSource({
             itemSize: this.gridInfo.containerSize$,
             ...props.grid,
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
+            onVisibleRangeChange: r => this.onVisibleGridContainerRangeChange(r),
         });
     }
 

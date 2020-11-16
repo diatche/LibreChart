@@ -5,7 +5,6 @@ import {
 } from 'evergrid';
 import React from 'react';
 import {
-    Animated,
     LayoutChangeEvent,
     StyleSheet,
     Text,
@@ -16,14 +15,21 @@ import {
 } from 'react-native';
 import { IAxisStyle } from '../types';
 
+const kMinThicknessChange = 1;
+
 export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
     tickLocations: Decimal[];
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
-    thickness$: Animated.Value;
-    resizeAnimationDuration: number;
+    /**
+     * To reduce the number of layout updates,
+     * snap thickness to this step size.
+     **/
+    thicknessStep: number;
+    /** Called on thickness layout change. */
+    onOptimalThicknessChange: (thickness: number) => void;
 }
 
 interface ChartAxisState {}
@@ -227,22 +233,12 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                 thickness = event.nativeEvent.layout.width;
                 break;
         }
-        if (Math.abs(thickness - this._layoutThickness) < 2) {
+        thickness = Math.ceil(thickness / this.props.thicknessStep) * this.props.thicknessStep;
+        if (Math.abs(thickness - this._layoutThickness) < kMinThicknessChange) {
             return;
         }
         this._layoutThickness = thickness;
-        console.debug('thickness: ' + thickness);
-        // return;
-        let duration = this.props.resizeAnimationDuration;
-        if (duration > 0) {
-            Animated.timing(this.props.thickness$, {
-                toValue: thickness,
-                duration,
-                useNativeDriver: false,
-            }).start();
-        } else {
-            this.props.thickness$.setValue(thickness);
-        }
+        this.props.onOptimalThicknessChange(thickness);
     }
 
     render() {
