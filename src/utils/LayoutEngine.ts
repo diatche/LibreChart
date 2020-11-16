@@ -2,6 +2,7 @@ import { Animated } from "react-native";
 import Evergrid, {
     AxisType,
     AxisTypeMapping,
+    axisTypeMap,
     FlatLayoutSource,
     FlatLayoutSourceProps,
     GridLayoutSource,
@@ -15,7 +16,10 @@ import Evergrid, {
     zeroPoint,
 } from "evergrid";
 import DataSource from "./DataSource";
-import { kAxisReuseIDs, kGridReuseID } from '../const';
+import {
+    kAxisReuseIDs,
+    kGridReuseID,
+} from '../const';
 import { Chart } from "../internal";
 import { ticks, zeroDecimalPoint } from "./scale";
 import debounce from 'lodash.debounce';
@@ -46,6 +50,10 @@ interface IGridLayoutInfo {
     readonly containerSize$: Animated.ValueXY;
 }
 
+interface IAxisLayoutInfo {
+    readonly thickness$: Animated.Value;
+}
+
 export default class LayoutEngine {
     dataSources: DataSource[] = [];
     gridLayout: GridLayoutSource;
@@ -53,7 +61,9 @@ export default class LayoutEngine {
 
     /** Grid layout info. */
     readonly gridInfo = LayoutEngine._createGridInfo();
-    readonly axes = LayoutEngine._createGridInfo();
+
+    /** Axis layout info. */
+    readonly axisInfo = LayoutEngine._createAxisInfos();
 
     /** Animated grid container size in view coordinates. */
     private _containerViewSize$?: IAnimatedPoint;
@@ -176,6 +186,16 @@ export default class LayoutEngine {
         this.gridInfo.majorCount = zeroPoint();
         this.gridInfo.containerSize = zeroPoint();
         this.gridInfo.containerSize$.setValue(zeroPoint());
+    }
+
+    private static _createAxisInfos(): AxisTypeMapping<IAxisLayoutInfo> {
+        return axisTypeMap(a => this._createAxisInfo(a));
+    }
+
+    private static _createAxisInfo(type: AxisType): IAxisLayoutInfo {
+        return {
+            thickness$: new Animated.Value(0),
+        };
     }
 
     getLayoutSources(): LayoutSource[] {
@@ -305,10 +325,12 @@ export default class LayoutEngine {
                     getItemViewLayout: () => ({
                         size: {
                             x: this._containerViewSize$?.x || 0,
-                            y: 60,
+                            y: this.axisInfo.bottomAxis.thickness$,
                         }
                     }),
-                    insets: { bottom: 60 },
+                    insets: {
+                        bottom: this.axisInfo.bottomAxis.thickness$
+                    },
                     horizontal: true,
                     stickyEdge: 'bottom',
                     shouldRenderItem: () => true,

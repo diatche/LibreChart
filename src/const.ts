@@ -26,6 +26,13 @@ export const kAxisDirection: AxisTypeMapping<'x' | 'y'> = {
     leftAxis: 'y',
 };
 
+export const kAxisCrossDirection: AxisTypeMapping<'x' | 'y'> = {
+    topAxis: 'y',
+    rightAxis: 'x',
+    bottomAxis: 'y',
+    leftAxis: 'x',
+};
+
 export const kAxisStyleBaseDefaults: IAxisStyle = {
     axisThickness: 1,
 

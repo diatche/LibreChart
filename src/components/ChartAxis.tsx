@@ -5,6 +5,8 @@ import {
 } from 'evergrid';
 import React from 'react';
 import {
+    Animated,
+    LayoutChangeEvent,
     StyleSheet,
     Text,
     TextStyle,
@@ -12,11 +14,13 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
+import { kAxisCrossDirection } from '../const';
 import { IAxisStyle } from '../types';
 
 export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     tickLocations: Decimal[];
+    thickness$: Animated.Value;
 }
 
 interface ChartAxisState {}
@@ -174,6 +178,22 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
         };
     }
 
+    onInnerContainerLayout(event: LayoutChangeEvent) {
+        // This is the optimal axis size, ask to adjust layout
+        let thickness = 0;
+        switch (this.props.type) {
+            case 'topAxis':
+            case 'bottomAxis':
+                thickness = event.nativeEvent.layout.height;
+                break;
+            case 'leftAxis':
+            case 'rightAxis':
+                thickness = event.nativeEvent.layout.width;
+                break;
+        }
+        this.props.thickness$.setValue(thickness);
+    }
+
     render() {
         let tickContainerStyle = this.getTickContainerStyle();
         let tickInnerContainerStyle = this.getTickInnerContainerStyle();
@@ -200,7 +220,10 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
     
         return (
             <View style={this.getContainerStyle()}>
-                <View style={this.getInnerContainerStyle()}>
+                <View
+                    style={this.getInnerContainerStyle()}
+                    onLayout={event => this.onInnerContainerLayout(event)}
+                >
                     {tickInnerContainers}
                 </View>
             </View>
