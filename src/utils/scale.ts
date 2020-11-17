@@ -18,7 +18,7 @@ const kMantissas5 = [k1, k5, k10];
  * Must specify either a `minDistance`, or 
  * `maxCount`, or both.
  */
-export interface TickOptions {
+export interface TickConstraints {
     /**
      * The smallest tick interval.
      */
@@ -43,17 +43,32 @@ export interface TickOptions {
 
 /**
  * Calculates optimal tick locations given an
- * interval and constraints (see {@link TickOptions}).
+ * interval and constraints (see {@link TickConstraints}).
  *  
  * @param start The inclusive start of the interval. 
  * @param end The inclusive end of the interval.
- * @param options See {@link TickOptions}
+ * @param options See {@link TickConstraints}
  * @returns An array of tick locations.
  */
-export const ticks = (
+export type TickGenerator = (
     start: Decimal.Value,
     end: Decimal.Value,
-    options: TickOptions,
+    constraints: TickConstraints,
+) => Decimal[];
+
+/**
+ * Calculates optimal tick locations in linear space given an
+ * interval and constraints (see {@link TickConstraints}).
+ *  
+ * @param start The inclusive start of the interval. 
+ * @param end The inclusive end of the interval.
+ * @param constraints See {@link TickConstraints}
+ * @returns An array of tick locations.
+ */
+export const linearTicks: TickGenerator = (
+    start: Decimal.Value,
+    end: Decimal.Value,
+    constraints: TickConstraints,
 ): Decimal[] => {
     let a = new Decimal(start);
     let b = new Decimal(end);
@@ -62,13 +77,13 @@ export const ticks = (
     }
     let len = b.sub(a);
 
-    let minDistance = new Decimal(options.minDistance || 0);
+    let minDistance = new Decimal(constraints.minDistance || 0);
     if (minDistance.lt(0) || minDistance.isNaN() || !minDistance.isFinite()) {
         throw new Error('Minimum tick distance must be finite and with a positive length');
     }
 
-    if (options.maxCount) {
-        let maxCount = new Decimal(options.maxCount);
+    if (constraints.maxCount) {
+        let maxCount = new Decimal(constraints.maxCount);
         if (maxCount.eq(0)) {
             return [];
         }
@@ -90,7 +105,7 @@ export const ticks = (
     let bScaled = b.div(exponent).ceil();
 
     let mantissas = kMantissas;
-    if (!options.expand) {
+    if (!constraints.expand) {
         // Restrict mantissas
         let scaledLen = bScaled.sub(aScaled);
         if (scaledLen.mod(k5).eq(k0)) {
@@ -142,7 +157,7 @@ export const ticks = (
         return [];
     }
 
-    let { expand = false } = options || {};
+    let { expand = false } = constraints || {};
     if (expand) {
         a = bestBase.start;
         b = bestBase.end;

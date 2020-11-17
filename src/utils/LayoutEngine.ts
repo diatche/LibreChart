@@ -23,7 +23,7 @@ import {
     kGridReuseID,
 } from '../const';
 import { Chart } from "../internal";
-import { ticks, zeroDecimalPoint } from "./scale";
+import { linearTicks, zeroDecimalPoint } from "./scale";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import { IChartStyle, IDecimalPoint } from "../types";
@@ -285,7 +285,7 @@ export default class LayoutEngine {
         let minorDist = new Decimal(minorGridLineDistanceMin);
 
         // Work out tick mark distance
-        let xMajorTicks = ticks(
+        let xMajorTicks = linearTicks(
             visibleRange[0].x,
             visibleRange[1].x,
             {
@@ -293,7 +293,7 @@ export default class LayoutEngine {
                 expand: true,
             }
         );
-        let yMajorTicks = ticks(
+        let yMajorTicks = linearTicks(
             visibleRange[0].y,
             visibleRange[1].y,
             {
@@ -309,7 +309,7 @@ export default class LayoutEngine {
                 .sub(yMajorTicks[0]),
         };
 
-        let xMinorTicks = ticks(
+        let xMinorTicks = linearTicks(
             k0,
             majorInterval.x,
             {
@@ -317,7 +317,7 @@ export default class LayoutEngine {
                 maxCount: 5,
             }
         );
-        let yMinorTicks = ticks(
+        let yMinorTicks = linearTicks(
             k0,
             majorInterval.y,
             {
