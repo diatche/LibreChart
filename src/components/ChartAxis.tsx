@@ -255,7 +255,7 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
 
             labelInnerContainers.push((
                 <View
-                    key={labels[i]}
+                    key={i}
                     style={labelInnerContainerStyle}
                 >
                     <Text style={labelStyle}>
