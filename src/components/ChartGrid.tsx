@@ -2,29 +2,70 @@ import React from 'react';
 import {
     View,
     StyleSheet,
+    ViewStyle,
 } from 'react-native';
+import { IAxisStyle } from '../types';
 
-export interface ChartGridProps {
+export interface ChartGridProps extends Required<IAxisStyle> {
     majorCountX: number;
     majorCountY: number;
+    minorCountX: number;
+    minorCountY: number;
 }
 
-const ChartGrid = React.memo(({
-    majorCountX,
-    majorCountY,
-}: ChartGridProps) => {
+const ChartGrid = React.memo((props: ChartGridProps) => {
+    // TODO: skip grid when color or thickness is falsy
+    const xMajorGridStyle = [
+        styles.xGrid,
+        {
+            borderLeftWidth: props.majorGridLineThickness,
+            borderColor: props.majorGridLineColor,
+        } as ViewStyle,
+    ];
+    const yMajorGridStyle = [
+        styles.yGrid,
+        {
+            borderTopWidth: props.majorGridLineThickness,
+            borderColor: props.majorGridLineColor,
+        } as ViewStyle,
+    ];
+    const xMinorGridStyle = [
+        styles.xGrid,
+        {
+            borderLeftWidth: props.minorGridLineThickness,
+            borderColor: props.minorGridLineColor,
+        } as ViewStyle,
+    ];
+    const yMinorGridStyle = [
+        styles.yGrid,
+        {
+            borderTopWidth: props.minorGridLineThickness,
+            borderColor: props.minorGridLineColor,
+        } as ViewStyle,
+    ];
+
     let xGridItems: React.ReactNode[] = [];
-    for (let i = 0; i < majorCountX; i++) {
+    for (let i = 0; i < props.majorCountX; i++) {
         xGridItems.push((
-            <View key={i} style={styles.xGrid} />
+            <View key={`xa${i}`} style={xMajorGridStyle} />
         ));
+        for (let j = 0; j < props.minorCountX; j++) {
+            xGridItems.push((
+                <View key={`xi${i},${j}`} style={xMinorGridStyle} />
+            ));
+        }
     }
 
     let yGridItems: React.ReactNode[] = [];
-    for (let i = 0; i < majorCountY; i++) {
+    for (let i = 0; i < props.majorCountY; i++) {
         yGridItems.push((
-            <View key={i} style={styles.yGrid} />
+            <View key={`ya${i}`} style={yMajorGridStyle} />
         ));
+        for (let j = 0; j < props.minorCountY; j++) {
+            yGridItems.push((
+                <View key={`yi${i},${j}`} style={yMinorGridStyle} />
+            ));
+        }
     }
 
     return (
@@ -42,8 +83,6 @@ const ChartGrid = React.memo(({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        // borderWidth: 2,
-        // borderColor: 'rgba(200, 210, 230, 0.5)',
     },
     innerContainer: {
         position: 'absolute',
@@ -53,13 +92,9 @@ const styles = StyleSheet.create({
     },
     xGrid: {
         flex: 1,
-        borderLeftWidth: 1,
-        borderColor: 'rgba(200, 210, 230, 0.5)',
     },
     yGrid: {
         flex: 1,
-        borderTopWidth: 1,
-        borderColor: 'rgba(200, 210, 230, 0.5)',
     },
 });
 

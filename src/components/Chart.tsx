@@ -93,10 +93,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             case kPointReuseID:
                 return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
             case kGridReuseID:
+                let chartStyle = this.getChartStyle();
                 return (
                     <ChartGrid
+                        {...chartStyle}
                         majorCountX={this.layout.gridInfo.majorCount.x}
                         majorCountY={this.layout.gridInfo.majorCount.y}
+                        minorCountX={this.layout.gridInfo.minorCount.x}
+                        minorCountY={this.layout.gridInfo.minorCount.y}
                     />
                 );
             default: 

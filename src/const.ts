@@ -35,10 +35,15 @@ export const kAxisCrossDirection: AxisTypeMapping<'x' | 'y'> = {
 
 export const kAxisStyleBaseDefaults: IAxisStyle = {
     axisLineThickness: 1,
-    axisResizeAnimationDuration: 200,
 
     majorTickLength: 3,
     majorTickThickness: 1,
+
+    majorGridLineDistanceMin: 50,
+    majorGridLineThickness: 1,
+
+    minorGridLineDistanceMin: 10,
+    minorGridLineThickness: 1,
 
     labelFontSize: 12,
     labelMargin: 3,
@@ -53,6 +58,10 @@ export const kAxisStyleLightDefaults = {
 
     majorTickColor: Colors.grey300,
 
+    majorGridLineColor: Colors.grey300,
+
+    minorGridLineColor: Colors.grey100,
+
     labelColor: Colors.grey500,
 } as Required<IAxisStyle>;
 
@@ -63,6 +72,10 @@ export const kAxisStyleDarkDefaults = {
     axisLineColor: Colors.grey600,
 
     majorTickColor: Colors.grey700,
+
+    majorGridLineColor: Colors.grey700,
+
+    minorGridLineColor: Colors.grey900,
 
     labelColor: Colors.grey500,
 } as Required<IAxisStyle>;

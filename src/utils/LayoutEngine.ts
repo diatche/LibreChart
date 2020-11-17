@@ -26,7 +26,7 @@ import { Chart } from "../internal";
 import { ticks, zeroDecimalPoint } from "./scale";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
-import { IDecimalPoint } from "../types";
+import { IChartStyle, IDecimalPoint } from "../types";
 import { isMatch } from "./comp";
 
 const kGridUpdateDebounceInterval = 100;
@@ -51,6 +51,12 @@ interface IGridLayoutBaseInfo {
     majorCount: IPoint;
     /** Major grid interval distance in content coordinates. */
     majorInterval: IDecimalPoint;
+
+    /** Number of minor grid intervals per grid container. */
+    minorCount: IPoint;
+    /** Minor grid interval distance in content coordinates. */
+    minorInterval: IDecimalPoint;
+
     /** Grid container size in content coordinates. */
     containerSize: IPoint;
 }
@@ -138,11 +144,11 @@ export default class LayoutEngine {
             return;
         }
 
-        this.updateGrid(view);
+        this.updateGrid(view, chart.getChartStyle());
     }
 
-    updateGrid(view: Evergrid) {
-        let gridInfo = this._getGridInfo(view);
+    updateGrid(view: Evergrid, chartStyle: Required<IChartStyle>) {
+        let gridInfo = this._getGridInfo(view, chartStyle);
         if (!gridInfo || isMatch(this.gridInfo, gridInfo)) {
             // No changes
             return;
@@ -261,7 +267,7 @@ export default class LayoutEngine {
         }
     }
 
-    private _getGridInfo(view: Evergrid): IGridLayoutBaseInfo | undefined {
+    private _getGridInfo(view: Evergrid, chartStyle: Required<IChartStyle>): IGridLayoutBaseInfo | undefined {
         let { scale } = view;
         let visibleRange = view.getVisibleLocationRange();
 
@@ -270,42 +276,77 @@ export default class LayoutEngine {
             return;
         }
 
+        let {
+            majorGridLineDistanceMin,
+            minorGridLineDistanceMin,
+        } = chartStyle;
+
+        let majorDist = new Decimal(majorGridLineDistanceMin);
+        let minorDist = new Decimal(minorGridLineDistanceMin);
+
         // Work out tick mark distance
-        let xTicks = ticks(
+        let xMajorTicks = ticks(
             visibleRange[0].x,
             visibleRange[1].x,
             {
-                minDistance: Math.abs(50 / scale.x),
+                minDistance: majorDist.div(scale.x).abs(),
                 expand: true,
             }
         );
-        let yTicks = ticks(
+        let yMajorTicks = ticks(
             visibleRange[0].y,
             visibleRange[1].y,
             {
-                minDistance: Math.abs(50 / scale.y),
+                minDistance: majorDist.div(scale.y).abs(),
                 expand: true,
             }
         );
 
+        let majorInterval = {
+            x: xMajorTicks[Math.min(1, xMajorTicks.length - 1)]
+                .sub(xMajorTicks[0]),
+            y: yMajorTicks[Math.min(1, yMajorTicks.length - 1)]
+                .sub(yMajorTicks[0]),
+        };
+
+        let xMinorTicks = ticks(
+            k0,
+            majorInterval.x,
+            {
+                minDistance: minorDist.div(scale.x).abs(),
+            }
+        );
+        let yMinorTicks = ticks(
+            k0,
+            majorInterval.y,
+            {
+                minDistance: minorDist.div(scale.y).abs(),
+            }
+        );
+
         return {
-            majorInterval: {
-                x: xTicks[Math.min(1, xTicks.length - 1)]
-                    .sub(xTicks[0]),
-                y: yTicks[Math.min(1, yTicks.length - 1)]
-                    .sub(yTicks[0]),
-            },
+            majorInterval,
             majorCount: {
-                x: xTicks.length - 1,
-                y: yTicks.length - 1,
+                x: xMajorTicks.length - 1,
+                y: yMajorTicks.length - 1,
+            },
+            minorInterval: {
+                x: xMinorTicks[Math.min(1, xMinorTicks.length - 1)]
+                    .sub(xMinorTicks[0]),
+                y: xMinorTicks[Math.min(1, xMinorTicks.length - 1)]
+                    .sub(xMinorTicks[0]),
+            },
+            minorCount: {
+                x: xMinorTicks.length - 1,
+                y: yMinorTicks.length - 1,
             },
             containerSize: {
-                x: xTicks[xTicks.length - 1]
-                    .sub(xTicks[0])
+                x: xMajorTicks[xMajorTicks.length - 1]
+                    .sub(xMajorTicks[0])
                     // .div(scale.x)
                     .toNumber(),
-                y: yTicks[yTicks.length - 1]
-                    .sub(yTicks[0])
+                y: yMajorTicks[yMajorTicks.length - 1]
+                    .sub(yMajorTicks[0])
                     // .div(scale.y)
                     .toNumber(),
             },
@@ -316,6 +357,8 @@ export default class LayoutEngine {
         return {
             majorInterval: zeroDecimalPoint(),
             majorCount: zeroPoint(),
+            minorInterval: zeroDecimalPoint(),
+            minorCount: zeroPoint(),
             containerSize: zeroPoint(),
             containerSize$: new Animated.ValueXY(),
             negHalfMajorInterval$: new Animated.ValueXY(),
