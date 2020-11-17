@@ -290,7 +290,7 @@ export default class LayoutEngine {
             visibleRange[0].x,
             visibleRange[1].x,
             {
-                minDistance: majorDist.div(scale.x).abs(),
+                minInterval: majorDist.div(scale.x).abs(),
                 expand: true,
             }
         );
@@ -298,7 +298,7 @@ export default class LayoutEngine {
             visibleRange[0].y,
             visibleRange[1].y,
             {
-                minDistance: majorDist.div(scale.y).abs(),
+                minInterval: majorDist.div(scale.y).abs(),
                 expand: true,
             }
         );
@@ -314,7 +314,7 @@ export default class LayoutEngine {
             k0,
             majorInterval.x,
             {
-                minDistance: minorDist.div(scale.x).abs(),
+                minInterval: minorDist.div(scale.x).abs(),
                 maxCount: 5,
             }
         );
@@ -322,7 +322,7 @@ export default class LayoutEngine {
             k0,
             majorInterval.y,
             {
-                minDistance: minorDist.div(scale.y).abs(),
+                minInterval: minorDist.div(scale.y).abs(),
                 maxCount: 5,
             }
         );

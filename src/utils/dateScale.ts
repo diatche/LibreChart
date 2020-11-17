@@ -1,30 +1,38 @@
 import Decimal from "decimal.js";
+import moment from 'moment';
+import 'moment-round';
 import {
     TickConstraints,
     TickGenerator,
 } from "./baseScale";
 
 const k0 = new Decimal(0);
-const k1 = new Decimal(1);
-const k2 = new Decimal(2);
-const k5 = new Decimal(5);
-const k10 = new Decimal(10);
 
-const kMantissas = [k1, k2, k5, k10];
-const kMantissas1 = [k1, k10];
-const kMantissas2 = [k1, k2, k10];
-const kMantissas5 = [k1, k5, k10];
+type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
+type DateUnitMapping<T> = { [unit in DateUnit]: T };
+
+const kDateUnitsDesc: DateUnit[] = [
+    'years',
+    'months',
+    'days',
+    'hours',
+    'minutes',
+    'seconds',
+    'milliseconds',
+];
+const kDateUnitsAsc = kDateUnitsDesc.reverse();
+const kUnitsLength = kDateUnitsDesc.length;
 
 /**
- * Calculates optimal tick locations in linear space given an
+ * Calculates optimal tick locations for dates given an
  * interval and constraints (see {@link TickConstraints}).
  *  
- * @param start The inclusive start of the interval. 
- * @param end The inclusive end of the interval.
+ * @param start The inclusive start of the date interval in milliseconds. 
+ * @param end The inclusive end of the date interval in milliseconds.
  * @param constraints See {@link TickConstraints}
- * @returns An array of tick locations.
+ * @returns An array of tick locations in milliseconds.
  */
-export const linearTicks: TickGenerator = (
+export const dateTicks: TickGenerator = (
     start: Decimal.Value,
     end: Decimal.Value,
     constraints: TickConstraints,
@@ -59,27 +67,71 @@ export const linearTicks: TickGenerator = (
         throw new Error('Must specify either a minimum tick interval interval or a maximum interval count');
     }
 
-    let exponent = k10.pow(Decimal.log10(minInterval).floor());
-    let aScaled = a.div(exponent).floor();
-    let bScaled = b.div(exponent).ceil();
+    let startDate = moment(a.toNumber());
+    let endDate = moment(b.toNumber());
 
-    let mantissas = kMantissas;
-    if (!constraints.expand) {
-        // Restrict mantissas
-        let scaledLen = bScaled.sub(aScaled);
-        if (scaledLen.mod(k5).eq(k0)) {
-            // This is a 5 interval, which
-            // should only divide by 5.
-            mantissas = kMantissas5;
-        } else if (scaledLen.mod(k2).eq(k0)) {
-            // This is an even interval, which
-            // should only divide by 2.
-            mantissas = kMantissas2;
-        } else {
-            // This is an odd interval, which
-            // should not divide.
-            mantissas = kMantissas1;
+    // Get duration
+    let minDuration = moment.duration(minInterval.toNumber());
+
+    // Get durations in units
+    let unitDurationsPartial: Partial<DateUnitMapping<number>> = {};
+    let minUnitDurationsPartial: Partial<DateUnitMapping<number>> = {};
+    for (let unit of kDateUnitsDesc) {
+        unitDurationsPartial[unit] = endDate.diff(startDate, unit);
+        minUnitDurationsPartial[unit] = minDuration.as(unit);
+    }
+    let unitDurations = unitDurationsPartial as DateUnitMapping<number>;
+    let minUnitDurations = minUnitDurationsPartial as DateUnitMapping<number>;
+
+    /**
+     * The largest non-zero unit of minInterval,
+     * specified as an index of `kDateUnitsAsc`.
+     **/
+    let minUnitAscIndex = -1;
+    let minUnit: DateUnit | undefined;
+    let minUnitDuration = k0;
+    for (let i = kUnitsLength - 1; i >= 0; i--) {
+        let unit = kDateUnitsAsc[i];
+        let unitDuration = minUnitDurations[unit];
+        if (Math.floor(unitDuration) > 0) {
+            minUnitAscIndex = i;
+            minUnit = unit;
+            minUnitDuration = new Decimal(unitDuration).ceil();
+            break;
         }
+    }
+    if (typeof minUnit === 'undefined') {
+        minUnit = 'milliseconds';
+        minUnitAscIndex = 0;
+        minUnitDuration = minInterval.ceil();
+    }
+
+    if (constraints.expand) {
+        startDate = startDate.floor(minUnitDuration.toNumber(), minUnit);
+        endDate = endDate.ceil(minUnitDuration.toNumber(), minUnit);
+    }
+
+    /**
+     * The range of units which are non-zero,
+     * specified as an index range of `kDateUnitsAsc`.
+     **/
+    let ascUnitRange: [number, number] = [0, 0];
+    for (let i = minUnitAscIndex; i < kUnitsLength; i++) {
+        let unitDuration = unitDurations[kDateUnitsAsc[i]];
+        if (unitDuration > 0) {
+            ascUnitRange[0] = i;
+            break;
+        }
+    }
+    for (let i = kUnitsLength - 1; i >= 0; i--) {
+        let unitDuration = unitDurations[kDateUnitsAsc[i]];
+        if (unitDuration > 0) {
+            ascUnitRange[1] = i + 1;
+            break;
+        }
+    }
+    if (ascUnitRange[0] >= ascUnitRange[1]) {
+        return [];
     }
 
     type Base = {

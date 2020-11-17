@@ -10,7 +10,7 @@ export interface TickConstraints {
     /**
      * The smallest tick interval.
      */
-    minDistance?: Decimal.Value;
+    minInterval?: Decimal.Value;
     /**
      * Maximum number of intervals to divide
      * the interval into.
