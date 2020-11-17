@@ -16,62 +16,83 @@ export interface ChartGridProps extends Required<IAxisStyle> {
 const ChartGrid = React.memo((props: ChartGridProps) => {
     // TODO: skip grid when color or thickness is falsy
 
-    // Note that we do not use borders as these do not
-    // always line up with the axis ticks.
+    // Note that we do not use borders as these tend to
+    // less often line up with axis ticks.
     const xMajorGridStyle: ViewStyle = {
         width: props.majorGridLineThickness,
         height: '100%',
+        marginLeft: -props.majorGridLineThickness / 2,
         backgroundColor: props.majorGridLineColor,
     };
     const xMinorGridStyle: ViewStyle = {
         width: props.minorGridLineThickness,
         height: '100%',
+        marginLeft: -props.minorGridLineThickness / 2,
         backgroundColor: props.minorGridLineColor,
     };
     const yMajorGridStyle: ViewStyle = {
         width: '100%',
         height: props.majorGridLineThickness,
+        marginTop: -props.majorGridLineThickness / 2,
         backgroundColor: props.majorGridLineColor,
     };
     const yMinorGridStyle: ViewStyle = {
         width: '100%',
         height: props.minorGridLineThickness,
+        marginTop: -props.minorGridLineThickness / 2,
         backgroundColor: props.minorGridLineColor,
     };
 
-    let xGridItems: React.ReactNode[] = [];
+    let xMajorGridItems: React.ReactNode[] = [];
+    let xMinorGridItems: React.ReactNode[] = [];
     for (let i = 0; i < props.majorCountX; i++) {
-        xGridItems.push((
+        xMajorGridItems.push((
             <View key={`xa${i}`} style={xMajorGridStyle} />
         ));
+        xMinorGridItems.push((
+            <View key={`xa${i}`} style={styles.placeholder} />
+        ));
         for (let j = 0; j < props.minorCountX; j++) {
-            xGridItems.push((
+            xMinorGridItems.push((
                 <View key={`xi${i},${j}`} style={xMinorGridStyle} />
             ));
         }
     }
 
-    let yGridItems: React.ReactNode[] = [];
+    let yMajorGridItems: React.ReactNode[] = [];
+    let yMinorGridItems: React.ReactNode[] = [];
     for (let i = 0; i < props.majorCountY; i++) {
-        yGridItems.push((
+        yMajorGridItems.push((
             <View key={`ya${i}`} style={yMajorGridStyle} />
         ));
+        yMinorGridItems.push((
+            <View key={`ya${i}`} style={styles.placeholder} />
+        ));
         for (let j = 0; j < props.minorCountY; j++) {
-            yGridItems.push((
+            yMinorGridItems.push((
                 <View key={`yi${i},${j}`} style={yMinorGridStyle} />
             ));
         }
     }
 
+    // Draw minor grid below major grid
     return (
         <View style={styles.container}>
             <View style={[styles.innerContainer, { flexDirection: 'row' }]}>
-                {xGridItems}
-                <View style={styles.edge} />
+                {xMinorGridItems}
+                <View style={styles.placeholder} />
             </View>
             <View style={[styles.innerContainer, { flexDirection: 'column' }]}>
-                {yGridItems}
-                <View style={styles.edge} />
+                {yMinorGridItems}
+                <View style={styles.placeholder} />
+            </View>
+            <View style={[styles.innerContainer, { flexDirection: 'row' }]}>
+                {xMajorGridItems}
+                <View style={styles.placeholder} />
+            </View>
+            <View style={[styles.innerContainer, { flexDirection: 'column' }]}>
+                {yMajorGridItems}
+                <View style={styles.placeholder} />
             </View>
         </View>
     );
@@ -87,7 +108,7 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'space-between',
     },
-    edge: {
+    placeholder: {
         width: 0,
         height: 0,
     },
