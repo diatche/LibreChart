@@ -314,6 +314,7 @@ export default class LayoutEngine {
             majorInterval.x,
             {
                 minDistance: minorDist.div(scale.x).abs(),
+                maxCount: 5,
             }
         );
         let yMinorTicks = ticks(
@@ -321,6 +322,7 @@ export default class LayoutEngine {
             majorInterval.y,
             {
                 minDistance: minorDist.div(scale.y).abs(),
+                maxCount: 5,
             }
         );
 

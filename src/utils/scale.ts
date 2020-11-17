@@ -12,28 +12,82 @@ const kMantissas1 = [k1, k10];
 const kMantissas2 = [k1, k2, k10];
 const kMantissas5 = [k1, k5, k10];
 
+/**
+ * Tick calculation options.
+ * 
+ * Must specify either a `minDistance`, or 
+ * `maxCount`, or both.
+ */
+export interface TickOptions {
+    /**
+     * The smallest tick interval.
+     */
+    minDistance?: Decimal.Value;
+    /**
+     * Maximum number of intervals to divide
+     * the interval into.
+     **/
+    maxCount?: Decimal.Value;
+    /**
+     * If `true`, expands the interval enough
+     * to satisfy the constraints.
+     * 
+     * If `false` (default), divides the interval into
+     * natural intervals, such that the constrainsts
+     * are satisfied. If the interval is uneven at the
+     * scale of the constraints, it is rounded appropriately,
+     * but in this case, some ticks at the edges may be discarded.
+     */
+    expand?: boolean;
+}
+
+/**
+ * Calculates optimal tick locations given an
+ * interval and constraints (see {@link TickOptions}).
+ *  
+ * @param start The inclusive start of the interval. 
+ * @param end The inclusive end of the interval.
+ * @param options See {@link TickOptions}
+ * @returns An array of tick locations.
+ */
 export const ticks = (
     start: Decimal.Value,
     end: Decimal.Value,
-    options: {
-        minDistance: Decimal.Value;
-        expand?: boolean;
-    }
+    options: TickOptions,
 ): Decimal[] => {
     let a = new Decimal(start);
     let b = new Decimal(end);
     if (b.lte(a) || a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
         throw new Error('Interval must be finite and with a positive length');
     }
+    let len = b.sub(a);
 
-    let minDistance = new Decimal(options?.minDistance || 0);
+    let minDistance = new Decimal(options.minDistance || 0);
     if (minDistance.lt(0) || minDistance.isNaN() || !minDistance.isFinite()) {
         throw new Error('Minimum tick distance must be finite and with a positive length');
     }
 
+    if (options.maxCount) {
+        let maxCount = new Decimal(options.maxCount);
+        if (maxCount.eq(0)) {
+            return [];
+        }
+        if (maxCount.lt(0) || maxCount.isNaN()) {
+            throw new Error('Max count must be greater than or equal to zero');
+        }
+        let maxCountDistance = len.div(maxCount.add(1));
+        if (maxCountDistance.gt(minDistance)) {
+            minDistance = maxCountDistance;
+        }
+    }
+
+    if (minDistance.lte(0)) {
+        throw new Error('Must specify either a minimum tick distance interval or a maximum interval count');
+    }
+
     let exponent = k10.pow(Decimal.log10(minDistance).floor());
-    let aScaled = a.div(exponent);
-    let bScaled = b.div(exponent);
+    let aScaled = a.div(exponent).floor();
+    let bScaled = b.div(exponent).ceil();
 
     let mantissas = kMantissas;
     if (!options.expand) {
@@ -61,7 +115,6 @@ export const ticks = (
         count: number;
     }
 
-    let bestRank = 0;
     let bestBase: Base | undefined;
 
     for (let i = 0; i < mantissas.length; i++) {
@@ -76,20 +129,17 @@ export const ticks = (
         if (interval.lt(minDistance) && !mantissa.eq(k10)) {
             continue;
         }
-        let rank = mInterval.toString().length;
-        if (bestRank === 0 || rank < bestRank) {
-            bestRank = rank;
-            bestBase = {
-                start: mStart.mul(exponent),
-                end: mEnd.mul(exponent),
-                interval,
-                count: tickCount.toNumber(),
-            };
-        }
+        bestBase = {
+            start: mStart.mul(exponent),
+            end: mEnd.mul(exponent),
+            interval,
+            count: tickCount.toNumber(),
+        };
+        break;
     }
 
     if (!bestBase) {
-        throw new Error('Failed to find tick interval');
+        return [];
     }
 
     let { expand = false } = options || {};
@@ -105,7 +155,7 @@ export const ticks = (
             ticks.push(tick);
         }
     }
-    if (!expand && ticks.length === 1 && b.sub(a).gte(minDistance)) {
+    if (!expand && ticks.length === 1 && len.gte(minDistance)) {
         // Fixed interval is greater than the min interval,
         // but is smaller than the optimal interval.
         if (a.eq(bestBase.start)) {
