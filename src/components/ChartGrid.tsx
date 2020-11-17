@@ -15,34 +15,29 @@ export interface ChartGridProps extends Required<IAxisStyle> {
 
 const ChartGrid = React.memo((props: ChartGridProps) => {
     // TODO: skip grid when color or thickness is falsy
-    const xMajorGridStyle = [
-        styles.xGrid,
-        {
-            borderLeftWidth: props.majorGridLineThickness,
-            borderColor: props.majorGridLineColor,
-        } as ViewStyle,
-    ];
-    const yMajorGridStyle = [
-        styles.yGrid,
-        {
-            borderTopWidth: props.majorGridLineThickness,
-            borderColor: props.majorGridLineColor,
-        } as ViewStyle,
-    ];
-    const xMinorGridStyle = [
-        styles.xGrid,
-        {
-            borderLeftWidth: props.minorGridLineThickness,
-            borderColor: props.minorGridLineColor,
-        } as ViewStyle,
-    ];
-    const yMinorGridStyle = [
-        styles.yGrid,
-        {
-            borderTopWidth: props.minorGridLineThickness,
-            borderColor: props.minorGridLineColor,
-        } as ViewStyle,
-    ];
+
+    // Note that we do not use borders as these do not
+    // always line up with the axis ticks.
+    const xMajorGridStyle: ViewStyle = {
+        width: props.majorGridLineThickness,
+        height: '100%',
+        backgroundColor: props.majorGridLineColor,
+    };
+    const xMinorGridStyle: ViewStyle = {
+        width: props.minorGridLineThickness,
+        height: '100%',
+        backgroundColor: props.minorGridLineColor,
+    };
+    const yMajorGridStyle: ViewStyle = {
+        width: '100%',
+        height: props.majorGridLineThickness,
+        backgroundColor: props.majorGridLineColor,
+    };
+    const yMinorGridStyle: ViewStyle = {
+        width: '100%',
+        height: props.minorGridLineThickness,
+        backgroundColor: props.minorGridLineColor,
+    };
 
     let xGridItems: React.ReactNode[] = [];
     for (let i = 0; i < props.majorCountX; i++) {
@@ -72,9 +67,11 @@ const ChartGrid = React.memo((props: ChartGridProps) => {
         <View style={styles.container}>
             <View style={[styles.innerContainer, { flexDirection: 'row' }]}>
                 {xGridItems}
+                <View style={styles.edge} />
             </View>
             <View style={[styles.innerContainer, { flexDirection: 'column' }]}>
                 {yGridItems}
+                <View style={styles.edge} />
             </View>
         </View>
     );
@@ -88,13 +85,11 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: '100%',
         height: '100%',
-        alignItems: 'stretch',
+        justifyContent: 'space-between',
     },
-    xGrid: {
-        flex: 1,
-    },
-    yGrid: {
-        flex: 1,
+    edge: {
+        width: 0,
+        height: 0,
     },
 });
 
