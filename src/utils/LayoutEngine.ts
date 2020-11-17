@@ -18,6 +18,7 @@ import Evergrid, {
 } from "evergrid";
 import DataSource from "./DataSource";
 import {
+    kAxisDirection,
     kAxisReuseIDs,
     kGridReuseID,
 } from '../const';
@@ -103,6 +104,9 @@ export default class LayoutEngine {
     /** Animated grid container size in view coordinates. */
     private _containerViewSize$?: IAnimatedPoint;
 
+    /** Visible grid container index range. */
+    private _visibleGridContainerIndexRange: [IPoint, IPoint] = [zeroPoint(), zeroPoint()];
+
     constructor(props: LayoutEngineProps) {
         this.dataSources = props.dataSources || [];
         this.gridLayout = this._createGridLayoutSource(props);
@@ -174,65 +178,78 @@ export default class LayoutEngine {
     ) {
         // Save optimal thicknesses until an
         // update is triggered.
-        const axis = this.axisInfo[axisType];
-        axis.optimalThicknesses[index] = thickness;
-        this.scheduleAxisUpdate(axisType, chart);
-    }
 
-    scheduleAxisUpdate(axisType: AxisType, chart: Chart) {
-        this._debouncedAxisUpdate[axisType](chart);
-    }
-    
-    private _debouncedAxisUpdate = axisTypeMap(axisType => debounce(
-        (chart: Chart) => this.updateAxisThickness(axisType, chart),
-        kAxisUpdateDebounceInterval,
-    ));
-
-    updateAxisThickness(axisType: AxisType, chart: Chart) {
         let view = chart.innerView;
         if (!view) {
             return;
         }
 
-        // Get optimal axis thickness
         const axis = this.axisInfo[axisType];
 
-        let axisThickness = 0;
-        for (let thickness of Object.values(axis.optimalThicknesses)) {
-            if (thickness > axisThickness) {
-                axisThickness = thickness;
+        // Apply thickness step
+        thickness = Math.ceil(thickness / axis.thicknessStep) * axis.thicknessStep;
+
+        if (thickness !== axis.optimalThicknesses[index]) {
+            axis.optimalThicknesses[index] = thickness;
+            this.scheduleAxisUpdate(axisType, view);
+        }
+    }
+
+    scheduleAxisUpdate(axisType: AxisType, view: Evergrid) {
+        if (!this.axisLayouts[axisType]) {
+            return;
+        }
+        this._debouncedAxisUpdate[axisType]();
+    }
+    
+    private _debouncedAxisUpdate = axisTypeMap(axisType => debounce(
+        () => this.updateAxisThickness(axisType),
+        kAxisUpdateDebounceInterval,
+    ));
+
+    updateAxisThickness(axisType: AxisType) {
+        const axis = this.axisInfo[axisType];
+
+        // Get optimal axis thickness
+        let thickness = 0;
+        for (let optimalThickness of Object.values(axis.optimalThicknesses)) {
+            if (optimalThickness > thickness) {
+                thickness = optimalThickness;
             }
         }
 
-        axisThickness = Math.ceil(axisThickness / axis.thicknessStep) * axis.thicknessStep;
+        thickness = Math.ceil(thickness / axis.thicknessStep) * axis.thicknessStep;
 
-        if (axisThickness !== axis.thickness) {
+        if (thickness !== axis.thickness) {
             // Thickness changed
-            axis.thickness = axisThickness;
+            axis.thickness = thickness;
 
             let duration = kAxisResizeDuration;
             if (duration > 0) {
                 Animated.timing(axis.thickness$, {
-                    toValue: axisThickness,
+                    toValue: thickness,
                     duration,
                     useNativeDriver: false,
                 }).start();
             } else {
-                axis.thickness$.setValue(axisThickness);
+                axis.thickness$.setValue(thickness);
             }
         }
+
+        this._cleanAxisThicknessInfo(axisType);
     }
 
-    private _cleanAxisThicknessInfo(axisType: AxisType, visibleRange: [number, number]) {
-        if (!this.axisLayouts[axisType]) {
-            return;
-        }
+    private _cleanAxisThicknessInfo(axisType: AxisType) {
+        let direction = kAxisDirection[axisType];
+        let visibleRange: [number, number] = [
+            this._visibleGridContainerIndexRange[0][direction],
+            this._visibleGridContainerIndexRange[1][direction],
+        ];
 
         // Remove hidden axis container indexes
         const axis = this.axisInfo[axisType];
-
+        
         if (isRangeEmpty(visibleRange)) {
-            axis.optimalThicknesses = {};
             return;
         }
 
@@ -411,12 +428,16 @@ export default class LayoutEngine {
     }
 
     onVisibleGridContainerRangeChange(visibleRange: [IPoint, IPoint]) {
-        let xRange: [number, number] = [visibleRange[0].x, visibleRange[1].x];
-        let yRange: [number, number] = [visibleRange[0].y, visibleRange[1].y];
-        this._cleanAxisThicknessInfo('topAxis', xRange);
-        this._cleanAxisThicknessInfo('bottomAxis', xRange);
-        this._cleanAxisThicknessInfo('leftAxis', yRange);
-        this._cleanAxisThicknessInfo('rightAxis', yRange);
+        this._visibleGridContainerIndexRange = visibleRange;
+    }
+
+    onAxisContainerDequeue(fromIndex: number, toIndex: number, axisType: AxisType) {
+        // Move optimal axis 
+        const axis = this.axisInfo[axisType];
+        if (axis.optimalThicknesses[fromIndex]) {
+            axis.optimalThicknesses[toIndex] = axis.optimalThicknesses[fromIndex];
+            delete axis.optimalThicknesses[fromIndex];
+        }
     }
 
     private _createGridLayoutSource(props: LayoutEngineProps) {
@@ -448,11 +469,21 @@ export default class LayoutEngine {
         if (!axisProps?.show) {
             return undefined;
         }
+
+        let layoutPropsBase: FlatLayoutSourceProps = {
+            itemSize: this.gridInfo.containerSize$,
+            ...axisProps,
+            shouldRenderItem: (item, previous) => {
+                this.onAxisContainerDequeue(previous.index, item.index, axis);
+                return true;
+            },
+            reuseID: kAxisReuseIDs[axis],
+        };
+
         switch (axis) {
             case 'bottomAxis':
                 return new FlatLayoutSource({
-                    itemSize: this.gridInfo.containerSize$,
-                    ...axisProps,
+                    ...layoutPropsBase,
                     getItemViewLayout: () => ({
                         size: {
                             x: this._containerViewSize$?.x || 0,
@@ -466,13 +497,10 @@ export default class LayoutEngine {
                     },
                     horizontal: true,
                     stickyEdge: 'bottom',
-                    shouldRenderItem: () => true,
-                    reuseID: kAxisReuseIDs[axis],
                 });
             case 'topAxis':
                 return new FlatLayoutSource({
-                    itemSize: this.gridInfo.containerSize$,
-                    ...axisProps,
+                    ...layoutPropsBase,
                     getItemViewLayout: () => ({
                         size: {
                             x: this._containerViewSize$?.x || 0,
@@ -486,13 +514,10 @@ export default class LayoutEngine {
                     },
                     horizontal: true,
                     stickyEdge: 'top',
-                    shouldRenderItem: () => true,
-                    reuseID: kAxisReuseIDs[axis],
                 });
             case 'leftAxis':
                 return new FlatLayoutSource({
-                    itemSize: this.gridInfo.containerSize$,
-                    ...axisProps,
+                    ...layoutPropsBase,
                     getItemViewLayout: () => ({
                         size: {
                             x: this.axisInfo[axis].thickness$,
@@ -506,13 +531,10 @@ export default class LayoutEngine {
                     },
                     horizontal: false,
                     stickyEdge: 'left',
-                    shouldRenderItem: () => true,
-                    reuseID: kAxisReuseIDs[axis],
                 });
             case 'rightAxis':
                 return new FlatLayoutSource({
-                    itemSize: this.gridInfo.containerSize$,
-                    ...axisProps,
+                    ...layoutPropsBase,
                     getItemViewLayout: () => ({
                         size: {
                             x: this.axisInfo[axis].thickness$,
@@ -526,8 +548,6 @@ export default class LayoutEngine {
                     },
                     horizontal: false,
                     stickyEdge: 'right',
-                    shouldRenderItem: () => true,
-                    reuseID: kAxisReuseIDs[axis],
                 });
         }
     }

@@ -15,19 +15,12 @@ import {
 } from 'react-native';
 import { IAxisStyle } from '../types';
 
-const kMinThicknessChange = 1;
-
 export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
     tickLocations: Decimal[];
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
-    /**
-     * To reduce the number of layout updates,
-     * snap thickness to this step size.
-     **/
-    thicknessStep: number;
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
 }
@@ -35,7 +28,6 @@ export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
 interface ChartAxisState {}
 
 export default class ChartAxis extends React.PureComponent<ChartAxisProps, ChartAxisState> {
-    private _layoutThickness = 0;
 
     getLabel(value: Decimal): string {
         // TODO: cache labels until prop change
@@ -233,11 +225,6 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                 thickness = event.nativeEvent.layout.width;
                 break;
         }
-        thickness = Math.ceil(thickness / this.props.thicknessStep) * this.props.thicknessStep;
-        if (Math.abs(thickness - this._layoutThickness) < kMinThicknessChange) {
-            return;
-        }
-        this._layoutThickness = thickness;
         this.props.onOptimalThicknessChange(thickness);
     }
 

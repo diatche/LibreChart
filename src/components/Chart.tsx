@@ -120,7 +120,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 type={axisType}
                 tickLocations={tickLocations}
                 isInverted={isInverted}
-                thicknessStep={this.layout.axisInfo[axisType].thicknessStep}
                 onOptimalThicknessChange={thickness => this.layout.onOptimalAxisThicknessChange(
                     thickness,
                     index,
