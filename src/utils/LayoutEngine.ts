@@ -337,8 +337,8 @@ export default class LayoutEngine {
                     .sub(xMinorTicks[0]),
             },
             minorCount: {
-                x: xMinorTicks.length - 1,
-                y: yMinorTicks.length - 1,
+                x: xMinorTicks.length - 2,
+                y: yMinorTicks.length - 2,
             },
             containerSize: {
                 x: xMajorTicks[xMajorTicks.length - 1]
