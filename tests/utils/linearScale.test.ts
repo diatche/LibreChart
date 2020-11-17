@@ -1,7 +1,7 @@
 import Decimal from 'decimal.js';
 import {
     linearTicks,
-} from '../../src/utils/scale';
+} from '../../src/utils/linearScale';
 
 describe('scale', () => {
 

@@ -1,5 +1,8 @@
-import Decimal from 'decimal.js';
-import { IDecimalPoint } from '../types';
+import Decimal from "decimal.js";
+import {
+    TickConstraints,
+    TickGenerator,
+} from "./baseScale";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);
@@ -11,50 +14,6 @@ const kMantissas = [k1, k2, k5, k10];
 const kMantissas1 = [k1, k10];
 const kMantissas2 = [k1, k2, k10];
 const kMantissas5 = [k1, k5, k10];
-
-/**
- * Tick calculation options.
- * 
- * Must specify either a `minDistance`, or 
- * `maxCount`, or both.
- */
-export interface TickConstraints {
-    /**
-     * The smallest tick interval.
-     */
-    minDistance?: Decimal.Value;
-    /**
-     * Maximum number of intervals to divide
-     * the interval into.
-     **/
-    maxCount?: Decimal.Value;
-    /**
-     * If `true`, expands the interval enough
-     * to satisfy the constraints.
-     * 
-     * If `false` (default), divides the interval into
-     * natural intervals, such that the constrainsts
-     * are satisfied. If the interval is uneven at the
-     * scale of the constraints, it is rounded appropriately,
-     * but in this case, some ticks at the edges may be discarded.
-     */
-    expand?: boolean;
-}
-
-/**
- * Calculates optimal tick locations given an
- * interval and constraints (see {@link TickConstraints}).
- *  
- * @param start The inclusive start of the interval. 
- * @param end The inclusive end of the interval.
- * @param options See {@link TickConstraints}
- * @returns An array of tick locations.
- */
-export type TickGenerator = (
-    start: Decimal.Value,
-    end: Decimal.Value,
-    constraints: TickConstraints,
-) => Decimal[];
 
 /**
  * Calculates optimal tick locations in linear space given an
@@ -183,8 +142,3 @@ export const linearTicks: TickGenerator = (
     }
     return ticks;
 };
-
-export const zeroDecimalPoint = (): IDecimalPoint => ({
-    x: new Decimal(0),
-    y: new Decimal(0),
-});

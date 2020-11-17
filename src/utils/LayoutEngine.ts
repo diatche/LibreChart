@@ -23,7 +23,8 @@ import {
     kGridReuseID,
 } from '../const';
 import { Chart } from "../internal";
-import { linearTicks, zeroDecimalPoint } from "./scale";
+import { linearTicks } from "./linearScale";
+import { zeroDecimalPoint } from "./vectors";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import { IChartStyle, IDecimalPoint } from "../types";
