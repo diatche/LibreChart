@@ -34,7 +34,7 @@ export const kAxisCrossDirection: AxisTypeMapping<'x' | 'y'> = {
 };
 
 export const kAxisStyleBaseDefaults: IAxisStyle = {
-    axisThickness: 1,
+    axisLineThickness: 1,
     axisResizeAnimationDuration: 200,
 
     majorTickLength: 3,
@@ -49,7 +49,7 @@ export const kAxisStyleLightDefaults = {
     ...kAxisStyleBaseDefaults,
 
     axisBackgroundColor: Colors.white,
-    axisColor: Colors.grey300,
+    axisLineColor: Colors.grey400,
 
     majorTickColor: Colors.grey300,
 
@@ -60,7 +60,7 @@ export const kAxisStyleDarkDefaults = {
     ...kAxisStyleBaseDefaults,
 
     axisBackgroundColor: Colors.black,
-    axisColor: Colors.grey700,
+    axisLineColor: Colors.grey600,
 
     majorTickColor: Colors.grey700,
 

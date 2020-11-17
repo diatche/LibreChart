@@ -8,8 +8,8 @@ export interface IDecimalPoint {
 
 export interface IAxisStyle {
     axisBackgroundColor?: ColorValue;
-    axisColor?: ColorValue;
-    axisThickness?: number;
+    axisLineColor?: ColorValue;
+    axisLineThickness?: number;
     axisResizeAnimationDuration?: number;
 
     majorTickLength?: number;

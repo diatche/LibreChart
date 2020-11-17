@@ -60,11 +60,11 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
     getContainerStyle() {
         // TODO: cache style until prop change
         const {
-            axisThickness,
+            axisLineThickness,
         } = this.props;
 
         let style: ViewStyle = {
-            borderColor: this.props.axisColor,
+            borderColor: this.props.axisLineColor,
             backgroundColor: this.props.axisBackgroundColor,
         };
 
@@ -72,28 +72,28 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
             case 'topAxis':
                 style = {
                     ...style,
-                    borderBottomWidth: axisThickness,
-                    marginBottom: -axisThickness,
+                    borderBottomWidth: axisLineThickness,
+                    marginBottom: -axisLineThickness,
                 };
             case 'bottomAxis':
                 style = {
                     ...style,
-                    borderTopWidth: axisThickness,
-                    marginTop: -axisThickness,
+                    borderTopWidth: axisLineThickness,
+                    marginTop: -axisLineThickness,
                 };
                 break;
             case 'leftAxis':
                 style = {
                     ...style,
-                    borderRightWidth: axisThickness,
-                    marginRight: -axisThickness,
+                    borderRightWidth: axisLineThickness,
+                    marginRight: -axisLineThickness,
                 };
                 break;
             case 'rightAxis':
                 style = {
                     ...style,
-                    borderLeftWidth: axisThickness,
-                    marginLeft: -axisThickness,
+                    borderLeftWidth: axisLineThickness,
+                    marginLeft: -axisLineThickness,
                 };
                 break;
         }
