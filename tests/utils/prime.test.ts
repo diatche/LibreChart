@@ -40,5 +40,10 @@ describe('scale', () => {
             let factors = findCommonFactors(8, 12).map(x => x.toNumber());
             expect(factors).toEqual([1, 2, 4]);
         });
+
+        it('should find all factors of -12 and -8', () => {
+            let factors = findCommonFactors(-12, -8).map(x => x.toNumber());
+            expect(factors).toEqual([-4, -2, -1]);
+        });
     });
 });

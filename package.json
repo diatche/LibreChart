@@ -60,11 +60,9 @@
   },
   "dependencies": {
     "@types/lodash.debounce": "^4.0.6",
-    "@types/lodash.intersectionwith": "^4.4.6",
     "@types/lodash.ismatchwith": "^4.4.6",
     "decimal.js": "^10.2.1",
     "lodash.debounce": "^4.0.8",
-    "lodash.intersectionwith": "^4.4.0",
     "lodash.ismatchwith": "^4.4.0",
     "moment": "^2.29.1"
   }

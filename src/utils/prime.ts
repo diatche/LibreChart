@@ -1,15 +1,9 @@
 import Decimal from 'decimal.js';
-import intersectionWith from 'lodash.intersectionwith';
 
 const k1 = new Decimal(1);
 const k2 = new Decimal(1);
 
-export const findFactors = (
-    value: Decimal.Value,
-    options?: {
-        max?: Decimal.Value;
-    }
-): Decimal[] => {
+export const findFactors = (value: Decimal.Value): Decimal[] => {
     let xOrig = new Decimal(value);
     let x = xOrig;
     let isNegative = x.isNegative();
@@ -23,9 +17,6 @@ export const findFactors = (
         return [xOrig];
     }
     let max = x.sqrt();
-    if (typeof options?.max !== 'undefined') {
-        max = Decimal.min(max, new Decimal(options!.max).div(2));
-    }
 
     let head: Decimal[] = [];
     let tail: Decimal[] = [];
@@ -94,11 +85,23 @@ export const findCommonFactors = (v1: Decimal.Value, v2: Decimal.Value): Decimal
 
     let x1 = new Decimal(v1);
     let x2 = new Decimal(v2);
-    let options = {
-        max: Decimal.min(x1, x2)
-    };
+    if (x1.isNegative() !== x2.isNegative()) {
+        return [];
+    }
+    if (x1.eq(x2)) {
+        return findFactors(x1);
+    }
 
-    let fs1 = findFactors(v1, options);
-    let fs2 = findFactors(v2, options);
-    return intersectionWith(fs1, fs2, (f1, f2) => f1.eq(f2));
+    let lower: Decimal;
+    let higher: Decimal;
+    if (x1.abs().lt(x2.abs())) {
+        lower = x1;
+        higher = x2;
+    } else {
+        lower = x2;
+        higher = x1;
+    }
+
+    let lowerFactors = findFactors(lower);
+    return lowerFactors.filter(x => higher.mod(x).isZero());
 };
