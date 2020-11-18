@@ -1,41 +1,59 @@
 import Decimal from "decimal.js";
-import moment from 'moment';
-import 'moment-round';
+import moment, { Moment } from 'moment';
 import {
     TickConstraints,
     TickGenerator,
 } from "./baseScale";
+import { linearTicks } from "./linearScale";
 
 const k0 = new Decimal(0);
 
 type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
 type DateUnitMapping<T> = { [unit in DateUnit]: T };
 
-const kDateUnitsDesc: DateUnit[] = [
-    'years',
-    'months',
-    'days',
-    'hours',
-    'minutes',
-    'seconds',
+const kDateUnitsAsc: DateUnit[] = [
     'milliseconds',
+    'seconds',
+    'minutes',
+    'hours',
+    'days',
+    'months',
+    'years',
 ];
-const kDateUnitsAsc = kDateUnitsDesc.reverse();
-const kUnitsLength = kDateUnitsDesc.length;
+const kDateUnitsDes = [...kDateUnitsAsc].reverse();
+const kUnitsLength = kDateUnitsAsc.length;
+const kSecondsIndexAsc = kDateUnitsAsc.indexOf('seconds');
+
+const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
+    seconds: new Decimal(60),
+    minutes: new Decimal(60),
+    hours: new Decimal(24),
+};
+
+interface DateTickConstraints extends TickConstraints {
+    /**
+     * Specifies a UTC offset to tick calculations.
+     * Defaults to the local time zone UTC offset.
+     * 
+     * See [Moment.js UTC Offset documentation](https://momentjs.com/docs/#/manipulating/utc-offset/)
+     * for possible values.
+     */
+    utcOffset?: number | string;
+}
 
 /**
  * Calculates optimal tick locations for dates given an
- * interval and constraints (see {@link TickConstraints}).
+ * interval and constraints (see {@link DateTickConstraints}).
  *  
  * @param start The inclusive start of the date interval in milliseconds. 
  * @param end The inclusive end of the date interval in milliseconds.
- * @param constraints See {@link TickConstraints}
+ * @param constraints See {@link DateTickConstraints}
  * @returns An array of tick locations in milliseconds.
  */
-export const dateTicks: TickGenerator = (
+export const dateTicks: TickGenerator<DateTickConstraints> = (
     start: Decimal.Value,
     end: Decimal.Value,
-    constraints: TickConstraints,
+    constraints: DateTickConstraints,
 ): Decimal[] => {
     let a = new Decimal(start);
     let b = new Decimal(end);
@@ -70,127 +88,166 @@ export const dateTicks: TickGenerator = (
     let startDate = moment(a.toNumber());
     let endDate = moment(b.toNumber());
 
+    if (typeof constraints.utcOffset !== 'undefined') {
+        startDate.utcOffset(constraints.utcOffset);
+        endDate.utcOffset(constraints.utcOffset);
+    }
+
     // Get duration
     let minDuration = moment.duration(minInterval.toNumber());
 
     // Get durations in units
-    let unitDurationsPartial: Partial<DateUnitMapping<number>> = {};
-    let minUnitDurationsPartial: Partial<DateUnitMapping<number>> = {};
-    for (let unit of kDateUnitsDesc) {
-        unitDurationsPartial[unit] = endDate.diff(startDate, unit);
-        minUnitDurationsPartial[unit] = minDuration.as(unit);
+    // let unitDurations: Partial<DateUnitMapping<number>> = {};
+    let minUnitDurations: Partial<DateUnitMapping<number>> = {};
+    for (let unit of kDateUnitsAsc) {
+        // unitDurationsPartial[unit] = endDate.diff(startDate, unit);
+
+        let unitDuration = minDuration.as(unit);
+        if (Math.floor(unitDuration) >= 1) {
+            minUnitDurations[unit] = unitDuration;
+        }
     }
-    let unitDurations = unitDurationsPartial as DateUnitMapping<number>;
-    let minUnitDurations = minUnitDurationsPartial as DateUnitMapping<number>;
 
     /**
      * The largest non-zero unit of minInterval,
      * specified as an index of `kDateUnitsAsc`.
      **/
     let minUnitAscIndex = -1;
-    let minUnit: DateUnit | undefined;
-    let minUnitDuration = k0;
     for (let i = kUnitsLength - 1; i >= 0; i--) {
         let unit = kDateUnitsAsc[i];
-        let unitDuration = minUnitDurations[unit];
-        if (Math.floor(unitDuration) > 0) {
+        let unitDuration = minUnitDurations[unit] || 0;
+        if (Math.floor(unitDuration) >= 1) {
             minUnitAscIndex = i;
-            minUnit = unit;
-            minUnitDuration = new Decimal(unitDuration).ceil();
             break;
         }
     }
-    if (typeof minUnit === 'undefined') {
-        minUnit = 'milliseconds';
-        minUnitAscIndex = 0;
-        minUnitDuration = minInterval.ceil();
+    if (minUnitAscIndex <= kSecondsIndexAsc) {
+        // Min interval is smaller than a second, use linear method
+        return linearTicks(start, end, constraints);
     }
 
-    if (constraints.expand) {
-        startDate = startDate.floor(minUnitDuration.toNumber(), minUnit);
-        endDate = endDate.ceil(minUnitDuration.toNumber(), minUnit);
+    let unitConstraints: TickConstraints = {
+        ...constraints,
+        maxCount: undefined,
     }
-
-    /**
-     * The range of units which are non-zero,
-     * specified as an index range of `kDateUnitsAsc`.
-     **/
-    let ascUnitRange: [number, number] = [0, 0];
+    let bestTicks: Decimal[] = [];
     for (let i = minUnitAscIndex; i < kUnitsLength; i++) {
-        let unitDuration = unitDurations[kDateUnitsAsc[i]];
-        if (unitDuration > 0) {
-            ascUnitRange[0] = i;
+        // Try to get tick intervals with this unit
+        let unit = kDateUnitsAsc[i];
+        let minUnitDuration = Math.ceil(minUnitDurations[unit] || 0);
+        let unitStart = snapDate(startDate, unit);
+        let unitEnd = snapDate(endDate, unit);
+        let unitDuration = unitEnd.diff(unitStart, unit, true);
+
+        if (constraints.expand) {
+            // TODO: expand w.r.t. minUnitDuration
+            unitStart = floorDate(unitStart, unit);
+            unitEnd = ceilDate(unitEnd, unit);
+        }
+
+        unitConstraints.minInterval = minUnitDuration;
+        unitConstraints.radix = kDateUnitRadix[unit];
+        let ticks = linearTicks(0, unitDuration, unitConstraints)
+            .map(x => new Decimal(unitStart.clone().add(x.toNumber(), unit).valueOf()));
+        if (ticks.length > 1) {
+            bestTicks = ticks;
             break;
+        } else if (ticks.length > bestTicks.length) {
+            bestTicks = ticks;
         }
     }
-    for (let i = kUnitsLength - 1; i >= 0; i--) {
-        let unitDuration = unitDurations[kDateUnitsAsc[i]];
-        if (unitDuration > 0) {
-            ascUnitRange[1] = i + 1;
-            break;
+
+    return bestTicks;
+};
+
+/**
+ * Returns the rounded date if the smaller
+ * unit also rounds to the same date,
+ * otherwise, returns the original date copy.
+ * 
+ * This is useful for avoiding floating point
+ * errors when calculating dates.
+ * 
+ * @param date 
+ * @param unit 
+ */
+export const snapDate = (date: moment.MomentInput, unit: DateUnit): Moment => {
+    let m = moment(date);
+    let smallerUnit = largerDateUnit(unit);
+    if (smallerUnit) {
+        let mRound = roundDate(m.clone(), unit);
+        let mSmallerRound = roundDate(m.clone(), smallerUnit);
+        if (mRound.isSame(mSmallerRound)) {
+            m = mRound;
         }
     }
-    if (ascUnitRange[0] >= ascUnitRange[1]) {
-        return [];
-    }
+    return m;
+};
 
-    type Base = {
-        start: Decimal;
-        end: Decimal;
-        interval: Decimal;
-        count: number;
-    }
+export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
+    let i = kDateUnitsAsc.indexOf(unit);
+    return i > 0 ? kDateUnitsAsc[i - 1] : undefined;
+};
 
-    let bestBase: Base | undefined;
+export const smallerDateUnit = (unit: DateUnit): DateUnit | undefined => {
+    let i = kDateUnitsDes.indexOf(unit);
+    return i > 0 ? kDateUnitsDes[i - 1] : undefined;
+};
 
-    for (let i = 0; i < mantissas.length; i++) {
-        const mantissa = mantissas[i];
-        // const baseLogCount = kBaseLogCounts[i];
-        let mStart = aScaled.div(mantissa).floor().mul(mantissa);
-        let mEnd = bScaled.div(mantissa).ceil().mul(mantissa);
-        let mLength = mEnd.sub(mStart);
-        let tickCount = mLength.div(mantissa);
-        let mInterval = mLength.div(tickCount);
-        let interval = mInterval.mul(exponent);
-        if (interval.lt(minInterval) && !mantissa.eq(k10)) {
-            continue;
-        }
-        bestBase = {
-            start: mStart.mul(exponent),
-            end: mEnd.mul(exponent),
-            interval,
-            count: tickCount.toNumber(),
-        };
-        break;
-    }
+/**
+ * Returns the date nearest to the specified `date`
+ * w.r.t. the specified date `unit`.
+ * @param date 
+ * @param unit 
+ */
+export const roundDate = (date: Moment, unit: DateUnit): Moment => {
+    return linearStepDate(date, 0.5, unit).startOf(unit);
+};
 
-    if (!bestBase) {
-        return [];
-    }
+export const floorDate = (date: Moment, unit: DateUnit): Moment => {
+    return date.clone().startOf(unit);
+};
 
-    let { expand = false } = constraints || {};
-    if (expand) {
-        a = bestBase.start;
-        b = bestBase.end;
-    }
+export const ceilDate = (date: Moment, unit: DateUnit): Moment => {
+    return floorDate(date, unit).add(1, unit);
+};
 
-    let ticks: Decimal[] = [];
-    for (let i = 0; i <= bestBase.count; i++) {
-        let tick = bestBase.start.add(bestBase.interval.mul(i));
-        if (tick.gte(a) && tick.lte(b)) {
-            ticks.push(tick);
-        }
-    }
-    if (!expand && ticks.length === 1 && len.gte(minInterval)) {
-        // Fixed interval is greater than the min interval,
-        // but is smaller than the optimal interval.
-        if (a.eq(bestBase.start)) {
-            // Use the end of the interval as the tick.
-            ticks.push(b);
-        } else {
-            // Use the original interval.
-            ticks = [a, b];
-        }
-    }
-    return ticks;
+/**
+ * Returns a date between the current unit (A) and 
+ * the date at the next unit (B).
+ * A step of 0 will return A, a step of 1 will return B,
+ * and a step of 0.5 will return a date between A and B
+ * using linear interpolation.
+ * @param date 
+ * @param step 
+ * @param unit 
+ */
+export const linearStepDate = (
+    date: Moment,
+    step: number,
+    unit: DateUnit,
+): Moment => {
+    return interpolatedDate(
+        date,
+        date.clone().add(1, unit),
+        step,
+    );
+};
+
+/**
+ * Returns a date between the `date1` and `date2`.
+ * A `position` of 0 will return `date1` (cloned),
+ * a `position` of 1 will return `date2` (cloned),
+ * a `position` of 0.5 will return a date between
+ * the two using linear interpolation.
+ * @param date1 
+ * @param date2 
+ * @param position 
+ */
+export const interpolatedDate = (
+    date1: Moment,
+    date2: Moment,
+    position: number,
+): Moment => {
+    return moment(date1.valueOf() * (1 - position) + date2.valueOf() * position);
 };

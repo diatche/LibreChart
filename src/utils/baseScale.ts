@@ -1,7 +1,7 @@
 import Decimal from 'decimal.js';
 
 /**
- * Tick calculation options.
+ * Tick calculation constraints and options.
  * 
  * Must specify either a `minDistance`, or 
  * `maxCount`, or both.
@@ -27,6 +27,12 @@ export interface TickConstraints {
      * but in this case, some ticks at the edges may be discarded.
      */
     expand?: boolean;
+    /**
+     * An integer greater than 1 specifying the base
+     * to use for representing numeric values. Defaults
+     * to 10.
+     */
+    radix?: Decimal.Value;
 }
 
 /**
@@ -38,8 +44,8 @@ export interface TickConstraints {
  * @param options See {@link TickConstraints}
  * @returns An array of tick locations.
  */
-export type TickGenerator = (
+export type TickGenerator<C extends TickConstraints = TickConstraints> = (
     start: Decimal.Value,
     end: Decimal.Value,
-    constraints: TickConstraints,
+    constraints: C,
 ) => Decimal[];

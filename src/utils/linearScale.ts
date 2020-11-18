@@ -3,6 +3,7 @@ import {
     TickConstraints,
     TickGenerator,
 } from "./baseScale";
+import { findCommonFactors } from "./prime";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);
@@ -10,10 +11,12 @@ const k2 = new Decimal(2);
 const k5 = new Decimal(5);
 const k10 = new Decimal(10);
 
-const kMantissas = [k1, k2, k5, k10];
-const kMantissas1 = [k1, k10];
-const kMantissas2 = [k1, k2, k10];
+const kMantissas10 = [k1, k2, k5, k10];
 const kMantissas5 = [k1, k5, k10];
+const kMantissas2 = [k1, k2, k10];
+const kMantissas1 = [k1, k10];
+// const kMantissas2 = [k1, k2, k10];
+// const kMantissas5 = [k1, k5, k10];
 
 /**
  * Calculates optimal tick locations in linear space given an
@@ -49,7 +52,7 @@ export const linearTicks: TickGenerator = (
         if (maxCount.lt(0) || maxCount.isNaN()) {
             throw new Error('Max count must be greater than or equal to zero');
         }
-        let maxCountInterval = len.div(maxCount.add(1));
+        let maxCountInterval = len.div(maxCount);
         if (maxCountInterval.gt(minInterval)) {
             minInterval = maxCountInterval;
         }
@@ -59,26 +62,56 @@ export const linearTicks: TickGenerator = (
         throw new Error('Must specify either a minimum tick interval interval or a maximum interval count');
     }
 
-    let exponent = k10.pow(Decimal.log10(minInterval).floor());
+    let radix = k10;
+    let radixLog10 = k1;
+    if (constraints.radix) {
+        radix = new Decimal(constraints.radix);
+        if (!radix.eq(k10)) {
+            radixLog10 = Decimal.log10(radix);
+        }
+        if (!radix.isInt() || radix.lt(2) || radix.isNaN() || !radix.isFinite()) {
+            throw new Error('Radix must be an integer greater than 1');
+        }
+    }
+
+    let exponent = radix.pow(
+        Decimal.log10(minInterval)
+            .div(radixLog10)
+            .floor()
+    );
     let aScaled = a.div(exponent).floor();
     let bScaled = b.div(exponent).ceil();
 
-    let mantissas = kMantissas;
+    let mantissas = kMantissas10;
     if (!constraints.expand) {
         // Restrict mantissas
         let scaledLen = bScaled.sub(aScaled);
-        if (scaledLen.mod(k5).eq(k0)) {
-            // This is a 5 interval, which
-            // should only divide by 5.
-            mantissas = kMantissas5;
-        } else if (scaledLen.mod(k2).eq(k0)) {
-            // This is an even interval, which
-            // should only divide by 2.
-            mantissas = kMantissas2;
+
+        if (radix === k10) {
+            if (scaledLen.mod(k5).eq(k0)) {
+                // This is a 5 interval, which
+                // should only divide by 5.
+                mantissas = kMantissas5;
+            } else if (scaledLen.mod(k2).eq(k0)) {
+                // This is an even interval, which
+                // should only divide by 2.
+                mantissas = kMantissas2;
+            } else {
+                // This is an odd interval, which
+                // should not divide.
+                mantissas = kMantissas1;
+            }
         } else {
-            // This is an odd interval, which
-            // should not divide.
-            mantissas = kMantissas1;
+            // Use common factors
+            mantissas = findCommonFactors(radix, scaledLen);
+            if (mantissas.length !== 0) {
+                if (!mantissas[mantissas.length - 1].eq(radix)) {
+                    mantissas.push(radix);
+                }
+            } else {
+                // Fallback to default
+                mantissas = kMantissas10;
+            }
         }
     }
 
@@ -89,27 +122,40 @@ export const linearTicks: TickGenerator = (
         count: number;
     }
 
+    let bestRank = -1;
     let bestBase: Base | undefined;
 
+    outer:
     for (let i = 0; i < mantissas.length; i++) {
         const mantissa = mantissas[i];
         // const baseLogCount = kBaseLogCounts[i];
         let mStart = aScaled.div(mantissa).floor().mul(mantissa);
         let mEnd = bScaled.div(mantissa).ceil().mul(mantissa);
         let mLength = mEnd.sub(mStart);
-        let tickCount = mLength.div(mantissa);
-        let mInterval = mLength.div(tickCount);
-        let interval = mInterval.mul(exponent);
-        if (interval.lt(minInterval) && !mantissa.eq(k10)) {
-            continue;
+        let count = mLength.div(mantissa);
+        let mInterval = mLength.div(count);
+        let mIntervalMin = minInterval.div(exponent);
+        while (mInterval.lt(mIntervalMin)) {
+            if (mantissa.eq(k1) || mantissa.eq(radix)) {
+                continue outer;
+            }
+            count = count.div(mantissa);
+            mInterval = mLength.div(count);
+            if (mInterval.lt(k1)) {
+                continue;
+            }
         }
-        bestBase = {
-            start: mStart.mul(exponent),
-            end: mEnd.mul(exponent),
-            interval,
-            count: tickCount.toNumber(),
-        };
-        break;
+        // let rank = (mInterval.toString().match(/[^0]/g) || []).length;
+        let rank = mInterval.toNumber();
+        if (bestRank < 0 || rank < bestRank) {
+            bestRank = rank;
+            bestBase = {
+                start: mStart.mul(exponent),
+                end: mEnd.mul(exponent),
+                interval: mInterval.mul(exponent),
+                count: count.toNumber(),
+            };
+        }
     }
 
     if (!bestBase) {

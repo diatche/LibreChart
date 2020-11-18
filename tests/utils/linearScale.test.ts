@@ -227,7 +227,7 @@ describe('scale', () => {
         it('should not divide -10..10 with large min distance', () => {
             let x = linearTicks(-10, 10, { minInterval: 20.1 })
                 .map(x => x.toString());
-            expect(x).toEqual(['0']);
+            expect(x).toEqual([]);
         });
 
         // expand
@@ -238,6 +238,22 @@ describe('scale', () => {
                 expand: true,
             }).map(x => x.toString());
             expect(x).toEqual(['0', '2', '4', '6']);
+        });
+
+        // radix 24
+
+        it('should divide 24 into intervals of 12 with min distance when not expanding with radix of 24', () => {
+            let x = linearTicks(0, 24, { minInterval: 10, radix: 24 })
+                .map(x => x.toString());
+            expect(x).toEqual(['0', '12', '24']);
+        });
+
+        // radix 60
+
+        it('should divide 60 into intervals of 30 with min distance when not expanding with radix of 60', () => {
+            let x = linearTicks(0, 60, { minInterval: 30, radix: 60 })
+                .map(x => x.toString());
+            expect(x).toEqual(['0', '30', '60']);
         });
     });
 });
