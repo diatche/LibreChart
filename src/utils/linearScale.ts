@@ -32,14 +32,23 @@ export const linearTicks: TickGenerator = (
 ): Decimal[] => {
     let a = new Decimal(start);
     let b = new Decimal(end);
-    if (b.lte(a) || a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
-        throw new Error('Interval must be finite and with a positive length');
+    if (b.lt(a)) {
+        return [];
+    }
+    if (a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
+        throw new Error('Invalid interval');
     }
     let len = b.sub(a);
 
-    let minInterval = new Decimal(constraints.minInterval || 0);
-    if (minInterval.lt(0) || minInterval.isNaN() || !minInterval.isFinite()) {
-        throw new Error('Minimum tick interval must be finite and with a positive length');
+    // Find min interval
+    let minInterval = k0;
+
+    if (constraints.minInterval) {
+        let minMs = new Decimal(constraints.minInterval);
+        if (minMs.lt(0) || minMs.isNaN() || !minMs.isFinite()) {
+            throw new Error('Minimum interval must be finite and with a positive length');
+        }
+        minInterval = minMs;
     }
 
     if (constraints.maxCount) {
@@ -57,7 +66,7 @@ export const linearTicks: TickGenerator = (
     }
 
     if (minInterval.lte(0)) {
-        throw new Error('Must specify either a minimum tick interval interval or a maximum interval count');
+        throw new Error('Must specify either a minimum interval or a maximum interval count');
     }
 
     let radix = k10;
@@ -159,16 +168,16 @@ export const linearTicks: TickGenerator = (
             ticks.push(tick);
         }
     }
-    if (!expand && ticks.length === 1 && len.gte(minInterval)) {
-        // Fixed interval is greater than the min interval,
-        // but is smaller than the optimal interval.
-        if (a.eq(bestBase.start)) {
-            // Use the end of the interval as the tick.
-            ticks.push(b);
-        } else {
-            // Use the original interval.
-            ticks = [a, b];
-        }
-    }
+    // if (!expand && ticks.length === 1 && len.gte(minInterval)) {
+    //     // Fixed interval is greater than the min interval,
+    //     // but is smaller than the optimal interval.
+    //     if (a.eq(bestBase.start)) {
+    //         // Use the end of the interval as the tick.
+    //         ticks.push(b);
+    //     } else {
+    //         // Use the original interval.
+    //         ticks = [a, b];
+    //     }
+    // }
     return ticks;
 };

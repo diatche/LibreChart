@@ -5,6 +5,9 @@ const k2 = new Decimal(1);
 
 export const findFactors = (value: Decimal.Value): Decimal[] => {
     let xOrig = new Decimal(value);
+    if (!xOrig.isInt()) {
+        return [];
+    }
     let x = xOrig;
     let isNegative = x.isNegative();
     if (isNegative) {

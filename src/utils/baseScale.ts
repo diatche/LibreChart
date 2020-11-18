@@ -3,7 +3,7 @@ import Decimal from 'decimal.js';
 /**
  * Tick calculation constraints and options.
  * 
- * Must specify either a `minDistance`, or 
+ * Must specify either a `minInterval`, or 
  * `maxCount`, or both.
  */
 export interface TickConstraints {

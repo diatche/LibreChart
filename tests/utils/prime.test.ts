@@ -32,6 +32,11 @@ describe('scale', () => {
             let factors = findFactors(-10).map(x => x.toNumber());
             expect(factors).toEqual([-10, -5, -2, -1]);
         });
+
+        it('should ignore non integers', () => {
+            let factors = findFactors(6.1).map(x => x.toNumber());
+            expect(factors).toEqual([]);
+        });
     });
 
     describe('findCommonFactors', () => {
@@ -44,6 +49,11 @@ describe('scale', () => {
         it('should find all factors of -12 and -8', () => {
             let factors = findCommonFactors(-12, -8).map(x => x.toNumber());
             expect(factors).toEqual([-4, -2, -1]);
+        });
+
+        it('should not find factors between opposite signs', () => {
+            let factors = findCommonFactors(8, -12).map(x => x.toNumber());
+            expect(factors).toEqual([]);
         });
     });
 });

@@ -6,10 +6,10 @@ import {
 } from "./baseScale";
 import { linearTicks } from "./linearScale";
 
-const k0 = new Decimal(0);
-
 type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
 type DateUnitMapping<T> = { [unit in DateUnit]: T };
+
+const k0 = new Decimal(0);
 
 const kDateUnitsAsc: DateUnit[] = [
     'milliseconds',
@@ -28,9 +28,18 @@ const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
     seconds: new Decimal(60),
     minutes: new Decimal(60),
     hours: new Decimal(24),
+    months: new Decimal(12),
 };
 
-interface DateTickConstraints extends TickConstraints {
+/**
+ * Date tick calculation constraints and options.
+ * 
+ * Must specify either a `minInterval` (in milliseconds),
+ * `minDuration`, or `maxCount`, or a combination of the three.
+ * 
+ * Automatically handles `radix`.
+ */
+export interface DateTickConstraints extends TickConstraints {
     /**
      * Specifies a UTC offset to tick calculations.
      * Defaults to the local time zone UTC offset.
@@ -39,6 +48,14 @@ interface DateTickConstraints extends TickConstraints {
      * for possible values.
      */
     utcOffset?: number | string;
+    /**
+     * Allows specifying a minimum interval using
+     * any date unit.
+     * 
+     * See [Moment.js Duration documentation](https://momentjs.com/docs/#/durations/)
+     * for possible values.
+     */
+    minDuration?: moment.Duration;
 }
 
 /**
@@ -57,14 +74,32 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
 ): Decimal[] => {
     let a = new Decimal(start);
     let b = new Decimal(end);
-    if (b.lte(a) || a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
-        throw new Error('Interval must be finite and with a positive length');
+    if (b.lt(a)) {
+        return [];
+    }
+    if (a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
+        throw new Error('Invalid interval');
     }
     let len = b.sub(a);
 
-    let minInterval = new Decimal(constraints.minInterval || 0);
-    if (minInterval.lt(0) || minInterval.isNaN() || !minInterval.isFinite()) {
-        throw new Error('Minimum tick interval must be finite and with a positive length');
+    let minInterval = k0;
+
+    if (constraints.minInterval) {
+        let minMs = new Decimal(constraints.minInterval);
+        if (minMs.lt(0) || minMs.isNaN() || !minMs.isFinite()) {
+            throw new Error('Minimum interval must be finite and with a positive length');
+        }
+        minInterval = minMs;
+    }
+
+    if (constraints.minDuration) {
+        let minMs = new Decimal(constraints.minDuration.asMilliseconds());
+        if (minMs.lt(0) || minMs.isNaN() || !minMs.isFinite()) {
+            throw new Error('Minimum duration must be finite and with a positive length');
+        }
+        if (minMs.gt(minInterval)) {
+            minInterval = minMs;
+        }
     }
 
     if (constraints.maxCount) {
@@ -82,7 +117,7 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     }
 
     if (minInterval.lte(0)) {
-        throw new Error('Must specify either a minimum tick interval interval or a maximum interval count');
+        throw new Error('Must specify either a minimum interval, or a minimum duration, or a maximum interval count');
     }
 
     let startDate = moment(a.toNumber());
@@ -123,7 +158,14 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     }
     if (minUnitAscIndex <= kSecondsIndexAsc) {
         // Min interval is smaller than a second, use linear method
-        return linearTicks(start, end, constraints);
+        return linearTicks(
+            start,
+            end,
+            {
+                ...constraints,
+                minInterval,
+            }
+        );
     }
 
     let unitConstraints: TickConstraints = {
@@ -134,7 +176,7 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     for (let i = minUnitAscIndex; i < kUnitsLength; i++) {
         // Try to get tick intervals with this unit
         let unit = kDateUnitsAsc[i];
-        let minUnitDuration = Math.ceil(minUnitDurations[unit] || 0);
+        let minUnitDuration = minUnitDurations[unit] || 0;
         if (minUnitDuration === 0) {
             break;
         }

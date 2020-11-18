@@ -2,6 +2,11 @@ import Decimal from 'decimal.js';
 import {
     linearTicks,
 } from '../../src/utils/linearScale';
+import {
+    LinearTickInput,
+    getLinearTicks,
+    getExpectedLinearTicks,
+} from './linearScaleUtil';
 
 describe('scale', () => {
 
@@ -10,29 +15,13 @@ describe('scale', () => {
         // divide 1
 
         it('should divide 1 into intervals of 0.1 with min distance when not expanding', () => {
-            let x = linearTicks(0, 1, { minInterval: 0.1 })
-                .map(x => x.toString());
-            let start = new Decimal(0);
-            let end = new Decimal(1);
-            let stride = new Decimal(0.1);
-            let expectedTicks: string[] = [];
-            for (let i = start; i.lte(end); i = i.add(stride)) {
-                expectedTicks.push(i.toString());
-            }
-            expect(x).toEqual(expectedTicks);
+            let input: LinearTickInput = { start: 0, end: 1, stride: 0.1 };
+            expect(getLinearTicks(input)).toEqual(getExpectedLinearTicks(input));
         });
 
         it('should divide 1 into intervals of 0.1 with max count when not expanding', () => {
-            let x = linearTicks(0, 1, { maxCount: 10 })
-                .map(x => x.toString());
-            let start = new Decimal(0);
-            let end = new Decimal(1);
-            let stride = new Decimal(0.1);
-            let expectedTicks: string[] = [];
-            for (let i = start; i.lte(end); i = i.add(stride)) {
-                expectedTicks.push(i.toString());
-            }
-            expect(x).toEqual(expectedTicks);
+            let input: LinearTickInput = { start: 0, end: 1, stride: 0.1, constraints: { maxCount: 10 } };
+            expect(getLinearTicks(input)).toEqual(getExpectedLinearTicks(input));
         });
 
         it('should ignore infinite max count', () => {
@@ -84,7 +73,7 @@ describe('scale', () => {
         it('should not divide 3 into intervals of 2 with min distance when not expanding', () => {
             let x = linearTicks(0, 3, { minInterval: 1.1 })
                 .map(x => x.toString());
-            expect(x).toEqual(['0', '3']);
+            expect(x).toEqual(['0']);
         });
 
         it('should not divide 3 with large min distance', () => {
@@ -113,6 +102,26 @@ describe('scale', () => {
             expect(x).toEqual(['0']);
         });
 
+        // divide 7
+
+        it('should divide 7 into intervals of 1 with min distance when not expanding', () => {
+            let x = linearTicks(0, 7, { minInterval: 1 })
+                .map(x => x.toString());
+            expect(x).toEqual(['0', '1', '2', '3', '4', '5', '6', '7']);
+        });
+
+        it('should not divide 7 into intervals of 2 with min distance when not expanding', () => {
+            let x = linearTicks(0, 7, { minInterval: 1.1 })
+                .map(x => x.toString());
+            expect(x).toEqual(['0']);
+        });
+
+        it('should not divide 7 with large min distance', () => {
+            let x = linearTicks(0, 7, { minInterval: 7.1 })
+                .map(x => x.toString());
+            expect(x).toEqual(['0']);
+        });
+
         // divide 0.5
 
         it('should divide 0.5 into intervals of 1 with min distance when not expanding', () => {
@@ -136,16 +145,11 @@ describe('scale', () => {
         // divide 1.5
 
         it('should not divide 1.5 into intervals of 0.05 with min distance when not expanding', () => {
-            let x = linearTicks(0.0, 1.5, { minInterval: 0.04, maxCount: 15 })
-                .map(x => x.toString());
-            let start = new Decimal(0);
-            let end = new Decimal(1.5);
-            let stride = new Decimal(0.1);
-            let expectedTicks: string[] = [];
-            for (let i = start; i.lte(end); i = i.add(stride)) {
-                expectedTicks.push(i.toString());
-            }
-            expect(x).toEqual(expectedTicks);
+            let input: LinearTickInput = {
+                start: 0, end: 1.5, stride: 0.1,
+                constraints: { minInterval: 0.04, maxCount: 15 }
+            };
+            expect(getLinearTicks(input)).toEqual(getExpectedLinearTicks(input));
         });
 
         it('should not divide 1.5 into intervals of 0.2 with min distance when not expanding', () => {
@@ -202,14 +206,11 @@ describe('scale', () => {
         });
 
         it('should not divide -10..10 into intervals of 2 with min distance when not expanding', () => {
-            let x = linearTicks(-10, 10, { minInterval: 1.1 })
-                .map(x => x.toString());
-            let expectedStride = 5;
-            let expectedTicks: string[] = [];
-            for (let i = -10; i <= 10; i += expectedStride) {
-                expectedTicks.push(String(i));
-            }
-            expect(x).toEqual(expectedTicks);
+            let input: LinearTickInput = {
+                start: -10, end: 10, stride: 5,
+                constraints: { minInterval: 1.1 }
+            };
+            expect(getLinearTicks(input)).toEqual(getExpectedLinearTicks(input));
         });
 
         it('should divide -10..10 into intervals of 10 with min distance when not expanding', () => {
@@ -221,13 +222,27 @@ describe('scale', () => {
         it('should divide -10..10 into intervals of 20 with min distance when not expanding', () => {
             let x = linearTicks(-10, 10, { minInterval: 10.1 })
                 .map(x => x.toString());
-            expect(x).toEqual(['-10', '10']);
+            expect(x).toEqual(['0']);
         });
 
         it('should not divide -10..10 with large min distance', () => {
             let x = linearTicks(-10, 10, { minInterval: 20.1 })
                 .map(x => x.toString());
             expect(x).toEqual(['0']);
+        });
+
+        // empty interval
+
+        it('should return empty array for point interval', () => {
+            let x = linearTicks(0, 0, { minInterval: 0.1 });
+            expect(x).toEqual([]);
+        });
+
+        // empty interval
+
+        it('should return empty array for reverse interval', () => {
+            let x = linearTicks(1, 0, { minInterval: 0.1 });
+            expect(x).toEqual([]);
         });
 
         // expand
