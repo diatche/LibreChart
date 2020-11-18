@@ -11,10 +11,10 @@ const k2 = new Decimal(2);
 const k5 = new Decimal(5);
 const k10 = new Decimal(10);
 
-const kMantissas10 = [k1, k2, k5, k10];
-const kMantissas5 = [k1, k5];
-const kMantissas2 = [k1, k2];
-const kMantissas1 = [k1];
+const kFactors10 = [k1, k2, k5, k10];
+const kFactors5 = [k1, k5];
+const kFactors2 = [k1, k2];
+const kFactors1 = [k1];
 
 /**
  * Calculates optimal tick locations in linear space given an
@@ -80,31 +80,31 @@ export const linearTicks: TickGenerator = (
     let aScaled = a.div(exponent).floor();
     let bScaled = b.div(exponent).ceil();
 
-    let mantissas = kMantissas10;
+    let factors = kFactors10;
     if (!constraints.expand) {
-        // Restrict mantissas
+        // Restrict factors
         let scaledLen = bScaled.sub(aScaled);
 
         if (radix === k10) {
             if (scaledLen.mod(k5).eq(k0)) {
                 // This is a 5 interval, which
                 // should only divide by 5.
-                mantissas = kMantissas5;
+                factors = kFactors5;
             } else if (scaledLen.mod(k2).eq(k0)) {
                 // This is an even interval, which
                 // should only divide by 2.
-                mantissas = kMantissas2;
+                factors = kFactors2;
             } else {
                 // This is an odd interval, which
                 // should not divide.
-                mantissas = kMantissas1;
+                factors = kFactors1;
             }
         } else {
             // Use common factors
-            mantissas = findCommonFactors(radix, scaledLen);
-            if (mantissas.length === 0) {
+            factors = findCommonFactors(radix, scaledLen);
+            if (factors.length === 0) {
                 // Fallback to default
-                mantissas = kMantissas10;
+                factors = kFactors10;
             }
         }
     }
@@ -119,12 +119,12 @@ export const linearTicks: TickGenerator = (
     let bestBase: Base | undefined;
 
     do {
-        for (let i = 0; i < mantissas.length; i++) {
-            const mantissa = mantissas[i];
-            let mStart = aScaled.div(mantissa).floor().mul(mantissa);
-            let mEnd = bScaled.div(mantissa).ceil().mul(mantissa);
+        for (let i = 0; i < factors.length; i++) {
+            const factor = factors[i];
+            let mStart = aScaled.div(factor).floor().mul(factor);
+            let mEnd = bScaled.div(factor).ceil().mul(factor);
             let mLength = mEnd.sub(mStart);
-            let count = mLength.div(mantissa);
+            let count = mLength.div(factor);
             let mInterval = mLength.div(count);
             let interval = mInterval.mul(exponent);
             if (interval.lt(minInterval)) {
