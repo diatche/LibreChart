@@ -12,11 +12,9 @@ const k5 = new Decimal(5);
 const k10 = new Decimal(10);
 
 const kMantissas10 = [k1, k2, k5, k10];
-const kMantissas5 = [k1, k5, k10];
-const kMantissas2 = [k1, k2, k10];
-const kMantissas1 = [k1, k10];
-// const kMantissas2 = [k1, k2, k10];
-// const kMantissas5 = [k1, k5, k10];
+const kMantissas5 = [k1, k5];
+const kMantissas2 = [k1, k2];
+const kMantissas1 = [k1];
 
 /**
  * Calculates optimal tick locations in linear space given an
@@ -104,11 +102,7 @@ export const linearTicks: TickGenerator = (
         } else {
             // Use common factors
             mantissas = findCommonFactors(radix, scaledLen);
-            if (mantissas.length !== 0) {
-                if (!mantissas[mantissas.length - 1].eq(radix)) {
-                    mantissas.push(radix);
-                }
-            } else {
+            if (mantissas.length === 0) {
                 // Fallback to default
                 mantissas = kMantissas10;
             }
@@ -122,45 +116,35 @@ export const linearTicks: TickGenerator = (
         count: number;
     }
 
-    let bestRank = -1;
     let bestBase: Base | undefined;
 
-    outer:
-    for (let i = 0; i < mantissas.length; i++) {
-        const mantissa = mantissas[i];
-        // const baseLogCount = kBaseLogCounts[i];
-        let mStart = aScaled.div(mantissa).floor().mul(mantissa);
-        let mEnd = bScaled.div(mantissa).ceil().mul(mantissa);
-        let mLength = mEnd.sub(mStart);
-        let count = mLength.div(mantissa);
-        let mInterval = mLength.div(count);
-        let mIntervalMin = minInterval.div(exponent);
-        while (mInterval.lt(mIntervalMin)) {
-            if (mantissa.eq(k1) || mantissa.eq(radix)) {
-                continue outer;
-            }
-            count = count.div(mantissa);
-            mInterval = mLength.div(count);
-            if (mInterval.lt(k1)) {
+    do {
+        for (let i = 0; i < mantissas.length; i++) {
+            const mantissa = mantissas[i];
+            let mStart = aScaled.div(mantissa).floor().mul(mantissa);
+            let mEnd = bScaled.div(mantissa).ceil().mul(mantissa);
+            let mLength = mEnd.sub(mStart);
+            let count = mLength.div(mantissa);
+            let mInterval = mLength.div(count);
+            let interval = mInterval.mul(exponent);
+            if (interval.lt(minInterval)) {
                 continue;
             }
-        }
-        // let rank = (mInterval.toString().match(/[^0]/g) || []).length;
-        let rank = mInterval.toNumber();
-        if (bestRank < 0 || rank < bestRank) {
-            bestRank = rank;
+    
             bestBase = {
                 start: mStart.mul(exponent),
                 end: mEnd.mul(exponent),
-                interval: mInterval.mul(exponent),
+                interval,
                 count: count.toNumber(),
             };
+            break;
         }
-    }
-
-    if (!bestBase) {
-        return [];
-    }
+        if (!bestBase) {
+            exponent = exponent.mul(radix);
+            aScaled = aScaled.div(radix);
+            bScaled = bScaled.div(radix);
+        }
+    } while (!bestBase);
 
     let { expand = false } = constraints || {};
     if (expand) {

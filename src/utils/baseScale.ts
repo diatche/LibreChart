@@ -31,6 +31,13 @@ export interface TickConstraints {
      * An integer greater than 1 specifying the base
      * to use for representing numeric values. Defaults
      * to 10.
+     * 
+     * Examples of when this is useful:
+     * 
+     * - When used with minutes or seconds (use a radix of 60).
+     * - When used with hours (use a radix of 24).
+     * - When used with months (use a radix of 12).
+     * - When used with other number systems. 
      */
     radix?: Decimal.Value;
 }

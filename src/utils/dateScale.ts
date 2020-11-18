@@ -135,6 +135,9 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
         // Try to get tick intervals with this unit
         let unit = kDateUnitsAsc[i];
         let minUnitDuration = Math.ceil(minUnitDurations[unit] || 0);
+        if (minUnitDuration === 0) {
+            break;
+        }
         let unitStart = snapDate(startDate, unit);
         let unitEnd = snapDate(endDate, unit);
         let unitDuration = unitEnd.diff(unitStart, unit, true);

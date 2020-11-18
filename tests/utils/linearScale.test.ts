@@ -227,7 +227,7 @@ describe('scale', () => {
         it('should not divide -10..10 with large min distance', () => {
             let x = linearTicks(-10, 10, { minInterval: 20.1 })
                 .map(x => x.toString());
-            expect(x).toEqual([]);
+            expect(x).toEqual(['0']);
         });
 
         // expand

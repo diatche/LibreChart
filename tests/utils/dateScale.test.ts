@@ -112,9 +112,9 @@ describe('scale', () => {
 
         it('should divide 1 hour into 30 minutes when not expanding', () => {
             let start = moment('2020-01-01 10:00');
-            let end = moment('2020-01-02 11:00');
+            let end = moment('2020-01-01 11:00');
             let strideInput = 30;
-            let strideUnit: moment.unitOfTime.Base = 'hour';
+            let strideUnit: moment.unitOfTime.Base = 'minutes';
             let format = 'YYYY-MM-DD HH:mm';
 
             let x = dateTicks(
