@@ -2,9 +2,9 @@ import Decimal from 'decimal.js';
 import {
     findCommonFactors,
     findFactors,
-} from '../../src/utils/prime';
+} from '../../src/utils/dfactors';
 
-describe('scale', () => {
+describe('dfactors', () => {
 
     describe('findFactors', () => {
 
