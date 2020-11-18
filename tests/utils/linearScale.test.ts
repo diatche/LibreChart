@@ -30,8 +30,14 @@ describe('scale', () => {
             expect(x).toEqual(['0', '0.5', '1']);
         });
 
-        it('should not divide 1 into intervals of 0.2 with min distance when not expanding', () => {
+        it('should divide 1 into intervals of 0.2 with min distance when not expanding', () => {
             let x = linearTicks(0, 1, { minInterval: 0.11 })
+                .map(x => x.toString());
+            expect(x).toEqual(['0', '0.2', '0.4', '0.6', '0.8', '1']);
+        });
+
+        it('should divide 1 into intervals of 0.5 with min distance when not expanding', () => {
+            let x = linearTicks(0, 1, { minInterval: 0.21 })
                 .map(x => x.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
@@ -205,10 +211,18 @@ describe('scale', () => {
             expect(x).toEqual(expectedTicks);
         });
 
-        it('should not divide -10..10 into intervals of 2 with min distance when not expanding', () => {
+        it('should divide -10..10 into intervals of 2 with min distance when not expanding', () => {
+            let input: LinearTickInput = {
+                start: -10, end: 10, stride: 2,
+                constraints: { minInterval: 1.1 }
+            };
+            expect(getLinearTicks(input)).toEqual(getExpectedLinearTicks(input));
+        });
+
+        it('should divide -10..10 into intervals of 5 with min distance when not expanding', () => {
             let input: LinearTickInput = {
                 start: -10, end: 10, stride: 5,
-                constraints: { minInterval: 1.1 }
+                constraints: { minInterval: 2.1 }
             };
             expect(getLinearTicks(input)).toEqual(getExpectedLinearTicks(input));
         });

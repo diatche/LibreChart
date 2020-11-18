@@ -64,8 +64,8 @@ describe('scale', () => {
 
         it('should divide 1 month (30 days) into 2 day intervals when not expanding', () => {
             let input: DateTickInput = {
-                start: moment('2020-04-01'),
-                end: moment('2020-05-01'),
+                start: moment('2020-06-01'),
+                end: moment('2020-07-01'),
                 stride: moment.duration(2, 'day'),
                 format: 'YYYY-MM-DD',
             };

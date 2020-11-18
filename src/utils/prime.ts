@@ -1,44 +1,58 @@
 import Decimal from 'decimal.js';
 
 const k1 = new Decimal(1);
-const k2 = new Decimal(1);
+const k2 = new Decimal(2);
+const k5 = new Decimal(5);
+const k10 = new Decimal(10);
 
-export const findFactors = (value: Decimal.Value): Decimal[] => {
-    let xOrig = new Decimal(value);
-    if (!xOrig.isInt()) {
-        return [];
-    }
-    let x = xOrig;
-    let isNegative = x.isNegative();
-    if (isNegative) {
-        x = x.neg();
-    }
-    if (x.lt(k1)) {
-        return [];
-    }
-    if (x.eq(k1)) {
-        return [xOrig];
-    }
+const kFactors10 = [k1, k2, k5, k10];
+
+const _findFactorsPos = (x: Decimal): Decimal[] => {
     let max = x.sqrt();
 
     let head: Decimal[] = [];
     let tail: Decimal[] = [];
-    if (isNegative) {
-        for (let i = k2; i.lt(max); i = i.add(k1)) {
-            if (x.mod(i).isZero()) {
-                tail.unshift(i.neg());
-                head.push(x.div(i).neg());
-            }
-        }
-    } else {
-        for (let i = k2; i.lt(max); i = i.add(k1)) {
-            if (x.mod(i).isZero()) {
-                head.push(i);
-                tail.unshift(x.div(i));
-            }
+    for (let i = k1; i.lt(max); i = i.add(k1)) {
+        if (x.mod(i).isZero()) {
+            head.push(i);
+            tail.unshift(x.div(i));
         }
     }
+    if (max.isInt()) {
+        tail.unshift(x.div(max));
+    }
     return head.concat(tail);
+}
+
+export const findFactors = (value: Decimal.Value): Decimal[] => {
+    let x = new Decimal(value);
+    if (x.isZero() || !x.isInt()) {
+        return [];
+    }
+    let isNegative = x.isNegative();
+    if (isNegative) {
+        x = x.neg();
+    }
+
+    let factors: Decimal[];
+    if (x.eq(k1)) {
+        factors = [x];
+    } else if (x.eq(k10)) {
+        // Optimisation for common radix
+        let factors = [...kFactors10];
+        if (isNegative) {
+            factors = factors.map(x => x.neg());
+            factors = factors.reverse(); 
+        }
+        return factors;
+    } else {
+        factors = _findFactorsPos(x);
+    }
+    if (isNegative) {
+        factors = factors.map(x => x.neg());
+        factors = factors.reverse(); 
+    }
+    return factors;
 }
 
 export const findCommonFactors = (v1: Decimal.Value, v2: Decimal.Value): Decimal[] => {

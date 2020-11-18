@@ -3,7 +3,7 @@ import {
     TickConstraints,
     TickGenerator,
 } from "./baseScale";
-import { findCommonFactors } from "./prime";
+import { findCommonFactors, findFactors } from "./factors";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);
@@ -89,33 +89,20 @@ export const linearTicks: TickGenerator = (
     let aScaled = a.div(exponent).floor();
     let bScaled = b.div(exponent).ceil();
 
-    let factors = kFactors10;
-    if (!constraints.expand) {
-        // Restrict factors
+    let factors: Decimal[];
+    if (constraints.expand) {
+        // Use radix factors
+        factors = findFactors(radix.toNumber())
+            .map(x => new Decimal(x));
+    } else {
+        // Use common factors
         let scaledLen = bScaled.sub(aScaled);
-
-        if (radix === k10) {
-            if (scaledLen.mod(k5).eq(k0)) {
-                // This is a 5 interval, which
-                // should only divide by 5.
-                factors = kFactors5;
-            } else if (scaledLen.mod(k2).eq(k0)) {
-                // This is an even interval, which
-                // should only divide by 2.
-                factors = kFactors2;
-            } else {
-                // This is an odd interval, which
-                // should not divide.
-                factors = kFactors1;
-            }
-        } else {
-            // Use common factors
-            factors = findCommonFactors(radix, scaledLen);
-            if (factors.length === 0) {
-                // Fallback to default
-                factors = kFactors10;
-            }
-        }
+        factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber())
+            .map(x => new Decimal(x));
+    }
+    if (factors.length === 0) {
+        // Fallback to default
+        factors = kFactors10;
     }
 
     type Base = {
