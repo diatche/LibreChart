@@ -1,35 +1,24 @@
 import Decimal from "decimal.js";
-import moment, { Moment } from 'moment';
+import moment from 'moment';
 import {
     TickConstraints,
     TickGenerator,
 } from "./baseScale";
+import {
+    DateUnitMapping,
+    kDateUnitsAsc,
+    kUnitsLength,
+    kSecondsIndexAsc,
+    kDateUnitRadix,
+} from "./dateBase";
+import {
+    ceilDate,
+    floorDate,
+    snapDate,
+} from "./duration";
 import { linearTicks } from "./linearScale";
 
-type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
-type DateUnitMapping<T> = { [unit in DateUnit]: T };
-
 const k0 = new Decimal(0);
-
-const kDateUnitsAsc: DateUnit[] = [
-    'milliseconds',
-    'seconds',
-    'minutes',
-    'hours',
-    'days',
-    'months',
-    'years',
-];
-const kDateUnitsDes = [...kDateUnitsAsc].reverse();
-const kUnitsLength = kDateUnitsAsc.length;
-const kSecondsIndexAsc = kDateUnitsAsc.indexOf('seconds');
-
-const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
-    seconds: new Decimal(60),
-    minutes: new Decimal(60),
-    hours: new Decimal(24),
-    months: new Decimal(12),
-};
 
 /**
  * Date tick calculation constraints and options.
@@ -203,96 +192,4 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     }
 
     return bestTicks;
-};
-
-/**
- * Returns the rounded date if the smaller
- * unit also rounds to the same date,
- * otherwise, returns the original date copy.
- * 
- * This is useful for avoiding floating point
- * errors when calculating dates.
- * 
- * @param date 
- * @param unit 
- */
-export const snapDate = (date: moment.MomentInput, unit: DateUnit): Moment => {
-    let m = moment(date);
-    let smallerUnit = largerDateUnit(unit);
-    if (smallerUnit) {
-        let mRound = roundDate(m.clone(), unit);
-        let mSmallerRound = roundDate(m.clone(), smallerUnit);
-        if (mRound.isSame(mSmallerRound)) {
-            m = mRound;
-        }
-    }
-    return m;
-};
-
-export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
-    let i = kDateUnitsAsc.indexOf(unit);
-    return i > 0 ? kDateUnitsAsc[i - 1] : undefined;
-};
-
-export const smallerDateUnit = (unit: DateUnit): DateUnit | undefined => {
-    let i = kDateUnitsDes.indexOf(unit);
-    return i > 0 ? kDateUnitsDes[i - 1] : undefined;
-};
-
-/**
- * Returns the date nearest to the specified `date`
- * w.r.t. the specified date `unit`.
- * @param date 
- * @param unit 
- */
-export const roundDate = (date: Moment, unit: DateUnit): Moment => {
-    return linearStepDate(date, 0.5, unit).startOf(unit);
-};
-
-export const floorDate = (date: Moment, unit: DateUnit): Moment => {
-    return date.clone().startOf(unit);
-};
-
-export const ceilDate = (date: Moment, unit: DateUnit): Moment => {
-    return floorDate(date, unit).add(1, unit);
-};
-
-/**
- * Returns a date between the current unit (A) and 
- * the date at the next unit (B).
- * A step of 0 will return A, a step of 1 will return B,
- * and a step of 0.5 will return a date between A and B
- * using linear interpolation.
- * @param date 
- * @param step 
- * @param unit 
- */
-export const linearStepDate = (
-    date: Moment,
-    step: number,
-    unit: DateUnit,
-): Moment => {
-    return interpolatedDate(
-        date,
-        date.clone().add(1, unit),
-        step,
-    );
-};
-
-/**
- * Returns a date between the `date1` and `date2`.
- * A `position` of 0 will return `date1` (cloned),
- * a `position` of 1 will return `date2` (cloned),
- * a `position` of 0.5 will return a date between
- * the two using linear interpolation.
- * @param date1 
- * @param date2 
- * @param position 
- */
-export const interpolatedDate = (
-    date1: Moment,
-    date2: Moment,
-    position: number,
-): Moment => {
-    return moment(date1.valueOf() * (1 - position) + date2.valueOf() * position);
 };
