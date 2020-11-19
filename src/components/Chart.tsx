@@ -9,7 +9,6 @@ import {
     kPointReuseID,
     kGridReuseID,
     kAxisDirection,
-    kAxisReuseIDs,
     kReuseIDAxes,
     kAxisStyleLightDefaults,
 } from '../const';

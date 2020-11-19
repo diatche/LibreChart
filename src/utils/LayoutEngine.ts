@@ -36,7 +36,7 @@ const kDefaultAxisThicknessStep = 10;
 
 const k0 = new Decimal(0);
 
-export interface IChartAxisInput<TC extends TickConstraints> {
+export interface IChartAxisInput<TC extends TickConstraints = TickConstraints> {
     /**
      * Toggles axis visiblity.
      * Axis is hidden by default.
@@ -55,14 +55,14 @@ export interface IChartAxisInput<TC extends TickConstraints> {
     defaultTickConstraints?: Partial<TC>;
 }
 
-export interface LayoutEngineProps<TC extends TickConstraints = TickConstraints> {
+export interface LayoutEngineProps {
     dataSources?: DataSource[];
     grid?: {
         horizontalAxis?: AxisType;
         verticalAxis?: AxisType;
     } & GridLayoutSourceProps;
     axes?: Partial<AxisTypeMapping<
-        IChartAxisInput<TC> & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>
+        IChartAxisInput & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>
     >>;
 }
 
