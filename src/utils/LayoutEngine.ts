@@ -7,11 +7,9 @@ import Evergrid, {
     FlatLayoutSourceProps,
     GridLayoutSource,
     GridLayoutSourceProps,
-    IAnimatedPoint,
     IItemUpdateManyOptions,
     IPoint,
     isAxisType,
-    isPointRangeEmpty,
     LayoutSource,
     zeroPoint,
     isRangeEmpty,
@@ -25,12 +23,11 @@ import {
 } from '../const';
 import { Chart } from "../internal";
 import { linearTicks } from "./linearScale";
-import { zeroDecimalPoint } from "./vectors";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
-import { IChartStyle, IDecimalPoint } from "../types";
+import { IChartStyle } from "../types";
 import { isMatch } from "./comp";
-import { TickGenerator } from "./baseScale";
+import { TickConstraints, TickGenerator } from "./baseScale";
 
 const kGridUpdateDebounceInterval = 100;
 const kAxisUpdateDebounceInterval = 100;
@@ -39,16 +36,34 @@ const kDefaultAxisThicknessStep = 10;
 
 const k0 = new Decimal(0);
 
-export interface LayoutEngineProps {
+export interface IChartAxisInput<TC extends TickConstraints> {
+    /**
+     * Toggles axis visiblity.
+     * Axis is hidden by default.
+     **/
+    show?: boolean;
+
+    /**
+     * Customises the tick location.
+     * Be default, linear ticks are used.
+     */
+    tickGenerator?: TickGenerator<TC>;
+
+    /**
+     * Use these defaults when generating ticks.
+     */
+    defaultTickConstraints?: Partial<TC>;
+}
+
+export interface LayoutEngineProps<TC extends TickConstraints = TickConstraints> {
     dataSources?: DataSource[];
     grid?: {
         horizontalAxis?: AxisType;
         verticalAxis?: AxisType;
     } & GridLayoutSourceProps;
-    axes?: Partial<AxisTypeMapping<{
-        show?: boolean;
-        tickLocations?: TickGenerator;
-    } & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>>>;
+    axes?: Partial<AxisTypeMapping<
+        IChartAxisInput<TC> & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>
+    >>;
 }
 
 interface IAxisLengthLayoutBaseInfo {
@@ -78,7 +93,6 @@ interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
      * This is used to syncronize axes with the axis.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
-    readonly tickLocations: TickGenerator;
 }
 
 interface IAxisWidthLayoutInfo {
@@ -104,7 +118,7 @@ interface IAxisWidthLayoutInfo {
     onOptimalThicknessChange: (thickness: number, index: number, chart: Chart) => void;
 }
 
-interface IChartAxis extends IAxisWidthLayoutInfo, IAxisLengthLayoutInfo {
+interface IChartAxis<TC extends TickConstraints = TickConstraints> extends IAxisWidthLayoutInfo, IAxisLengthLayoutInfo, Required<IChartAxisInput<TC>> {
     horizontal: boolean;
     layout?: FlatLayoutSource;
 }
@@ -364,10 +378,11 @@ export default class LayoutEngine {
         let minorDist = new Decimal(minorGridLineDistanceMin);
 
         // Work out tick mark distance
-        let majorTicks = linearTicks(
+        let majorTicks = axis.tickGenerator(
             visibleRange[0],
             visibleRange[1],
             {
+                ...axis.defaultTickConstraints,
                 minInterval: majorDist.div(scale.x).abs(),
                 expand: true,
             }
@@ -376,12 +391,13 @@ export default class LayoutEngine {
         let majorInterval = majorTicks[Math.min(1, majorTicks.length - 1)]
                 .sub(majorTicks[0]);
 
-        let minorTicks = linearTicks(
+        let minorTicks = axis.tickGenerator(
             k0,
             majorInterval,
             {
+                ...axis.defaultTickConstraints,
                 minInterval: minorDist.div(scale.x).abs(),
-                maxCount: 5,
+                expand: false,
             }
         );
 
@@ -566,10 +582,13 @@ export default class LayoutEngine {
 
     private _createAxis(axisType: AxisType, props: LayoutEngineProps): IChartAxis {
         let {
-            tickLocations = linearTicks,
-        } = props.axes?.[axisType] || {};
+            show = true,
+            tickGenerator = linearTicks,
+            defaultTickConstraints = {},
+        } = props.axes?.[axisType] || { show: false };
 
         let axis: IChartAxis = {
+            show,
             horizontal: isAxisHorizontal(axisType),
             majorInterval: k0,
             majorCount: 0,
@@ -585,9 +604,12 @@ export default class LayoutEngine {
             onOptimalThicknessChange: (thickness, index, chart) => (
                 this.onOptimalAxisThicknessChange(thickness, index, axisType, chart)
             ),
-            tickLocations,
+            tickGenerator,
+            defaultTickConstraints,
         };
-        axis.layout = this._createAxisLayoutSource(axisType, axis, props);
+        if (show) {
+            axis.layout = this._createAxisLayoutSource(axisType, axis, props);
+        }
         return axis;
     }
 
