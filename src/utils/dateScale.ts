@@ -19,6 +19,13 @@ import {
 import { linearTicks } from "./linearScale";
 
 const k0 = new Decimal(0);
+
+/**
+ * When specifying a minimum duration,
+ * non-uniform durations, like months,
+ * allow small rounding errors before
+ * discarding the duration.
+ */
 const kMinDurationFilter = 0.9;
 
 /**
