@@ -24,6 +24,30 @@ describe('scale', () => {
 
     describe('dateTicks', () => {
 
+        // divide into years
+
+        it('should divide years into decades when not expanding', () => {
+            let input: DateTickInput = {
+                start: moment('1900-01-01'),
+                end: moment('2000-01-01'),
+                stride: moment.duration(10, 'year'),
+                format: 'YYYY-MM-DD',
+            };
+            expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
+        });
+
+        // divide years into 1 month intervals
+
+        it('should divide 1 year into 1 month intervals when not expanding', () => {
+            let input: DateTickInput = {
+                start: moment('2020-01-01'),
+                end: moment('2021-01-01'),
+                stride: moment.duration(1, 'month'),
+                format: 'YYYY-MM-DD HH:mm',
+            };
+            expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
+        });
+
         // divide months into 1 day intervals
 
         it('should divide 1 month (30 days) into 1 day intervals when not expanding', () => {

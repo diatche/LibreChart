@@ -66,6 +66,10 @@ export const roundDate = (
         method?: (x: number) => number;
     } = {}
 ): Moment => {
+    if (value < 1 || value % 1 !== 0) {
+        throw new Error('Rounding value must be a positive integer');
+    }
+
     let {
         originUnit,
         method = Math.round,
@@ -78,10 +82,6 @@ export const roundDate = (
         } else if (compareDateUnits('years', unit) > 0) {
             originUnit = 'years';
         }
-    }
-
-    if (value < 1 || value % 1 !== 0) {
-        throw new Error('Rounding value must be a positive integer');
     }
 
     let origin: moment.Moment;
@@ -157,9 +157,13 @@ export const floorDate = (
         originUnit?: DateUnit;
     } = {}
 ): Moment => {
-    if (value <= 1) {
+    if (value < 1 || value % 1 !== 0) {
+        throw new Error('Rounding value must be a positive integer');
+    }
+    if (value === 1) {
         return date.clone().startOf(unit);
     }
+    
     return roundDate(date, value, unit, {
         ...options,
         method: Math.floor,

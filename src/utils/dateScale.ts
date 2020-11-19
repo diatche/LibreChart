@@ -14,12 +14,12 @@ import {
 import {
     ceilDate,
     floorDate,
-    roundDateLinear,
     snapDate,
 } from "./duration";
 import { linearTicks } from "./linearScale";
 
 const k0 = new Decimal(0);
+const kMinDurationFilter = 0.9;
 
 /**
  * Date tick calculation constraints and options.
@@ -122,14 +122,11 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     let minDuration = moment.duration(minInterval.toNumber());
 
     // Get durations in units
-    // let unitDurations: Partial<DateUnitMapping<number>> = {};
     let minUnitDurations: Partial<DateUnitMapping<number>> = {};
     for (let unit of kDateUnitsAsc) {
-        // unitDurationsPartial[unit] = endDate.diff(startDate, unit);
-
         let unitDuration = minDuration.as(unit);
-        if (Math.floor(unitDuration) >= 1) {
-            minUnitDurations[unit] = unitDuration;
+        if (unitDuration >= kMinDurationFilter) {
+            minUnitDurations[unit] = Math.ceil(unitDuration);
         }
     }
 
@@ -140,8 +137,7 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     let minUnitAscIndex = -1;
     for (let i = kUnitsLength - 1; i >= 0; i--) {
         let unit = kDateUnitsAsc[i];
-        let unitDuration = minUnitDurations[unit] || 0;
-        if (Math.floor(unitDuration) >= 1) {
+        if (minUnitDurations[unit]) {
             minUnitAscIndex = i;
             break;
         }
@@ -180,14 +176,14 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
         unitConstraints.minInterval = minUnitDuration;
         unitConstraints.radix = kDateUnitRadix[unit];
         let ticks = linearTicks(0, uniformDuration, unitConstraints)
-            .map(x => {
-                let date = uniformStart.clone().add(x.toNumber(), unit);
-                if (unit === 'days') {
-                    // In case of daylight savings, round the date
-                    date = roundDateLinear(date, unit);
-                }
-                return new Decimal(date.valueOf());
-            });
+            .map(x => (
+                new Decimal(
+                    uniformStart
+                        .clone()
+                        .add(x.toNumber(), unit)
+                        .valueOf()
+                )
+            ));
         if (!constraints.expand) {
             let iStart = unitStart.diff(uniformStart, unit);
             let iEnd = ticks.length - uniformEnd.diff(unitEnd, unit) / minUnitDuration;

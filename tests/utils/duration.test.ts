@@ -204,6 +204,14 @@ describe('duration', () => {
                 'months'
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
+
+        // errors
+
+        it('should throw an error when a non-interger value is used', () => {
+            expect(() => {
+                roundDate(moment('2020-01-01'), 0.5, 'milliseconds');
+            }).toThrow();
+        });
     });
 
     describe('floorDate', () => {
@@ -274,6 +282,14 @@ describe('duration', () => {
                 2,
                 'months'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
+        });
+
+        // errors
+
+        it('should throw an error when a non-interger value is used', () => {
+            expect(() => {
+                floorDate(moment('2020-01-01'), 0.5, 'milliseconds');
+            }).toThrow();
         });
     });
 
