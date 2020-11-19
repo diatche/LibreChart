@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import {
     dateTicks,
 } from '../../src/utils/dateScale';
@@ -15,17 +15,35 @@ import {
 
 describe('scale', () => {
 
+    beforeAll(() => {
+        // Fix time zone to test daylight savings
+        let zoneName = 'NZ';
+        expect(moment.tz.zone(zoneName)).toBeTruthy();
+        moment.tz.setDefault(zoneName);
+    });
+
     describe('dateTicks', () => {
 
         // divide months into 1 day intervals
 
         it('should divide 1 month (30 days) into 1 day intervals when not expanding', () => {
             let input: DateTickInput = {
+                start: moment('2020-06-01'),
+                end: moment('2020-07-01'),
+                stride: moment.duration(1, 'day'),
+                format: 'YYYY-MM-DD HH:mm',
+            };
+            expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
+        });
+
+        it('should divide 1 month (30 days) into 1 day intervals accross daylight savings when not expanding', () => {
+            let input: DateTickInput = {
                 start: moment('2020-04-01'),
                 end: moment('2020-05-01'),
                 stride: moment.duration(1, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
             };
+            expect(input.start.utcOffset()).not.toEqual(input.end.utcOffset());
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
 
@@ -34,7 +52,7 @@ describe('scale', () => {
                 start: moment('2020-01-01'),
                 end: moment('2020-02-01'),
                 stride: moment.duration(1, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -44,7 +62,7 @@ describe('scale', () => {
                 start: moment('2019-02-01'),
                 end: moment('2019-03-01'),
                 stride: moment.duration(1, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -54,7 +72,7 @@ describe('scale', () => {
                 start: moment('2020-02-01'),
                 end: moment('2020-03-01'),
                 stride: moment.duration(1, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -66,7 +84,7 @@ describe('scale', () => {
                 start: moment('2020-06-01'),
                 end: moment('2020-07-01'),
                 stride: moment.duration(2, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -76,7 +94,7 @@ describe('scale', () => {
                 start: moment('2020-01-01'),
                 end: moment('2020-02-01'),
                 stride: moment.duration(2, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -86,7 +104,11 @@ describe('scale', () => {
                 start: moment('2019-02-01'),
                 end: moment('2019-03-01'),
                 stride: moment.duration(2, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
+                expectedOverrides: {
+                    start: moment('2019-02-02'),
+                    end: moment('2019-03-01'),
+                },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -96,7 +118,11 @@ describe('scale', () => {
                 start: moment('2020-02-01'),
                 end: moment('2020-03-01'),
                 stride: moment.duration(2, 'day'),
-                format: 'YYYY-MM-DD',
+                format: 'YYYY-MM-DD HH:mm',
+                expectedOverrides: {
+                    start: moment('2020-02-02'),
+                    end: moment('2020-03-01'),
+                },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -108,7 +134,7 @@ describe('scale', () => {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-02'),
                 stride: moment.duration(1, 'hour'),
-                format: 'YYYY-MM-DD HH',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -118,10 +144,7 @@ describe('scale', () => {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-02'),
                 stride: moment.duration(2, 'hour'),
-                format: 'YYYY-MM-DD HH',
-                constraints: {
-                    minDuration: moment.duration(1.1, 'hour'),
-                }
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
@@ -131,7 +154,7 @@ describe('scale', () => {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-03'),
                 stride: moment.duration(12, 'hour'),
-                format: 'YYYY-MM-DD HH',
+                format: 'YYYY-MM-DD HH:mm',
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });

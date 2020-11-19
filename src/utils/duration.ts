@@ -1,4 +1,4 @@
-import moment, { Moment } from 'moment';
+import moment, { Moment, utc } from 'moment';
 import {
     compareDateUnits,
     DateUnit,
@@ -56,7 +56,9 @@ export const interpolatedDate = (
     date2: Moment,
     position: number,
 ): Moment => {
-    return moment(date1.valueOf() * (1 - position) + date2.valueOf() * position);
+    let date = moment(date1.valueOf() * (1 - position) + date2.valueOf() * position);
+    date.utcOffset(date1.utcOffset());
+    return date;
 };
 
 export const roundDate = (
@@ -95,6 +97,7 @@ export const roundDate = (
         origin.utcOffset(utcOffset);
     }
 
+    let smallerUnit = smallerDateUnit(unit) || 'milliseconds';
     if (kDateNonUniform[unit]) {
         // Find matching period for non-uniform interval
         let periodStart = origin;
@@ -105,17 +108,19 @@ export const roundDate = (
         let indexEnd = 1;
         let dateIndex = -1;
         if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
-            let periodLength = periodEnd.diff(periodStart, 'ms');
-            dateIndex = date.diff(periodStart, 'ms') / periodLength + indexStart;
-        }
-        while (date.isAfter(periodStart) || indexStart % value !== 0) {
-            periodStart = periodEnd;
-            periodEnd = periodStart.clone().add(1, unit);
-            indexStart = indexEnd;
-            indexEnd += 1;
-            if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
-                let periodLength = periodEnd.diff(periodStart, 'ms');
-                dateIndex = date.diff(periodStart, 'ms') / periodLength + indexStart;
+            let periodLength = periodEnd.diff(periodStart, smallerUnit);
+            dateIndex = date.diff(periodStart, smallerUnit) / periodLength + indexStart;
+        } else {
+            while (date.isAfter(periodStart) || indexStart % value !== 0) {
+                periodStart = periodEnd;
+                periodEnd = periodStart.clone().add(1, unit);
+                indexStart = indexEnd;
+                indexEnd += 1;
+                if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
+                    let periodLength = periodEnd.diff(periodStart, smallerUnit);
+                    dateIndex = date.diff(periodStart, smallerUnit) / periodLength + indexStart;
+                    break;
+                }
             }
         }
         while (indexEnd % value !== 0) {
@@ -124,11 +129,11 @@ export const roundDate = (
             indexEdge = indexEnd;
             indexEnd += 1;
             if (date.isSameOrAfter(periodEdge) && date.isSameOrBefore(periodEnd)) {
-                let periodLength = periodEnd.diff(periodEdge, 'ms');
-                dateIndex = date.diff(periodEdge, 'ms') / periodLength + indexEdge;
+                let periodLength = periodEnd.diff(periodEdge, smallerUnit);
+                dateIndex = date.diff(periodEdge, smallerUnit) / periodLength + indexEdge;
             }
         }
-        if (dateIndex < 0) {
+        if (dateIndex < indexStart || dateIndex > indexEnd) {
             throw new Error('Date rounding error');
         }
         // Round indexes instead of intervals
@@ -139,10 +144,12 @@ export const roundDate = (
         return roundedDate;
     } else {
         // Use ms with uniform interval
-        let interval = moment.duration(value, unit).asMilliseconds();
-        let duration = date.diff(origin, 'ms') / interval;
+        let interval = moment.duration(value, unit).as(smallerUnit);
+        let duration = date.diff(origin, smallerUnit) / interval;
         let roundedDuration = method(duration);
-        let roundedDate = origin.clone().add(roundedDuration * interval, 'ms');
+        let roundedDate = origin.clone().add(roundedDuration * interval, smallerUnit);
+        // In case of daylight savings, round one more time
+        roundedDate = roundDateLinear(roundedDate, unit);
         return roundedDate;
     }
 };

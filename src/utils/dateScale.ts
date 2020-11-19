@@ -14,6 +14,7 @@ import {
 import {
     ceilDate,
     floorDate,
+    roundDateLinear,
     snapDate,
 } from "./duration";
 import { linearTicks } from "./linearScale";
@@ -171,17 +172,27 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
         }
         let unitStart = snapDate(startDate, unit);
         let unitEnd = snapDate(endDate, unit);
-        let unitDuration = unitEnd.diff(unitStart, unit, true);
 
-        if (constraints.expand) {
-            unitStart = floorDate(unitStart, minUnitDuration, unit);
-            unitEnd = ceilDate(unitEnd, minUnitDuration, unit);
-        }
+        let uniformStart = floorDate(unitStart, minUnitDuration, unit);
+        let uniformEnd = ceilDate(unitEnd, minUnitDuration, unit);
+        let uniformDuration = uniformEnd.diff(uniformStart, unit);
 
         unitConstraints.minInterval = minUnitDuration;
         unitConstraints.radix = kDateUnitRadix[unit];
-        let ticks = linearTicks(0, unitDuration, unitConstraints)
-            .map(x => new Decimal(unitStart.clone().add(x.toNumber(), unit).valueOf()));
+        let ticks = linearTicks(0, uniformDuration, unitConstraints)
+            .map(x => {
+                let date = uniformStart.clone().add(x.toNumber(), unit);
+                if (unit === 'days') {
+                    // In case of daylight savings, round the date
+                    date = roundDateLinear(date, unit);
+                }
+                return new Decimal(date.valueOf());
+            });
+        if (!constraints.expand) {
+            let iStart = unitStart.diff(uniformStart, unit);
+            let iEnd = ticks.length - uniformEnd.diff(unitEnd, unit) / minUnitDuration;
+            ticks = ticks.slice(iStart, iEnd);
+        }
         if (ticks.length > 1) {
             bestTicks = ticks;
             break;

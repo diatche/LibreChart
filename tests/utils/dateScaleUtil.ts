@@ -10,16 +10,16 @@ export interface DateTickInput {
     stride: moment.Duration;
     format: string;
     constraints?: DateTickConstraints;
+    expectedOverrides?: {
+        start?: moment.Moment;
+        end?: moment.Moment;
+    };
 }
 
-export const getExpectedDateTicks = (
-    {
-        start,
-        end,
-        stride,
-        format,
-    }: DateTickInput
-): string[] => {
+export const getExpectedDateTicks = (input: DateTickInput): string[] => {
+    let start = input.expectedOverrides?.start || input.start;
+    let end = input.expectedOverrides?.end || input.end;
+    let { stride, format } = input;
     let expectedTicks: string[] = [];
     for (let i = start.clone(); i.isSameOrBefore(end); i.add(stride)) {
         let tick = i.format(format);
