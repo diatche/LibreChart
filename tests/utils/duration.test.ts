@@ -2,6 +2,7 @@ import moment from 'moment-timezone';
 import {
     ceilDate,
     floorDate,
+    interpolatedDate,
     roundDate,
 } from '../../src/utils/duration';
 
@@ -14,6 +15,17 @@ describe('duration', () => {
         let zoneName = 'NZ';
         expect(moment.tz.zone(zoneName)).toBeTruthy();
         moment.tz.setDefault(zoneName);
+    });
+
+    describe('interpolatedDate', () => {
+
+        it('should change UTC offset accross daylight savings', () => {
+            let start = moment('2020-04-01');
+            let end = moment('2020-05-01');
+            expect(start.utcOffset()).not.toBe(end.utcOffset());
+            expect(interpolatedDate(start, end, 0).utcOffset()).toBe(start.utcOffset());
+            expect(interpolatedDate(start, end, 1).utcOffset()).toBe(end.utcOffset());
+        });
     });
 
     describe('roundDate', () => {

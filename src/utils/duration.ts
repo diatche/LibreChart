@@ -1,13 +1,10 @@
-import moment, { Moment, utc } from 'moment';
+import moment, { Moment } from 'moment';
 import {
     compareDateUnits,
     DateUnit,
     kDateNonUniform,
-    largerDateUnit,
     smallerDateUnit,
 } from './dateBase';
-
-const kMinuteMs = 60000;
 
 /**
  * Returns the date nearest to the specified `date`
@@ -56,9 +53,8 @@ export const interpolatedDate = (
     date2: Moment,
     position: number,
 ): Moment => {
-    let date = moment(date1.valueOf() * (1 - position) + date2.valueOf() * position);
-    date.utcOffset(date1.utcOffset());
-    return date;
+    let length = date2.diff(date1, 'ms');
+    return date1.clone().add(position * length, 'ms');
 };
 
 export const roundDate = (
@@ -70,7 +66,6 @@ export const roundDate = (
         method?: (x: number) => number;
     } = {}
 ): Moment => {
-    let utcOffset = date.utcOffset();
     let {
         originUnit,
         method = Math.round,
@@ -93,8 +88,8 @@ export const roundDate = (
     if (originUnit) {
         origin = date.clone().startOf(originUnit);
     } else {
-        origin = moment(0);
-        origin.utcOffset(utcOffset);
+        // Use 1 CE
+        origin = date.clone().startOf('year').subtract(date.year());
     }
 
     let smallerUnit = smallerDateUnit(unit) || 'milliseconds';
