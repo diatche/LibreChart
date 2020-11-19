@@ -1,4 +1,3 @@
-import moment, { Moment } from 'moment';
 
 export type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
 export type DateUnitMapping<T> = { [unit in DateUnit]: T };

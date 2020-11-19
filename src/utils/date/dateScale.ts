@@ -3,7 +3,7 @@ import moment from 'moment';
 import {
     TickConstraints,
     TickGenerator,
-} from "./baseScale";
+} from "../baseScale";
 import {
     DateUnitMapping,
     kDateUnitsAsc,
@@ -16,7 +16,7 @@ import {
     floorDate,
     snapDate,
 } from "./duration";
-import { linearTicks } from "./linearScale";
+import { linearTicks } from "../linearScale";
 
 const k0 = new Decimal(0);
 
