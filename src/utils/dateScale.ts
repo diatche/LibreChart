@@ -174,9 +174,8 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
         let unitDuration = unitEnd.diff(unitStart, unit, true);
 
         if (constraints.expand) {
-            // TODO: expand w.r.t. minUnitDuration
-            unitStart = floorDate(unitStart, unit);
-            unitEnd = ceilDate(unitEnd, unit);
+            unitStart = floorDate(unitStart, minUnitDuration, unit);
+            unitEnd = ceilDate(unitEnd, minUnitDuration, unit);
         }
 
         unitConstraints.minInterval = minUnitDuration;

@@ -1,4 +1,3 @@
-import Decimal from 'decimal.js';
 import moment from 'moment';
 import {
     dateTicks,

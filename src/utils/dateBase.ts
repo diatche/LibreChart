@@ -23,52 +23,43 @@ export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
     months: 12,
 };
 
-export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
-    let i = kDateUnitsAsc.indexOf(unit);
-    return i > 0 ? kDateUnitsAsc[i - 1] : undefined;
+export const kDateNonUniform: Partial<DateUnitMapping<boolean>> = {
+    months: true,
 };
 
-export const smallerDateUnit = (unit: DateUnit): DateUnit | undefined => {
+export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
     let i = kDateUnitsDes.indexOf(unit);
     return i > 0 ? kDateUnitsDes[i - 1] : undefined;
 };
 
-/**
- * Returns a date between the current unit (A) and 
- * the date at the next unit (B).
- * A step of 0 will return A, a step of 1 will return B,
- * and a step of 0.5 will return a date between A and B
- * using linear interpolation.
- * @param date 
- * @param step 
- * @param unit 
- */
-export const linearStepDate = (
-    date: Moment,
-    step: number,
-    unit: DateUnit,
-): Moment => {
-    return interpolatedDate(
-        date,
-        date.clone().add(1, unit),
-        step,
-    );
+export const smallerDateUnit = (unit: DateUnit): DateUnit | undefined => {
+    let i = kDateUnitsAsc.indexOf(unit);
+    return i > 0 ? kDateUnitsAsc[i - 1] : undefined;
 };
 
 /**
- * Returns a date between the `date1` and `date2`.
- * A `position` of 0 will return `date1` (cloned),
- * a `position` of 1 will return `date2` (cloned),
- * a `position` of 0.5 will return a date between
- * the two using linear interpolation.
- * @param date1 
- * @param date2 
- * @param position 
+ * Returns:
+ * 
+ * - A positive number if `unit1` is larger than `unit2`;
+ * - 0 if `unit1` is the same as `unit2`;
+ * - A negative number if `unit1` is smaller than `unit2`;
+ * - NaN if a unit is invalid.
+ * 
+ * To get an intuitive sense of the return value,
+ * you can think of the comma between the
+ * arguments as a minus sign.
+ * 
+ * @param unit1 
+ * @param unit2 
  */
-export const interpolatedDate = (
-    date1: Moment,
-    date2: Moment,
-    position: number,
-): Moment => {
-    return moment(date1.valueOf() * (1 - position) + date2.valueOf() * position);
+export const compareDateUnits = (unit1: DateUnit, unit2: DateUnit): number => {
+    let i1 = kDateUnitsAsc.indexOf(unit1);
+    if (i1 < 0) {
+        return NaN;
+    }
+    let i2 = kDateUnitsAsc.indexOf(unit2);
+    if (i2 < 0) {
+        return NaN;
+    }
+    return i1 - i2;
 };
