@@ -94,13 +94,15 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
             case kGridReuseID:
                 let chartStyle = this.getChartStyle();
+                let hAxis = this.layout.getHorizontalGridAxis();
+                let vAxis = this.layout.getVerticalGridAxis();
                 return (
                     <ChartGrid
                         {...chartStyle}
-                        majorCountX={this.layout.gridInfo.majorCount.x}
-                        majorCountY={this.layout.gridInfo.majorCount.y}
-                        minorCountX={this.layout.gridInfo.minorCount.x}
-                        minorCountY={this.layout.gridInfo.minorCount.y}
+                        majorCountX={hAxis?.majorCount || 0}
+                        minorCountX={hAxis?.minorCount || 0}
+                        majorCountY={vAxis?.majorCount || 0}
+                        minorCountY={vAxis?.minorCount || 0}
                     />
                 );
             default: 
@@ -115,8 +117,8 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         let axisType = kReuseIDAxes[reuseID];
         let chartStyle = this.getChartStyle();
         let direction = kAxisDirection[axisType];
-        let range = this.layout.getGridContainerRangeAtIndex(index, direction);
-        let tickLocations = this.layout.getTickLocations(range[0], range[1], direction);
+        let range = this.layout.getAxisContainerRangeAtIndex(index, axisType);
+        let tickLocations = this.layout.getAxisTickLocations(range[0], range[1], axisType);
         let isInverted = this.layout.isAxisInverted(direction, this);
         return (
             <ChartAxis
