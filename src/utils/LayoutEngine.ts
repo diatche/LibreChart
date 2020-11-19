@@ -175,6 +175,7 @@ export default class LayoutEngine {
             if (scale) {
                 let axisScale = axis.horizontal ? scale.x : scale.y;
                 axis.containerViewLength$ = Animated.multiply(axis.containerLength$, axisScale);
+                return;
             }
         }
         axis.containerViewLength$ = undefined;
@@ -527,7 +528,6 @@ export default class LayoutEngine {
         let {
             horizontalAxis,
             verticalAxis,
-            ...otherProps
         } = props.grid || {};
 
         if (horizontalAxis && !isAxisType(horizontalAxis)) {
@@ -555,12 +555,10 @@ export default class LayoutEngine {
         } = props.grid || {};
         return new GridLayoutSource({
             itemSize: view => ({
-                x: horizontalAxis
-                    ? axes[horizontalAxis].containerLength$
-                    : view.containerSize$.x,
-                y: verticalAxis
-                    ? axes[verticalAxis].containerLength$
-                    : view.containerSize$.y,
+                x: horizontalAxis && axes[horizontalAxis]?.containerLength$
+                    || view.containerSize$.x,
+                y: verticalAxis && axes[verticalAxis]?.containerLength$
+                    || view.containerSize$.y,
             }),
             ...otherProps,
             shouldRenderItem: () => false,
