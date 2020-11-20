@@ -19,20 +19,6 @@ export const kReuseIDAxes: { [reuseID: string]: AxisType } = {
     leftAxis: 'leftAxis',
 };
 
-export const kAxisDirection: AxisTypeMapping<'x' | 'y'> = {
-    topAxis: 'x',
-    rightAxis: 'y',
-    bottomAxis: 'x',
-    leftAxis: 'y',
-};
-
-export const kAxisCrossDirection: AxisTypeMapping<'x' | 'y'> = {
-    topAxis: 'y',
-    rightAxis: 'x',
-    bottomAxis: 'y',
-    leftAxis: 'x',
-};
-
 export const kAxisStyleBaseDefaults: IAxisStyle = {
     axisLineThickness: 1,
 

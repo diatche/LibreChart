@@ -8,7 +8,6 @@ import Evergrid, {
 import {
     kPointReuseID,
     kGridReuseID,
-    kAxisDirection,
     kReuseIDAxes,
     kAxisStyleLightDefaults,
 } from '../const';
@@ -115,10 +114,9 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
         let axisType = kReuseIDAxes[reuseID];
         let chartStyle = this.getChartStyle();
-        let direction = kAxisDirection[axisType];
         let range = this.layout.getAxisContainerRangeAtIndex(index, axisType);
         let tickLocations = this.layout.getAxisTickLocations(range[0], range[1], axisType);
-        let isInverted = this.layout.isAxisInverted(direction, this);
+        let isInverted = this.layout.isAxisInverted(axisType, this);
         return (
             <ChartAxis
                 {...chartStyle}

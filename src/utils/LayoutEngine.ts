@@ -8,7 +8,6 @@ import Evergrid, {
     GridLayoutSource,
     GridLayoutSourceProps,
     IItemUpdateManyOptions,
-    IPoint,
     isAxisType,
     LayoutSource,
     zeroPoint,
@@ -17,7 +16,6 @@ import Evergrid, {
 } from "evergrid";
 import DataSource from "./DataSource";
 import {
-    kAxisDirection,
     kAxisReuseIDs,
     kGridReuseID,
 } from '../const';
@@ -93,6 +91,8 @@ interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
      * This is used to syncronize axes with the axis.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
+    /** The currently visible container index ranges. */
+    visibleContainerIndexRange: [number, number];
 }
 
 interface IAxisWidthLayoutInfo {
@@ -138,9 +138,6 @@ export default class LayoutEngine {
 
     /** Grid layout info. */
     readonly grid: IChartGrid;
-
-    /** Visible grid container index range. */
-    private _visibleGridContainerIndexRange: [IPoint, IPoint] = [zeroPoint(), zeroPoint()];
 
     constructor(props: LayoutEngineProps) {
         this.dataSources = props.dataSources || [];
@@ -333,15 +330,10 @@ export default class LayoutEngine {
     }
 
     private _cleanAxisThicknessInfo(axisType: AxisType) {
-        let direction = kAxisDirection[axisType];
-        let visibleRange: [number, number] = [
-            this._visibleGridContainerIndexRange[0][direction],
-            this._visibleGridContainerIndexRange[1][direction],
-        ];
-
-        // Remove hidden axis container indexes
         const axis = this.axes[axisType];
         
+        // Remove hidden axis container indexes
+        let visibleRange = axis.visibleContainerIndexRange;
         if (isRangeEmpty(visibleRange)) {
             return;
         }
@@ -501,15 +493,17 @@ export default class LayoutEngine {
 
     /**
      * Returns `true` if the axis has a negative scale.
-     * @param direction 
+     * @param axisType 
      * @param chart 
      */
-    isAxisInverted(direction: 'x' | 'y', chart: Chart) {
-        return (chart.innerView?.scale[direction] || 0) < 0;
-    }
-
-    onVisibleGridContainerRangeChange(visibleRange: [IPoint, IPoint]) {
-        this._visibleGridContainerIndexRange = visibleRange;
+    isAxisInverted(axisType: AxisType, chart: Chart) {
+        let view = chart.innerView;
+        if (!view) {
+            return false;
+        }
+        let axis = this.axes[axisType];
+        let scale = axis.layout?.getScale(view) || zeroPoint();
+        return (axis.horizontal ? scale.x : scale.y) < 0;
     }
 
     onAxisContainerDequeue(fromIndex: number, toIndex: number, axisType: AxisType) {
@@ -563,7 +557,6 @@ export default class LayoutEngine {
             ...otherProps,
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
-            onVisibleRangeChange: r => this.onVisibleGridContainerRangeChange(r),
         });
     }
 
@@ -595,6 +588,7 @@ export default class LayoutEngine {
             containerLength: 0,
             containerLength$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
+            visibleContainerIndexRange: [0, 0],
             thickness: 0,
             thicknessStep: kDefaultAxisThicknessStep,
             thickness$: new Animated.Value(0),
@@ -625,6 +619,9 @@ export default class LayoutEngine {
                 return true;
             },
             reuseID: kAxisReuseIDs[axisType],
+            onVisibleRangeChange: r => {
+                axis.visibleContainerIndexRange = r;
+            },
         };
 
         switch (axisType) {
