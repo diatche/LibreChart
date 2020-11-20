@@ -53,12 +53,20 @@ export interface IChartAxisInput<TC extends TickConstraints = TickConstraints> {
     defaultTickConstraints?: Partial<TC>;
 }
 
+export interface IChartGridInput {
+    /**
+     * Toggles grid visiblity.
+     * Grid is hidden by default.
+     **/
+    show?: boolean;
+
+    horizontalAxis?: AxisType;
+    verticalAxis?: AxisType;
+}
+
 export interface LayoutEngineProps {
     dataSources?: DataSource[];
-    grid?: {
-        horizontalAxis?: AxisType;
-        verticalAxis?: AxisType;
-    } & GridLayoutSourceProps;
+    grid?: IChartGridInput & Omit<GridLayoutSourceProps, 'shouldRenderItem'>;
     axes?: Partial<AxisTypeMapping<
         IChartAxisInput & Omit<FlatLayoutSourceProps, 'shouldRenderItem'>
     >>;
@@ -121,10 +129,9 @@ interface IChartAxis<TC extends TickConstraints = TickConstraints> extends IAxis
     layout?: FlatLayoutSource;
 }
 
-interface IChartGrid {
+interface IChartGrid extends IChartGridInput {
+    show: boolean;
     layout?: GridLayoutSource;
-    horizontalAxis?: AxisType;
-    verticalAxis?: AxisType;
 }
 
 
@@ -497,21 +504,9 @@ export default class LayoutEngine {
         axes: AxisTypeMapping<IChartAxis>,
         props: LayoutEngineProps,
     ): IChartGrid {
-        let {
-            horizontalAxis,
-            verticalAxis,
-        } = props.grid || {};
-
-        if (horizontalAxis && !isAxisType(horizontalAxis)) {
-            throw new Error('Invalid axis type');
-        }
-        if (verticalAxis && !isAxisType(verticalAxis)) {
-            throw new Error('Invalid axis type');
-        }
-
         return {
-            horizontalAxis,
-            verticalAxis,
+            show: false,
+            ...props.grid,
             layout: this._createGridLayout(axes, props),
         };
     }
@@ -665,9 +660,3 @@ export default class LayoutEngine {
         }
     }
 }
-
-// export const create = () => {
-//     return new GridLayoutSource({
-
-//     });
-// };

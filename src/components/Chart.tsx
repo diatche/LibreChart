@@ -91,18 +91,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             case kPointReuseID:
                 return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
             case kGridReuseID:
-                let chartStyle = this.getChartStyle();
-                let hAxis = this.layout.getHorizontalGridAxis();
-                let vAxis = this.layout.getVerticalGridAxis();
-                return (
-                    <ChartGrid
-                        {...chartStyle}
-                        majorCountX={hAxis?.majorCount || 0}
-                        minorCountX={hAxis?.minorCount || 0}
-                        majorCountY={vAxis?.majorCount || 0}
-                        minorCountY={vAxis?.minorCount || 0}
-                    />
-                );
+                return this.renderGrid();
             default: 
                 return null;
         }
@@ -113,6 +102,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             return null;
         }
         let axisType = kReuseIDAxes[reuseID];
+        let axis = this.layout.axes[axisType];
+        if (!axis.show) {
+            return null;
+        }
         let chartStyle = this.getChartStyle();
         let range = this.layout.getAxisContainerRangeAtIndex(index, axisType);
         let tickLocations = this.layout.getAxisTickLocations(range[0], range[1], axisType);
@@ -129,6 +122,27 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                     axisType,
                     this,
                 )}
+            />
+        );
+    }
+
+    renderGrid() {
+        if (!this.layout.grid.show) {
+            return null;
+        }
+        let chartStyle = this.getChartStyle();
+        let hAxis = this.layout.getHorizontalGridAxis();
+        let vAxis = this.layout.getVerticalGridAxis();
+        if (!hAxis && !vAxis) {
+            return null;
+        }
+        return (
+            <ChartGrid
+                {...chartStyle}
+                majorCountX={hAxis?.majorCount || 0}
+                minorCountX={hAxis?.minorCount || 0}
+                majorCountY={vAxis?.majorCount || 0}
+                minorCountY={vAxis?.minorCount || 0}
             />
         );
     }
