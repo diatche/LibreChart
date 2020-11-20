@@ -139,7 +139,7 @@ export default class LayoutEngine {
     dataSources: DataSource[] = [];
 
     /** Axis layout info. */
-    readonly axes: AxisTypeMapping<IChartAxis>;
+    readonly axes: Partial<AxisTypeMapping<IChartAxis>>;
 
     /** Grid layout info. */
     readonly grid: IChartGrid;
@@ -225,7 +225,7 @@ export default class LayoutEngine {
         updateOptions: IItemUpdateManyOptions,
     ): boolean {
         let axis = this.axes[axisType];
-        if (!axis.layout) {
+        if (!axis?.layout) {
             return false;
         }
 
@@ -259,7 +259,7 @@ export default class LayoutEngine {
             return;
         }
 
-        const axis = this.axes[axisType];
+        const axis = this.axes[axisType]!;
 
         // Apply thickness step
         thickness = Math.ceil(thickness / axis.thicknessStep) * axis.thicknessStep;
@@ -271,7 +271,7 @@ export default class LayoutEngine {
     }
 
     scheduleAxisThicknessUpdate(axisType: AxisType, view: Evergrid) {
-        if (!this.axes[axisType].layout) {
+        if (!this.axes[axisType]?.layout) {
             return;
         }
         this._debouncedAxisUpdate[axisType]();
@@ -283,7 +283,7 @@ export default class LayoutEngine {
     ));
 
     updateAxisThickness(axisType: AxisType) {
-        const axis = this.axes[axisType];
+        const axis = this.axes[axisType]!;
 
         // Get optimal axis thickness
         let thickness = 0;
@@ -315,7 +315,7 @@ export default class LayoutEngine {
     }
 
     private _cleanAxisThicknessInfo(axisType: AxisType) {
-        const axis = this.axes[axisType];
+        const axis = this.axes[axisType]!;
         
         // Remove hidden axis container indexes
         let visibleRange = axis.visibleContainerIndexRange;
@@ -407,10 +407,10 @@ export default class LayoutEngine {
             // Data above grid and below axes
             ...this.dataSources.map(d => d.layout),
             // Horizontal axes below vertical axes
-            this.axes.bottomAxis.layout,
-            this.axes.topAxis.layout,
-            this.axes.rightAxis.layout,
-            this.axes.leftAxis.layout,
+            this.axes.bottomAxis?.layout,
+            this.axes.topAxis?.layout,
+            this.axes.rightAxis?.layout,
+            this.axes.leftAxis?.layout,
         ].filter(s => !!s) as LayoutSource[];
     }
 
@@ -424,8 +424,8 @@ export default class LayoutEngine {
      */
     getAxisContainerRangeAtIndex(index: number, axisType: AxisType): [Decimal, Decimal] {
         let axis = this.axes[axisType];
-        let interval = axis.majorInterval;
-        let count = axis.majorCount;
+        let interval = axis?.majorInterval || k0;
+        let count = axis?.majorCount || 0;
         if (count === 0 || interval.lte(0)) {
             return [k0, k0];
         }
@@ -455,8 +455,8 @@ export default class LayoutEngine {
             return [];
         }
         let axis = this.axes[axisType];
-        let interval = axis.majorInterval;
-        let count = axis.majorCount;
+        let interval = axis?.majorInterval || k0;
+        let count = axis?.majorCount || 0;
         if (count === 0 || interval.lte(0)) {
             return [];
         }
@@ -487,21 +487,21 @@ export default class LayoutEngine {
             return false;
         }
         let axis = this.axes[axisType];
-        let scale = axis.layout?.getScale(view) || zeroPoint();
-        return (axis.horizontal ? scale.x : scale.y) < 0;
+        let scale = axis?.layout?.getScale(view) || zeroPoint();
+        return (axis?.horizontal ? scale.x : scale.y) < 0;
     }
 
     onAxisContainerDequeue(fromIndex: number, toIndex: number, axisType: AxisType) {
         // Move optimal axis 
         const axis = this.axes[axisType];
-        if (axis.optimalThicknesses[fromIndex]) {
+        if (axis?.optimalThicknesses[fromIndex]) {
             axis.optimalThicknesses[toIndex] = axis.optimalThicknesses[fromIndex];
             delete axis.optimalThicknesses[fromIndex];
         }
     }
 
     private _createGrid(
-        axes: AxisTypeMapping<IChartAxis>,
+        axes: Partial<AxisTypeMapping<IChartAxis>>,
         props: LayoutEngineProps,
     ): IChartGrid {
         return {
@@ -512,7 +512,7 @@ export default class LayoutEngine {
     }
 
     private _createGridLayout(
-        axes: AxisTypeMapping<IChartAxis>,
+        axes: Partial<AxisTypeMapping<IChartAxis>>,
         props: LayoutEngineProps,
     ): GridLayoutSource | undefined {
         let {
@@ -533,14 +533,20 @@ export default class LayoutEngine {
         });
     }
 
-    private _createAxes(props: LayoutEngineProps): AxisTypeMapping<IChartAxis> {
+    private _createAxes(props: LayoutEngineProps): Partial<AxisTypeMapping<IChartAxis>> {
+        let axesInput = props.axes || {};
+        let gridAxisTypes = new Set([
+            props.grid?.horizontalAxis,
+            props.grid?.verticalAxis,
+        ].filter(t => !!t) as AxisType[]);
+
+        // Create axes only when needed
         let axes: Partial<AxisTypeMapping<IChartAxis>> = {};
-        for (let axisType of Object.keys(props.axes || {})) {
-            if (!isAxisType(axisType)) {
-                throw new Error(`Invalid axis type: ${axisType}`);
+        axisTypeMap(axisType => {
+            if (axisType in axesInput || gridAxisTypes.has(axisType)) {
+                axes[axisType] = this._createAxis(axisType, props);
             }
-            axes[axisType] = this._createAxis(axisType, props);
-        }
+        });
         return axes as AxisTypeMapping<IChartAxis>;
     }
 
