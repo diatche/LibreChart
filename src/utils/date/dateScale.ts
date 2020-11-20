@@ -93,8 +93,8 @@ export function dateTicks<TC extends DateTickConstraints = DateTickConstraints>(
     let endDate: moment.Moment;
     if (rescale) {
         // Rescale
-        startDate = originDate.add(a.toNumber(), baseUnit);
-        endDate = originDate.add(b.toNumber(), baseUnit);
+        startDate = originDate.clone().add(a.toNumber(), baseUnit);
+        endDate = originDate.clone().add(b.toNumber(), baseUnit);
     } else {
         startDate = moment(a.toNumber());
         endDate = moment(b.toNumber());
