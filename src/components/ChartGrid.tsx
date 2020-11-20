@@ -4,9 +4,9 @@ import {
     StyleSheet,
     ViewStyle,
 } from 'react-native';
-import { IAxisStyle } from '../types';
+import { IChartGridStyle } from '../types';
 
-export interface ChartGridProps extends Required<IAxisStyle> {
+export interface ChartGridProps extends Required<IChartGridStyle> {
     majorCountX: number;
     majorCountY: number;
     minorCountX: number;

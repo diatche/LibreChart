@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { AxisType, AxisTypeMapping } from "evergrid";
-import { IAxisStyle } from "./types";
+import { IAxisStyle, IChartGridStyle } from "./types";
 import * as Colors from './utils/colors';
 
 export const kPointReuseID = 'point';
@@ -26,14 +26,11 @@ export const kAxisStyleBaseDefaults: IAxisStyle = {
     majorTickThickness: 1,
 
     majorGridLineDistanceMin: 50,
-    majorGridLineThickness: 1,
 
     minorGridLineDistanceMin: 10,
-    minorGridLineThickness: 1,
 
     labelFontSize: 12,
     labelMargin: 3,
-    getLabel: (value: Decimal) => value.toString(),
 }
 
 export const kAxisStyleLightDefaults = {
@@ -65,3 +62,20 @@ export const kAxisStyleDarkDefaults = {
 
     labelColor: Colors.grey500,
 } as Required<IAxisStyle>;
+
+export const kChartGridStyleBaseDefaults: IChartGridStyle = {
+    majorGridLineThickness: 1,
+    minorGridLineThickness: 1,
+}
+
+export const kChartGridStyleLightDefaults = {
+    ...kChartGridStyleBaseDefaults,
+    majorGridLineColor: Colors.grey300,
+    minorGridLineColor: Colors.grey100,
+} as Required<IChartGridStyle>;
+
+export const kChartGridStyleDarkDefaults = {
+    ...kChartGridStyleBaseDefaults,
+    majorGridLineColor: Colors.grey700,
+    minorGridLineColor: Colors.grey900,
+} as Required<IChartGridStyle>;

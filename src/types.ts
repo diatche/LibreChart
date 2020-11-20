@@ -15,10 +15,6 @@ export interface IAxisLayoutStyle {
 
     labelFontSize?: number;
     labelMargin?: number;
-    getLabel?: (value: Decimal) => string;
-}
-
-export interface IChartLayoutStyle extends IAxisLayoutStyle {
 }
 
 export interface IAxisStyle extends IAxisLayoutStyle {
@@ -29,14 +25,13 @@ export interface IAxisStyle extends IAxisLayoutStyle {
     majorTickThickness?: number;
     majorTickColor?: ColorValue;
 
+    labelColor?: ColorValue;
+}
+
+export interface IChartGridStyle {
     majorGridLineThickness?: number;
     majorGridLineColor?: ColorValue;
 
     minorGridLineThickness?: number;
     minorGridLineColor?: ColorValue;
-
-    labelColor?: ColorValue;
-}
-
-export interface IChartStyle extends IAxisStyle {
 }

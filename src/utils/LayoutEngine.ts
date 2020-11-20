@@ -17,13 +17,15 @@ import Evergrid, {
 import DataSource from "./DataSource";
 import {
     kAxisReuseIDs,
+    kAxisStyleLightDefaults,
+    kChartGridStyleLightDefaults,
     kGridReuseID,
 } from '../const';
 import { Chart } from "../internal";
 import { linearTicks } from "./linearScale";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
-import { IChartStyle } from "../types";
+import { IAxisStyle, IChartGridStyle } from "../types";
 import { isMatch } from "./comp";
 import { TickConstraints, TickGenerator } from "./baseScale";
 
@@ -41,6 +43,8 @@ export interface IChartAxisInput<TC extends TickConstraints = TickConstraints> {
      **/
     show?: boolean;
 
+    getLabel?: (value: Decimal) => string;
+
     /**
      * Customises the tick location.
      * Be default, linear ticks are used.
@@ -51,6 +55,8 @@ export interface IChartAxisInput<TC extends TickConstraints = TickConstraints> {
      * Use these defaults when generating ticks.
      */
     defaultTickConstraints?: Partial<TC>;
+
+    style?: IAxisStyle;
 }
 
 export interface IChartGridInput {
@@ -62,6 +68,8 @@ export interface IChartGridInput {
 
     horizontalAxis?: AxisType;
     verticalAxis?: AxisType;
+
+    style?: IChartGridStyle;
 }
 
 export interface LayoutEngineProps {
@@ -124,14 +132,16 @@ interface IAxisWidthLayoutInfo {
     onOptimalThicknessChange: (thickness: number, index: number, chart: Chart) => void;
 }
 
-interface IChartAxis<TC extends TickConstraints = TickConstraints> extends IAxisWidthLayoutInfo, IAxisLengthLayoutInfo, Required<IChartAxisInput<TC>> {
+interface IChartAxis extends IAxisWidthLayoutInfo, IAxisLengthLayoutInfo, Required<IChartAxisInput> {
     horizontal: boolean;
     layout?: FlatLayoutSource;
+    style: Required<IAxisStyle>;
 }
 
 interface IChartGrid extends IChartGridInput {
     show: boolean;
     layout?: GridLayoutSource;
+    style: Required<IChartGridStyle>;
 }
 
 
@@ -187,10 +197,10 @@ export default class LayoutEngine {
             return;
         }
 
-        this._update(view, chart.getChartStyle());
+        this._update(view);
     }
 
-    private _update(view: Evergrid, chartStyle: Required<IChartStyle>) {
+    private _update(view: Evergrid) {
         const updateOptions: IItemUpdateManyOptions = {
             visible: true,
             queued: true,
@@ -204,7 +214,6 @@ export default class LayoutEngine {
         let changes = axisTypeMap(axisType => this._updateAxis(
             axisType,
             view,
-            chartStyle,
             updateOptions,
         ));
         
@@ -221,7 +230,6 @@ export default class LayoutEngine {
     private _updateAxis(
         axisType: AxisType,
         view: Evergrid,
-        chartStyle: Required<IChartStyle>,
         updateOptions: IItemUpdateManyOptions,
     ): boolean {
         let axis = this.axes[axisType];
@@ -229,7 +237,7 @@ export default class LayoutEngine {
             return false;
         }
 
-        let axisLengthInfo = this._getAxisLengthInfo(axis, view, chartStyle);
+        let axisLengthInfo = this._getAxisLengthInfo(axis, view);
         if (!axisLengthInfo || isMatch(axis, axisLengthInfo)) {
             // No changes
             return false;
@@ -334,7 +342,6 @@ export default class LayoutEngine {
     private _getAxisLengthInfo(
         axis: IChartAxis,
         view: Evergrid,
-        chartStyle: Required<IChartStyle>
     ): IAxisLengthLayoutBaseInfo | undefined {
         let { scale } = view;
         let visibleLocationRange = axis.layout!.getVisibleLocationRange(view);
@@ -350,7 +357,7 @@ export default class LayoutEngine {
         let {
             majorGridLineDistanceMin,
             minorGridLineDistanceMin,
-        } = chartStyle;
+        } = axis.style;
 
         let majorDist = new Decimal(majorGridLineDistanceMin);
         let minorDist = new Decimal(minorGridLineDistanceMin);
@@ -508,6 +515,10 @@ export default class LayoutEngine {
             show: false,
             ...props.grid,
             layout: this._createGridLayout(axes, props),
+            style: {
+                ...kChartGridStyleLightDefaults,
+                ...props.grid?.style,
+            },
         };
     }
 
@@ -553,11 +564,15 @@ export default class LayoutEngine {
     private _createAxis(axisType: AxisType, props: LayoutEngineProps): IChartAxis {
         let {
             show = true,
+            getLabel = (value: Decimal) => value.toString(),
             tickGenerator = linearTicks,
             defaultTickConstraints = {},
+            style = {},
+            ...otherProps
         } = props.axes?.[axisType] || { show: false };
 
         let axis: IChartAxis = {
+            ...otherProps,
             show,
             horizontal: isAxisHorizontal(axisType),
             majorInterval: k0,
@@ -575,8 +590,13 @@ export default class LayoutEngine {
             onOptimalThicknessChange: (thickness, index, chart) => (
                 this.onOptimalAxisThicknessChange(thickness, index, axisType, chart)
             ),
+            getLabel,
             tickGenerator,
             defaultTickConstraints,
+            style: {
+                ...kAxisStyleLightDefaults,
+                ...style,
+            },
         };
         if (show) {
             axis.layout = this._createAxisLayoutSource(axisType, axis, props);

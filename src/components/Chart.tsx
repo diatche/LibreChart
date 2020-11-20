@@ -9,7 +9,6 @@ import {
     kPointReuseID,
     kGridReuseID,
     kReuseIDAxes,
-    kAxisStyleLightDefaults,
 } from '../const';
 import {
     LayoutEngine,
@@ -18,11 +17,10 @@ import {
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxis from './ChartAxis';
-import { IChartStyle } from '../types';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
-export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps, IChartStyle {
+export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps {
 
 }
 
@@ -54,14 +52,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             ...this.layout.getLayoutSources(),
             ...this.props.layoutSources || [],
         ];
-    }
-
-    getChartStyle(): Required<IChartStyle> {
-        // TODO: cache labels until prop change
-        return {
-            ...kAxisStyleLightDefaults,
-            ...this.props,
-        };
     }
 
     updateLayout() {
@@ -103,18 +93,18 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
         let axisType = kReuseIDAxes[reuseID];
         let axis = this.layout.axes[axisType];
-        if (!axis.show) {
+        if (!axis?.show) {
             return null;
         }
-        let chartStyle = this.getChartStyle();
         let range = this.layout.getAxisContainerRangeAtIndex(index, axisType);
         let tickLocations = this.layout.getAxisTickLocations(range[0], range[1], axisType);
         let isInverted = this.layout.isAxisInverted(axisType, this);
         return (
             <ChartAxis
-                {...chartStyle}
+                {...axis.style}
                 type={axisType}
                 tickLocations={tickLocations}
+                getLabel={value => axis?.getLabel(value) || ''}
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness => this.layout.onOptimalAxisThicknessChange(
                     thickness,
@@ -130,7 +120,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (!this.layout.grid.show) {
             return null;
         }
-        let chartStyle = this.getChartStyle();
         let hAxis = this.layout.getHorizontalGridAxis();
         let vAxis = this.layout.getVerticalGridAxis();
         if (!hAxis && !vAxis) {
@@ -138,7 +127,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
         return (
             <ChartGrid
-                {...chartStyle}
+                {...this.layout.grid.style}
                 majorCountX={hAxis?.majorCount || 0}
                 minorCountX={hAxis?.minorCount || 0}
                 majorCountY={vAxis?.majorCount || 0}

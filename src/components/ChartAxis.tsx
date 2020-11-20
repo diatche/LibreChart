@@ -23,6 +23,8 @@ export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
     isInverted: boolean;
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
+    /** Return a label for the value. */
+    getLabel: (value: Decimal) => string;
 }
 
 interface ChartAxisState {}
