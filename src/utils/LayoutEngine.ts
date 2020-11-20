@@ -8,7 +8,6 @@ import Evergrid, {
     GridLayoutSource,
     GridLayoutSourceProps,
     IItemUpdateManyOptions,
-    isAxisType,
     LayoutSource,
     zeroPoint,
     isRangeEmpty,

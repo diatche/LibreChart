@@ -2,7 +2,6 @@ import Decimal from "decimal.js";
 import moment from 'moment';
 import {
     TickConstraints,
-    TickGenerator,
 } from "../baseScale";
 import {
     DateUnitMapping,
@@ -10,6 +9,7 @@ import {
     kUnitsLength,
     kSecondsIndexAsc,
     kDateUnitRadix,
+    DateUnit,
 } from "./dateBase";
 import {
     ceilDate,
@@ -19,6 +19,7 @@ import {
 import { linearTicks } from "../linearScale";
 
 const k0 = new Decimal(0);
+const kUnixEpoch = moment.unix(0);
 
 /**
  * When specifying a minimum duration,
@@ -53,6 +54,9 @@ export interface DateTickConstraints extends TickConstraints {
      * for possible values.
      */
     minDuration?: moment.Duration;
+
+    baseUnit?: DateUnit;
+    originDate?: moment.Moment;
 }
 
 /**
@@ -64,11 +68,11 @@ export interface DateTickConstraints extends TickConstraints {
  * @param constraints See {@link DateTickConstraints}
  * @returns An array of tick locations in milliseconds.
  */
-export const dateTicks: TickGenerator<DateTickConstraints> = (
+export function dateTicks<TC extends DateTickConstraints = DateTickConstraints>(
     start: Decimal.Value,
     end: Decimal.Value,
-    constraints: DateTickConstraints,
-): Decimal[] => {
+    constraints: TC,
+): Decimal[] {
     let a = new Decimal(start);
     let b = new Decimal(end);
     if (b.lt(a)) {
@@ -77,6 +81,22 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     if (a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
         throw new Error('Invalid interval');
     }
+
+    let {
+        baseUnit = 'milliseconds',
+        originDate = kUnixEpoch,
+    } = constraints;
+
+    let rescale = (baseUnit !== 'milliseconds') || !originDate.isSame(kUnixEpoch);
+    if (rescale) {
+        // Rescale
+        let startDate = originDate.add(a.toNumber(), baseUnit);
+        let endDate = originDate.add(b.toNumber(), baseUnit);
+        a = new Decimal(startDate.valueOf());
+        b = new Decimal(endDate.valueOf());
+        console.debug(`tick interval: ${startDate.format()} - ${endDate.format()}`)
+    }
+
     let len = b.sub(a);
 
     let minInterval = k0;
@@ -183,14 +203,18 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
         unitConstraints.minInterval = minUnitDuration;
         unitConstraints.radix = kDateUnitRadix[unit];
         let ticks = linearTicks(0, uniformDuration, unitConstraints)
-            .map(x => (
-                new Decimal(
-                    uniformStart
-                        .clone()
-                        .add(x.toNumber(), unit)
-                        .valueOf()
-                )
-            ));
+            .map(tick => {
+                let date = uniformStart
+                    .clone()
+                    .add(tick.toNumber(), unit);
+                let scaledTick: number;
+                if (rescale) {
+                    scaledTick = date.diff(originDate, baseUnit);
+                } else {
+                    scaledTick = date.valueOf();
+                }
+                return new Decimal(scaledTick);
+            });
         if (!constraints.expand) {
             let iStart = unitStart.diff(uniformStart, unit);
             let iEnd = ticks.length - uniformEnd.diff(unitEnd, unit) / minUnitDuration;
@@ -205,4 +229,4 @@ export const dateTicks: TickGenerator<DateTickConstraints> = (
     }
 
     return bestTicks;
-};
+}
