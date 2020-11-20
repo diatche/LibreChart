@@ -1,6 +1,6 @@
 import {
     compareDateUnits,
-} from '../../src/utils/dateBase';
+} from '../../../src/utils/date/dateBase';
 
 describe('dateBase', () => {
 

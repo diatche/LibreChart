@@ -4,7 +4,7 @@ import {
     floorDate,
     interpolatedDate,
     roundDate,
-} from '../../src/utils/duration';
+} from '../../../src/utils/date/duration';
 
 const kDateFormat = 'YYYY-MM-DD HH:mm:ss';
 

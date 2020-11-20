@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 import {
     dateTicks,
-} from '../../src/utils/dateScale';
+} from '../../../src/utils/date/dateScale';
 import {
     DateTickInput,
     getDateTicks,
@@ -9,9 +9,8 @@ import {
 } from './dateScaleUtil';
 import {
     getExpectedLinearTicks,
-    getLinearTicks,
     LinearTickInput,
-} from './linearScaleUtil';
+} from '../linearScaleUtil';
 
 describe('scale', () => {
 

@@ -2,7 +2,7 @@ import moment from 'moment';
 import {
     DateTickConstraints,
     dateTicks,
-} from '../../src/utils/dateScale';
+} from '../../../src/utils/date/dateScale';
 
 export interface DateTickInput {
     start: moment.Moment;
