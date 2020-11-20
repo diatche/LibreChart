@@ -82,8 +82,6 @@ interface IAxisLengthLayoutBaseInfo {
 interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
     /** Animated axis container length in content coordinates. */
     readonly containerLength$: Animated.Value;
-    /** Animated axis container length in view coordinates. */
-    containerViewLength$?: Animated.AnimatedInterpolation;
     /**
      * Animated major axis interval negative half-distance
      * in content coordinates.
@@ -160,31 +158,11 @@ export default class LayoutEngine {
     }
     
     configure(chart: Chart) {
-        axisTypeMap(axisType => this.configureAxis(axisType, chart));
         this.update(chart);
-    }
-    
-    configureAxis(axisType: AxisType, chart: Chart) {
-        const axis = this.axes[axisType];
-        let view = chart.innerView;
-        if (view) {
-            let scale = axis.layout?.getScale$(view);
-            if (scale) {
-                let axisScale = axis.horizontal ? scale.x : scale.y;
-                axis.containerViewLength$ = Animated.multiply(axis.containerLength$, axisScale);
-                return;
-            }
-        }
-        axis.containerViewLength$ = undefined;
     }
 
     unconfigure(chart: Chart) {
-        axisTypeMap(axisType => this.unconfigureAxis(axisType, chart));
-    }
-    
-    unconfigureAxis(axisType: AxisType, chart: Chart) {
-        const axis = this.axes[axisType];
-        axis.containerViewLength$ = undefined;
+
     }
 
     scheduleUpdate(chart: Chart) {
@@ -612,7 +590,10 @@ export default class LayoutEngine {
         }
 
         let layoutPropsBase: FlatLayoutSourceProps = {
-            itemSize: { x: axis.containerLength$, y: axis.containerLength$ },
+            itemSize: {
+                x: axis.containerLength$,
+                y: axis.containerLength$,
+            },
             ...axisProps,
             shouldRenderItem: (item, previous) => {
                 this.onAxisContainerDequeue(previous.index, item.index, axisType);
@@ -629,10 +610,7 @@ export default class LayoutEngine {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: {
-                            x: axis.containerViewLength$ || 0,
-                            y: this.axes[axisType].thickness$,
-                        }
+                        size: { y: axis.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 0 },
                     origin: {
@@ -646,10 +624,7 @@ export default class LayoutEngine {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: {
-                            x: axis.containerViewLength$ || 0,
-                            y: this.axes[axisType].thickness$,
-                        }
+                        size: { y: axis.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 1 },
                     origin: {
@@ -663,10 +638,7 @@ export default class LayoutEngine {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: {
-                            x: this.axes[axisType].thickness$,
-                            y: axis.containerViewLength$ || 0,
-                        }
+                        size: { x: axis.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 0 },
                     origin: {
@@ -680,10 +652,7 @@ export default class LayoutEngine {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: {
-                            x: this.axes[axisType].thickness$,
-                            y: axis.containerViewLength$ || 0,
-                        }
+                        size: { x: axis.thickness$ }
                     }),
                     itemOrigin: { x: 1, y: 0 },
                     origin: {
