@@ -290,5 +290,21 @@ describe('scale', () => {
             );
             expect(x).toEqual([]);
         });
+
+        // scaling
+
+        it('should divide into days with day base unit', () => {
+            let originDate = moment('2020-01-01');
+            let ticks = dateTicks(
+                moment('2020-01-11').diff(originDate, 'day'),
+                moment('2020-01-16').diff(originDate, 'day'),
+                {
+                    minInterval: 1,
+                    baseUnit: 'days',
+                    originDate,
+                }
+            ).map(x => x.toNumber());
+            expect(ticks).toEqual([10, 11, 12, 13, 14, 15]);
+        });
     });
 });

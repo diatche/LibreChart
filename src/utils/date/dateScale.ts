@@ -88,17 +88,22 @@ export function dateTicks<TC extends DateTickConstraints = DateTickConstraints>(
     } = constraints;
 
     let rescale = (baseUnit !== 'milliseconds') || !originDate.isSame(kUnixEpoch);
+
+    let startDate: moment.Moment;
+    let endDate: moment.Moment;
     if (rescale) {
         // Rescale
-        let startDate = originDate.add(a.toNumber(), baseUnit);
-        let endDate = originDate.add(b.toNumber(), baseUnit);
-        a = new Decimal(startDate.valueOf());
-        b = new Decimal(endDate.valueOf());
-        console.debug(`tick interval: ${startDate.format()} - ${endDate.format()}`)
+        startDate = originDate.add(a.toNumber(), baseUnit);
+        endDate = originDate.add(b.toNumber(), baseUnit);
+    } else {
+        startDate = moment(a.toNumber());
+        endDate = moment(b.toNumber());
+    }
+    if (!startDate.isValid() || !endDate.isValid()) {
+        throw new Error('Invalid date interval');
     }
 
-    let len = b.sub(a);
-
+    let len = new Decimal(endDate.diff(startDate, baseUnit));
     let minInterval = k0;
 
     if (constraints.minInterval) {
@@ -136,9 +141,6 @@ export function dateTicks<TC extends DateTickConstraints = DateTickConstraints>(
     if (minInterval.lte(0)) {
         throw new Error('Must specify either a minimum interval, or a minimum duration, or a maximum interval count');
     }
-
-    let startDate = moment(a.toNumber());
-    let endDate = moment(b.toNumber());
 
     if (typeof constraints.utcOffset !== 'undefined') {
         startDate.utcOffset(constraints.utcOffset);
