@@ -1,9 +1,11 @@
 import moment from 'moment-timezone';
 import {
     ceilDate,
+    dateIntervalLength,
     floorDate,
     interpolatedDate,
     roundDate,
+    stepDateLinear,
 } from '../../../src/utils/date/duration';
 
 const kDateFormat = 'YYYY-MM-DD HH:mm:ss';
@@ -11,15 +13,70 @@ const kDateFormat = 'YYYY-MM-DD HH:mm:ss';
 describe('duration', () => {
 
     beforeAll(() => {
-        // Fix time zone to test daylight savings
+        // Fix time zone to test DST
         let zoneName = 'NZ';
         expect(moment.tz.zone(zoneName)).toBeTruthy();
         moment.tz.setDefault(zoneName);
     });
 
+    describe('dateIntervalLength', () => {
+
+        it('should diff whole days', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01'),
+                moment('2020-01-02'),
+                'days'
+            );
+            expect(diff).toBe(1);
+        });
+
+        it('should diff partial days', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01'),
+                moment('2020-01-02 12:00'),
+                'days'
+            );
+            expect(diff).toBe(1.5);
+        });
+
+        it('should diff days with DST boundaries', () => {
+            let diff = dateIntervalLength(
+                moment('2020-04-01'),
+                moment('2020-04-29 12:00'),
+                'days'
+            );
+            expect(diff).toBe(28.5);
+        });
+
+        it('should diff whole hours', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01'),
+                moment('2020-01-02'),
+                'hours'
+            );
+            expect(diff).toBe(24);
+        });
+
+        it('should diff hours with DST boundaries', () => {
+            let diff = dateIntervalLength(
+                moment('2020-04-01'),
+                moment('2020-04-29'),
+                'hours'
+            );
+            expect(diff).toBe(672);
+        });
+    })
+
     describe('interpolatedDate', () => {
 
-        it('should change UTC offset accross daylight savings', () => {
+        it('should work with floats', () => {
+            let start = moment('2020-01-01');
+            let end = moment('2020-01-02');
+            let date = interpolatedDate(start, end, 0.5);
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 12:00');
+        });
+
+        it('should change UTC offset accross DST', () => {
             let start = moment('2020-04-01');
             let end = moment('2020-05-01');
             expect(start.utcOffset()).not.toBe(end.utcOffset());
@@ -28,7 +85,80 @@ describe('duration', () => {
         });
     });
 
+    describe('stepDateLinear', () => {
+
+        it('should return same date with step 0 days', () => {
+            let start = moment('2020-01-01');
+            let date = stepDateLinear(start, 0, 'days');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 00:00');
+        });
+
+        it('should return next date with step 1 days', () => {
+            let start = moment('2020-01-01');
+            let date = stepDateLinear(start, 1, 'days');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-02 00:00');
+        });
+
+        it('should return middle date with step 0.5 days', () => {
+            let start = moment('2020-01-01');
+            let date = stepDateLinear(start, 0.5, 'days');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 12:00');
+        });
+
+        it('should step whole days with large step (with DST boundary)', () => {
+            let start = moment('2020-04-01');
+            let date = stepDateLinear(start, 28.5, 'days');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-04-29 12:00');
+        });
+
+        it('should return next date with step 1 hours', () => {
+            let start = moment('2020-01-01');
+            let date = stepDateLinear(start, 1, 'hours');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 01:00');
+        });
+
+        it('should return correct date with hours step over DST boundary', () => {
+            let start = moment('2020-04-01');
+            let date = stepDateLinear(start, 672, 'hours');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-04-29 00:00');
+        });
+    });
+
     describe('roundDate', () => {
+
+        // hours
+
+        it('should round date down with 1 hour', () => {
+            expect(roundDate(
+                moment('2020-01-08T00:29'),
+                1,
+                'hours'
+            ).format(kDateFormat)).toBe('2020-01-08 00:00:00');
+        });
+
+        it('should round date up from middle with 1 hour', () => {
+            expect(roundDate(
+                moment('2020-01-08T00:30'),
+                1,
+                'hours'
+            ).format(kDateFormat)).toBe('2020-01-08 01:00:00');
+        });
+
+        it('should round date down with 2 hour', () => {
+            expect(roundDate(
+                moment('2020-01-08T00:59'),
+                2,
+                'hours'
+            ).format(kDateFormat)).toBe('2020-01-08 00:00:00');
+        });
+
+        it('should round date up from middle with 2 hour', () => {
+            expect(roundDate(
+                moment('2020-01-08T01:00'),
+                2,
+                'hours'
+            ).format(kDateFormat)).toBe('2020-01-08 02:00:00');
+        });
 
         // days
 
@@ -82,6 +212,14 @@ describe('duration', () => {
             expect(roundedDate.utcOffset()).toBe(-120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-02 00:00:00');
+        });
+
+        it('should round to same date on boundary with 1 day', () => {
+            expect(roundDate(
+                moment('2020-01-02'),
+                1,
+                'days'
+            ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
         it('should round date down with 2 day', () => {
@@ -162,7 +300,7 @@ describe('duration', () => {
                 .toBe('2020-02-01 00:00:00');
         });
 
-        it('should return same date on edge with 1 month (30 days) accross daylight savings', () => {
+        it('should return same date on edge with 1 month (30 days) accross DST', () => {
             expect(moment('2020-04-01T00:00').utcOffset()).not.toEqual(moment('2020-05-01T00:00').utcOffset());
             expect(roundDate(
                 moment('2020-04-01T00:00'),
@@ -171,7 +309,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-04-01 00:00:00');
         });
 
-        it('should round date down with 1 month (30 days) accross daylight savings', () => {
+        it('should round date down with 1 month (30 days) accross DST', () => {
             expect(moment('2020-04-01T00:00').utcOffset()).not.toEqual(moment('2020-05-01T00:00').utcOffset());
             expect(roundDate(
                 moment('2020-04-15T11:59'),
@@ -180,7 +318,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-04-01 00:00:00');
         });
 
-        it('should round date up with 1 month (30 days) accross daylight savings', () => {
+        it('should round date up with 1 month (30 days) accross DST', () => {
             expect(moment('2020-04-01T00:00').utcOffset()).not.toEqual(moment('2020-05-01T00:00').utcOffset());
             expect(roundDate(
                 moment('2020-04-16'),
@@ -218,7 +356,7 @@ describe('duration', () => {
 
         // days
 
-        it('should round date down with 1 day', () => {
+        it('should floor date down with 1 day', () => {
             expect(floorDate(
                 moment('2020-01-01T11:59'),
                 1,
@@ -226,7 +364,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
-        it('should round date down from middle with 1 day', () => {
+        it('should floor date down from middle with 1 day', () => {
             expect(floorDate(
                 moment('2020-01-01T12:00'),
                 1,
@@ -234,7 +372,15 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
-        it('should round date down with 2 day', () => {
+        it('should floor same date on boundary with 1 day', () => {
+            expect(floorDate(
+                moment('2020-01-02'),
+                1,
+                'days'
+            ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
+        });
+
+        it('should floor date down with 2 day', () => {
             expect(floorDate(
                 moment('2020-01-01T23:59'),
                 2,
@@ -242,7 +388,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
-        it('should round date down from middle with 2 day', () => {
+        it('should floor date down from middle with 2 day', () => {
             expect(floorDate(
                 moment('2020-01-02T00:00'),
                 2,
@@ -252,7 +398,7 @@ describe('duration', () => {
 
         // months
 
-        it('should round date down with 1 month (31 days)', () => {
+        it('should floor date down with 1 month (31 days)', () => {
             expect(floorDate(
                 moment('2020-01-16T11:59'),
                 1,
@@ -260,7 +406,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
-        it('should round date down from middle with 1 month (31 days)', () => {
+        it('should floor date down from middle with 1 month (31 days)', () => {
             expect(floorDate(
                 moment('2020-01-16T12:00'),
                 1,
@@ -268,7 +414,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
-        it('should round date down with 2 month', () => {
+        it('should floor date down with 2 month', () => {
             expect(floorDate(
                 moment('2020-01-31T23:59'),
                 2,
@@ -276,7 +422,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
-        it('should round date down from middle with 2 month', () => {
+        it('should floor date down from middle with 2 month', () => {
             expect(floorDate(
                 moment('2020-02-01T00:00'),
                 2,
@@ -297,7 +443,7 @@ describe('duration', () => {
 
         // days
 
-        it('should round date up with 1 day', () => {
+        it('should ceil date up with 1 day', () => {
             expect(ceilDate(
                 moment('2020-01-01T11:59'),
                 1,
@@ -305,7 +451,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
-        it('should round date up from middle with 1 day', () => {
+        it('should ceil date up from middle with 1 day', () => {
             expect(ceilDate(
                 moment('2020-01-01T12:00'),
                 1,
@@ -313,7 +459,15 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
-        it('should round date up with 2 day', () => {
+        it('should ceil same date on boundary with 1 day', () => {
+            expect(ceilDate(
+                moment('2020-01-02'),
+                1,
+                'days'
+            ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
+        });
+
+        it('should ceil date up with 2 day', () => {
             expect(ceilDate(
                 moment('2020-01-01T23:59'),
                 2,
@@ -321,7 +475,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
-        it('should round date up from middle with 2 day', () => {
+        it('should ceil date up from middle with 2 day', () => {
             expect(ceilDate(
                 moment('2020-01-02T00:00'),
                 2,
@@ -329,9 +483,17 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
+        it('should ceil same date on boundary with 2 day', () => {
+            expect(ceilDate(
+                moment('2020-01-03'),
+                2,
+                'days'
+            ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
+        });
+
         // months
 
-        it('should round date up with 1 month (31 days)', () => {
+        it('should ceil date up with 1 month (31 days)', () => {
             expect(ceilDate(
                 moment('2020-01-16T11:59'),
                 1,
@@ -339,7 +501,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-02-01 00:00:00');
         });
 
-        it('should round date up from middle with 1 month (31 days)', () => {
+        it('should ceil date up from middle with 1 month (31 days)', () => {
             expect(ceilDate(
                 moment('2020-01-16T12:00'),
                 1,
@@ -347,7 +509,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-02-01 00:00:00');
         });
 
-        it('should round date up with 2 month', () => {
+        it('should ceil date up with 2 month', () => {
             expect(ceilDate(
                 moment('2020-01-31T23:59'),
                 2,
@@ -355,7 +517,7 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
 
-        it('should round date up from middle with 2 month', () => {
+        it('should ceil date up from middle with 2 month', () => {
             expect(ceilDate(
                 moment('2020-02-01T00:00'),
                 2,

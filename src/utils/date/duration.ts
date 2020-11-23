@@ -6,22 +6,49 @@ import {
     smallerDateUnit,
 } from './dateBase';
 
-/**
- * Returns the date nearest to the specified `date`
- * w.r.t. the specified date `unit`.
- * @param date 
- * @param unit 
- */
-export const roundDateLinear = (date: Moment, unit: DateUnit): Moment => {
-    return stepDateLinear(date, 0.5, unit).startOf(unit);
+export const dateIntervalLength = (
+    origin: Moment,
+    date: Moment,
+    unit: DateUnit,
+): number => {
+    let days = 0;
+    if (compareDateUnits('days', unit) > 0) {
+        // Unit is smaller than a day.
+        // First find number of whole days in diff.
+        days = date.diff(origin, 'days');
+        if (days) {
+            origin = origin.clone().add(days, 'days');
+        }
+    }
+
+    // Find number of whole units
+    let diff = date.diff(origin, unit);
+
+    // Find number of partial units
+    let partialStart = origin.clone().add(diff, unit);
+    if (!partialStart.isSame(date)) {
+        let partialDuration = moment.duration(date.diff(partialStart)).as(unit);
+        diff += partialDuration;
+    }
+
+    if (days) {
+        diff += moment.duration(days, 'days').as(unit);
+    }
+
+    return diff;
 };
 
 /**
  * Returns a date between the current unit (A) and 
  * the date after the next unit (B).
+ * 
  * A step of 0 will return A, a step of 1 will return B,
  * and a step of 0.5 will return a date between A and B
  * using linear interpolation.
+ * 
+ * A step greater than 1 or less than 1 will use the
+ * calendar to step.
+ * 
  * @param date 
  * @param step 
  * @param unit 
@@ -31,6 +58,32 @@ export const stepDateLinear = (
     step: number,
     unit: DateUnit,
 ): Moment => {
+    if (Math.abs(step) > 1) {
+        date = date.clone();
+
+        // Step whole days
+        if (compareDateUnits('days', unit) > 0) {
+            // Unit is smaller than a day.
+            // First step whole days
+            let days = Math.floor(moment.duration(step, unit).asDays());
+            if (days >= 1) {
+                date.add(days, 'days');
+                step -= moment.duration(days, 'days').as(unit);
+            }
+        }
+
+        // Step whole units
+        let calStep = step > 0
+            ? Math.floor(step)
+            : Math.ceil(step);
+        date.add(calStep, unit);
+        step -= calStep;
+        if (step === 0) {
+            return date;
+        }
+    }
+    
+    // Step partial units
     return interpolatedDate(
         date,
         date.clone().add(1, unit),
@@ -57,6 +110,27 @@ export const interpolatedDate = (
     return date1.clone().add(position * length, 'ms');
 };
 
+/**
+ * Returns the date nearest to the specified `date`
+ * w.r.t. the specified date `unit`.
+ * @param date 
+ * @param unit 
+ */
+export const roundDateLinear = (date: Moment, unit: DateUnit): Moment => {
+    return stepDateLinear(date, 0.5, unit).startOf(unit);
+};
+
+const getOriginUnit = (unit: DateUnit): DateUnit | undefined => {
+    if (compareDateUnits('seconds', unit) > 0) {
+        return 'seconds';
+    } else if (compareDateUnits('days', unit) > 0) {
+        return 'days';
+    } else if (compareDateUnits('years', unit) > 0) {
+        return 'years';
+    }
+    return undefined;
+};
+
 export const roundDate = (
     date: Moment,
     value: number,
@@ -71,18 +145,9 @@ export const roundDate = (
     }
 
     let {
-        originUnit,
+        originUnit = getOriginUnit(unit),
         method = Math.round,
     } = options;
-    if (!originUnit) {
-        if (compareDateUnits('seconds', unit) > 0) {
-            originUnit = 'seconds';
-        } else if (compareDateUnits('days', unit) > 0) {
-            originUnit = 'days';
-        } else if (compareDateUnits('years', unit) > 0) {
-            originUnit = 'years';
-        }
-    }
 
     let origin: moment.Moment;
     if (originUnit) {
@@ -143,7 +208,7 @@ export const roundDate = (
         let duration = date.diff(origin, smallerUnit) / interval;
         let roundedDuration = method(duration);
         let roundedDate = origin.clone().add(roundedDuration * interval, smallerUnit);
-        // In case of daylight savings, round one more time
+        // In case of DST, round one more time
         roundedDate = roundDateLinear(roundedDate, unit);
         return roundedDate;
     }
@@ -178,7 +243,11 @@ export const ceilDate = (
         originUnit?: DateUnit;
     }
 ): Moment => {
-    return floorDate(date, value, unit, options).add(value, unit);
+    let fDate = floorDate(date, value, unit, options);
+    if (fDate.isSame(date)) {
+        return fDate;
+    }
+    return fDate.add(value, unit);
 };
 
 /**

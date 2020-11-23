@@ -1,6 +1,8 @@
 
+// TODO: sync with normalised moment date units (singular)
 export type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
 export type DateUnitMapping<T> = { [unit in DateUnit]: T };
+export type ImmutableDateUnitMapping<T> = { readonly [unit in DateUnit]: T };
 
 export const kDateUnitsAsc: DateUnit[] = [
     'milliseconds',
@@ -25,6 +27,10 @@ export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
 export const kDateNonUniform: Partial<DateUnitMapping<boolean>> = {
     months: true,
 };
+
+export const isDateUnit = (unit: any): unit is DateUnit => {
+    return kDateUnitsAsc.indexOf(unit as any) >= 0;
+}
 
 export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
     let i = kDateUnitsDes.indexOf(unit);
@@ -61,4 +67,12 @@ export const compareDateUnits = (unit1: DateUnit, unit2: DateUnit): number => {
         return NaN;
     }
     return i1 - i2;
+};
+
+export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
+    let mapped: Partial<DateUnitMapping<T>> = {};
+    for (let dateUnit of kDateUnitsAsc) {
+        mapped[dateUnit] = iterator(dateUnit);
+    }
+    return mapped as DateUnitMapping<T>;
 };
