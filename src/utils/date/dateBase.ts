@@ -1,5 +1,4 @@
 
-// TODO: sync with normalised moment date units (singular)
 export type DateUnit =
     'millisecond'
     | 'second'
@@ -21,7 +20,7 @@ export const kDateUnitsAsc: DateUnit[] = [
     'month',
     'year',
 ];
-export const kDateUnitsDes = [...kDateUnitsAsc].reverse();
+export const kDateUnitsDes = kDateUnitsAsc.slice().reverse();
 export const kUnitsLength = kDateUnitsAsc.length;
 export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('second');
 
