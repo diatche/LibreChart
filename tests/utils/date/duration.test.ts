@@ -25,7 +25,7 @@ describe('duration', () => {
             let diff = dateIntervalLength(
                 moment('2020-01-01'),
                 moment('2020-01-02'),
-                'days'
+                'day'
             );
             expect(diff).toBe(1);
         });
@@ -34,7 +34,7 @@ describe('duration', () => {
             let diff = dateIntervalLength(
                 moment('2020-01-01'),
                 moment('2020-01-02 12:00'),
-                'days'
+                'day'
             );
             expect(diff).toBe(1.5);
         });
@@ -43,7 +43,7 @@ describe('duration', () => {
             let diff = dateIntervalLength(
                 moment('2020-04-01'),
                 moment('2020-04-29 12:00'),
-                'days'
+                'day'
             );
             expect(diff).toBe(28.5);
         });
@@ -52,7 +52,7 @@ describe('duration', () => {
             let diff = dateIntervalLength(
                 moment('2020-01-01'),
                 moment('2020-01-02'),
-                'hours'
+                'hour'
             );
             expect(diff).toBe(24);
         });
@@ -61,7 +61,7 @@ describe('duration', () => {
             let diff = dateIntervalLength(
                 moment('2020-04-01'),
                 moment('2020-04-29'),
-                'hours'
+                'hour'
             );
             expect(diff).toBe(672);
         });
@@ -89,37 +89,37 @@ describe('duration', () => {
 
         it('should return same date with step 0 days', () => {
             let start = moment('2020-01-01');
-            let date = stepDateLinear(start, 0, 'days');
+            let date = stepDateLinear(start, 0, 'day');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 00:00');
         });
 
         it('should return next date with step 1 days', () => {
             let start = moment('2020-01-01');
-            let date = stepDateLinear(start, 1, 'days');
+            let date = stepDateLinear(start, 1, 'day');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-02 00:00');
         });
 
         it('should return middle date with step 0.5 days', () => {
             let start = moment('2020-01-01');
-            let date = stepDateLinear(start, 0.5, 'days');
+            let date = stepDateLinear(start, 0.5, 'day');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 12:00');
         });
 
         it('should step whole days with large step (with DST boundary)', () => {
             let start = moment('2020-04-01');
-            let date = stepDateLinear(start, 28.5, 'days');
+            let date = stepDateLinear(start, 28.5, 'day');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-04-29 12:00');
         });
 
         it('should return next date with step 1 hours', () => {
             let start = moment('2020-01-01');
-            let date = stepDateLinear(start, 1, 'hours');
+            let date = stepDateLinear(start, 1, 'hour');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-01 01:00');
         });
 
         it('should return correct date with hours step over DST boundary', () => {
             let start = moment('2020-04-01');
-            let date = stepDateLinear(start, 672, 'hours');
+            let date = stepDateLinear(start, 672, 'hour');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-04-29 00:00');
         });
     });
@@ -132,7 +132,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-08T00:29'),
                 1,
-                'hours'
+                'hour'
             ).format(kDateFormat)).toBe('2020-01-08 00:00:00');
         });
 
@@ -140,7 +140,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-08T00:30'),
                 1,
-                'hours'
+                'hour'
             ).format(kDateFormat)).toBe('2020-01-08 01:00:00');
         });
 
@@ -148,7 +148,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-08T00:59'),
                 2,
-                'hours'
+                'hour'
             ).format(kDateFormat)).toBe('2020-01-08 00:00:00');
         });
 
@@ -156,7 +156,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-08T01:00'),
                 2,
-                'hours'
+                'hour'
             ).format(kDateFormat)).toBe('2020-01-08 02:00:00');
         });
 
@@ -166,14 +166,14 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-01T11:59'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
         it('should round date down with 1 day with postive time zone', () => {
             let date = moment.utc('2020-01-01T09:59');
             date.utcOffset(120);
-            let roundedDate = roundDate(date, 1, 'days');
+            let roundedDate = roundDate(date, 1, 'day');
             expect(roundedDate.utcOffset()).toBe(120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-01 00:00:00');
@@ -182,7 +182,7 @@ describe('duration', () => {
         it('should round date down with 1 day with negative time zone', () => {
             let date = moment.utc('2020-01-01T13:59');
             date.utcOffset(-120);
-            let roundedDate = roundDate(date, 1, 'days');
+            let roundedDate = roundDate(date, 1, 'day');
             expect(roundedDate.utcOffset()).toBe(-120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-01 00:00:00');
@@ -192,14 +192,14 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-01T12:00'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
         it('should round date up with 1 day with positive time zone', () => {
             let date = moment.utc('2020-01-01T10:00');
             date.utcOffset(120);
-            let roundedDate = roundDate(date, 1, 'days');
+            let roundedDate = roundDate(date, 1, 'day');
             expect(roundedDate.utcOffset()).toBe(120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-02 00:00:00');
@@ -208,7 +208,7 @@ describe('duration', () => {
         it('should round date up with 1 day with negative time zone', () => {
             let date = moment.utc('2020-01-01T14:00');
             date.utcOffset(-120);
-            let roundedDate = roundDate(date, 1, 'days');
+            let roundedDate = roundDate(date, 1, 'day');
             expect(roundedDate.utcOffset()).toBe(-120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-02 00:00:00');
@@ -218,7 +218,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-02'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
@@ -226,7 +226,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-01T23:59'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -234,7 +234,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-02T00:00'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
@@ -244,7 +244,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-01'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -252,14 +252,14 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-16'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
         it('should round date down with 1 month (31 days) with postive time zone', () => {
             let date = moment.utc('2020-01-16T21:59');
             date.utcOffset(120);
-            let roundedDate = roundDate(date, 1, 'months');
+            let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-01 00:00:00');
@@ -268,7 +268,7 @@ describe('duration', () => {
         it('should round date down with 1 month (31 days) with negative time zone', () => {
             let date = moment.utc('2020-01-17T01:59');
             date.utcOffset(-120);
-            let roundedDate = roundDate(date, 1, 'months');
+            let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(-120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-01-01 00:00:00');
@@ -278,14 +278,14 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-17'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-02-01 00:00:00');
         });
 
         it('should round date up with 1 month (31 days) with postive time zone', () => {
             let date = moment.utc('2020-01-16T22:00');
             date.utcOffset(120);
-            let roundedDate = roundDate(date, 1, 'months');
+            let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-02-01 00:00:00');
@@ -294,7 +294,7 @@ describe('duration', () => {
         it('should round date up with 1 month (31 days) with negative time zone', () => {
             let date = moment.utc('2020-01-17T02:00');
             date.utcOffset(-120);
-            let roundedDate = roundDate(date, 1, 'months');
+            let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(-120);
             expect(roundedDate.format(kDateFormat))
                 .toBe('2020-02-01 00:00:00');
@@ -305,7 +305,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-04-01T00:00'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-04-01 00:00:00');
         });
 
@@ -314,7 +314,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-04-15T11:59'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-04-01 00:00:00');
         });
 
@@ -323,7 +323,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-04-16'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-05-01 00:00:00');
         });
 
@@ -331,7 +331,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-01-31T23:59'),
                 2,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -339,7 +339,7 @@ describe('duration', () => {
             expect(roundDate(
                 moment('2020-02-01T00:00'),
                 2,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
 
@@ -347,7 +347,7 @@ describe('duration', () => {
 
         it('should throw an error when a non-interger value is used', () => {
             expect(() => {
-                roundDate(moment('2020-01-01'), 0.5, 'milliseconds');
+                roundDate(moment('2020-01-01'), 0.5, 'millisecond');
             }).toThrow();
         });
     });
@@ -360,7 +360,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-01T11:59'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -368,7 +368,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-01T12:00'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -376,7 +376,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-02'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
@@ -384,7 +384,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-01T23:59'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -392,7 +392,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-02T00:00'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -402,7 +402,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-16T11:59'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -410,7 +410,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-16T12:00'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -418,7 +418,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-01-31T23:59'),
                 2,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -426,7 +426,7 @@ describe('duration', () => {
             expect(floorDate(
                 moment('2020-02-01T00:00'),
                 2,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
@@ -434,7 +434,7 @@ describe('duration', () => {
 
         it('should throw an error when a non-interger value is used', () => {
             expect(() => {
-                floorDate(moment('2020-01-01'), 0.5, 'milliseconds');
+                floorDate(moment('2020-01-01'), 0.5, 'millisecond');
             }).toThrow();
         });
     });
@@ -447,7 +447,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-01T11:59'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
@@ -455,7 +455,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-01T12:00'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
@@ -463,7 +463,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-02'),
                 1,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-02 00:00:00');
         });
 
@@ -471,7 +471,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-01T23:59'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
@@ -479,7 +479,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-02T00:00'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
@@ -487,7 +487,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-03'),
                 2,
-                'days'
+                'day'
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
@@ -497,7 +497,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-16T11:59'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-02-01 00:00:00');
         });
 
@@ -505,7 +505,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-16T12:00'),
                 1,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-02-01 00:00:00');
         });
 
@@ -513,7 +513,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-01-31T23:59'),
                 2,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
 
@@ -521,7 +521,7 @@ describe('duration', () => {
             expect(ceilDate(
                 moment('2020-02-01T00:00'),
                 2,
-                'months'
+                'month'
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
     });

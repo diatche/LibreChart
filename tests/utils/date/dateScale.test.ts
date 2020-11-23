@@ -30,7 +30,7 @@ describe('scale', () => {
         it('should scale and offset the date with day base unit', () => {
             let x = encodeDate(moment('2000-01-02 12:00'), {
                 originDate: moment('2000-01-01'),
-                baseUnit: 'days',
+                baseUnit: 'day',
             });
             expect(x.toString()).toBe('1.5');
         });
@@ -38,7 +38,7 @@ describe('scale', () => {
         it('should scale and offset the date with hour base unit', () => {
             let x = encodeDate(moment('2000-01-01 02:30'), {
                 originDate: moment('2000-01-01'),
-                baseUnit: 'hours',
+                baseUnit: 'hour',
             });
             expect(x.toString()).toBe('2.5');
         });
@@ -46,7 +46,7 @@ describe('scale', () => {
         it('should scale and offset the date with hour base unit and near origin', () => {
             let x = encodeDate(moment('2000-01-01 02:30'), {
                 originDate: moment('1999-01-01'),
-                baseUnit: 'hours',
+                baseUnit: 'hour',
             });
             expect(x.toString()).toBe('8762.5');
         });
@@ -54,7 +54,7 @@ describe('scale', () => {
         it('should scale and offset the date with hour base unit and default origin', () => {
             // Default origin is Unix Epoch.
             let x = encodeDate(moment('2000-01-01 02:30'), {
-                baseUnit: 'hours',
+                baseUnit: 'hour',
             });
             expect(x.toString()).toBe('262970.5');
         });
@@ -65,7 +65,7 @@ describe('scale', () => {
         it('should revert scale and offset the date with day base unit', () => {
             let x = decodeDate(1.5, {
                 originDate: moment('2000-01-01'),
-                baseUnit: 'days',
+                baseUnit: 'day',
             });
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-02 12:00');
         });
@@ -73,7 +73,7 @@ describe('scale', () => {
         it('should revert scale and offset the date with hour base unit', () => {
             let x = decodeDate(2.5, {
                 originDate: moment('2000-01-01'),
-                baseUnit: 'hours',
+                baseUnit: 'hour',
             });
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
@@ -81,7 +81,7 @@ describe('scale', () => {
         it('should revert scale and offset the date with hour base unit and near origin', () => {
             let x = decodeDate(8762.5, {
                 originDate: moment('1999-01-01'),
-                baseUnit: 'hours',
+                baseUnit: 'hour',
             });
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
@@ -89,7 +89,7 @@ describe('scale', () => {
         it('should revert scale and offset the date with hour base unit and default origin', () => {
             // Default origin is Unix Epoch.
             let x = decodeDate(262970.5, {
-                baseUnit: 'hours',
+                baseUnit: 'hour',
             });
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
@@ -103,10 +103,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('1900-01-01'),
                 end: moment('2000-01-01'),
-                stride: moment.duration(10, 'years'),
+                stride: moment.duration(10, 'year'),
                 format: 'YYYY-MM-DD',
                 constraints: {
-                    baseUnit: 'years',
+                    baseUnit: 'year',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -118,10 +118,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2021-01-01'),
-                stride: moment.duration(1, 'months'),
+                stride: moment.duration(1, 'month'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'months',
+                    baseUnit: 'month',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -133,10 +133,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-06-01'),
                 end: moment('2020-07-01'),
-                stride: moment.duration(1, 'days'),
+                stride: moment.duration(1, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -146,10 +146,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-04-01'),
                 end: moment('2020-05-01'),
-                stride: moment.duration(1, 'days'),
+                stride: moment.duration(1, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(input.start.utcOffset()).not.toEqual(input.end.utcOffset());
@@ -160,10 +160,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2020-02-01'),
-                stride: moment.duration(1, 'days'),
+                stride: moment.duration(1, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -173,10 +173,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2019-02-01'),
                 end: moment('2019-03-01'),
-                stride: moment.duration(1, 'days'),
+                stride: moment.duration(1, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -186,10 +186,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-02-01'),
                 end: moment('2020-03-01'),
-                stride: moment.duration(1, 'days'),
+                stride: moment.duration(1, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -201,10 +201,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-06-01'),
                 end: moment('2020-07-01'),
-                stride: moment.duration(2, 'days'),
+                stride: moment.duration(2, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -214,10 +214,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2020-02-01'),
-                stride: moment.duration(2, 'days'),
+                stride: moment.duration(2, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -227,10 +227,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2019-02-01'),
                 end: moment('2019-03-01'),
-                stride: moment.duration(2, 'days'),
+                stride: moment.duration(2, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
                 expectedOverrides: {
                     start: moment('2019-02-01'),
@@ -244,14 +244,14 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-02-01'),
                 end: moment('2020-03-01'),
-                stride: moment.duration(2, 'days'),
+                stride: moment.duration(2, 'day'),
                 format: 'YYYY-MM-DD HH:mm',
                 expectedOverrides: {
                     start: moment('2020-02-02'),
                     end: moment('2020-03-01'),
                 },
                 constraints: {
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -263,10 +263,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-02'),
-                stride: moment.duration(1, 'hours'),
+                stride: moment.duration(1, 'hour'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'hours',
+                    baseUnit: 'hour',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -276,10 +276,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-02'),
-                stride: moment.duration(2, 'hours'),
+                stride: moment.duration(2, 'hour'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'hours',
+                    baseUnit: 'hour',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -289,10 +289,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-03'),
-                stride: moment.duration(12, 'hours'),
+                stride: moment.duration(12, 'hour'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'hours',
+                    baseUnit: 'hour',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -304,10 +304,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01 10:00'),
                 end: moment('2020-01-02 11:00'),
-                stride: moment.duration(10, 'minutes'),
+                stride: moment.duration(10, 'minute'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'minutes',
+                    baseUnit: 'minute',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -317,10 +317,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01 10:00'),
                 end: moment('2020-01-02 11:00'),
-                stride: moment.duration(30, 'minutes'),
+                stride: moment.duration(30, 'minute'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'minutes',
+                    baseUnit: 'minute',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -330,10 +330,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01 10:00'),
                 end: moment('2020-01-03 10:00'),
-                stride: moment.duration(30, 'minutes'),
+                stride: moment.duration(30, 'minute'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
-                    baseUnit: 'minutes',
+                    baseUnit: 'minute',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -345,10 +345,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01 10:00'),
                 end: moment('2020-01-01 10:01'),
-                stride: moment.duration(10, 'seconds'),
+                stride: moment.duration(10, 'second'),
                 format: 'YYYY-MM-DD HH:mm:ss',
                 constraints: {
-                    baseUnit: 'minutes',
+                    baseUnit: 'minute',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -360,10 +360,10 @@ describe('scale', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01 10:00:00'),
                 end: moment('2020-01-01 10:00:01'),
-                stride: moment.duration(10, 'milliseconds'),
+                stride: moment.duration(10, 'millisecond'),
                 format: 'YYYY-MM-DD HH:mm:ss:SSS',
                 constraints: {
-                    baseUnit: 'seconds',
+                    baseUnit: 'second',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
@@ -380,7 +380,7 @@ describe('scale', () => {
                 end.valueOf(),
                 {
                     minInterval: 0.1,
-                    baseUnit: 'milliseconds',
+                    baseUnit: 'millisecond',
                 }
             ).map(x => x.toString());
 
@@ -404,7 +404,7 @@ describe('scale', () => {
                 end.valueOf(),
                 {
                     minInterval: 1,
-                    baseUnit: 'milliseconds',
+                    baseUnit: 'millisecond',
                 }
             );
             expect(x).toEqual([]);
@@ -419,7 +419,7 @@ describe('scale', () => {
                 end.valueOf(),
                 {
                     minInterval: 1,
-                    baseUnit: 'hours',
+                    baseUnit: 'hour',
                 }
             );
             expect(x).toEqual([]);
@@ -435,7 +435,7 @@ describe('scale', () => {
                 moment('2020-01-16').diff(originDate, 'day'),
                 {
                     minInterval: 1,
-                    baseUnit: 'days',
+                    baseUnit: 'day',
                     originDate,
                 }
             ).map(x => x.toNumber());
@@ -449,11 +449,11 @@ describe('scale', () => {
             let originDate = moment('2020-01-01');
 
             let ticks = dateTicks(
-                moment('2020-01-11 00:00').diff(originDate, 'days', true),
-                moment('2020-01-11 05:00').diff(originDate, 'days', true),
+                moment('2020-01-11 00:00').diff(originDate, 'day', true),
+                moment('2020-01-11 05:00').diff(originDate, 'day', true),
                 {
-                    minDuration: moment.duration(1, 'hours'),
-                    baseUnit: 'days',
+                    minDuration: moment.duration(1, 'hour'),
+                    baseUnit: 'day',
                     originDate,
                 }
             ).map(x => x.toFixed(6));

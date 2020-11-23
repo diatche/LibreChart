@@ -302,6 +302,8 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 210, 130, 0.5)',
     },
     label: {
+        width: '100%',
+        textAlign: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(200, 110, 130, 0.5)',
     }

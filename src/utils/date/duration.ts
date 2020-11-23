@@ -12,12 +12,12 @@ export const dateIntervalLength = (
     unit: DateUnit,
 ): number => {
     let days = 0;
-    if (compareDateUnits('days', unit) > 0) {
+    if (compareDateUnits('day', unit) > 0) {
         // Unit is smaller than a day.
         // First find number of whole days in diff.
-        days = date.diff(origin, 'days');
+        days = date.diff(origin, 'day');
         if (days) {
-            origin = origin.clone().add(days, 'days');
+            origin = origin.clone().add(days, 'day');
         }
     }
 
@@ -32,7 +32,7 @@ export const dateIntervalLength = (
     }
 
     if (days) {
-        diff += moment.duration(days, 'days').as(unit);
+        diff += moment.duration(days, 'day').as(unit);
     }
 
     return diff;
@@ -62,13 +62,13 @@ export const stepDateLinear = (
         date = date.clone();
 
         // Step whole days
-        if (compareDateUnits('days', unit) > 0) {
+        if (compareDateUnits('day', unit) > 0) {
             // Unit is smaller than a day.
             // First step whole days
             let days = Math.floor(moment.duration(step, unit).asDays());
             if (days >= 1) {
-                date.add(days, 'days');
-                step -= moment.duration(days, 'days').as(unit);
+                date.add(days, 'day');
+                step -= moment.duration(days, 'day').as(unit);
             }
         }
 
@@ -121,12 +121,12 @@ export const roundDateLinear = (date: Moment, unit: DateUnit): Moment => {
 };
 
 const getOriginUnit = (unit: DateUnit): DateUnit | undefined => {
-    if (compareDateUnits('seconds', unit) > 0) {
-        return 'seconds';
-    } else if (compareDateUnits('days', unit) > 0) {
-        return 'days';
-    } else if (compareDateUnits('years', unit) > 0) {
-        return 'years';
+    if (compareDateUnits('second', unit) > 0) {
+        return 'second';
+    } else if (compareDateUnits('day', unit) > 0) {
+        return 'day';
+    } else if (compareDateUnits('year', unit) > 0) {
+        return 'year';
     }
     return undefined;
 };
@@ -157,7 +157,7 @@ export const roundDate = (
         origin = date.clone().startOf('year').subtract(date.year());
     }
 
-    let smallerUnit = smallerDateUnit(unit) || 'milliseconds';
+    let smallerUnit = smallerDateUnit(unit) || 'millisecond';
     if (kDateNonUniform[unit]) {
         // Find matching period for non-uniform interval
         let periodStart = origin;

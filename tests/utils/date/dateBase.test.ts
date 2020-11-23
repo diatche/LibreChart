@@ -7,12 +7,12 @@ describe('dateBase', () => {
     describe('compareDateUnits', () => {
 
         it('should compare correctly', () => {
-            expect(compareDateUnits('hours', 'seconds')).toBe(2);
-            expect(compareDateUnits('hours', 'minutes')).toBe(1);
-            expect(compareDateUnits('hours', 'hours')).toBe(0);
-            expect(compareDateUnits('hours', 'days')).toBe(-1);
-            expect(compareDateUnits('hours', 'months')).toBe(-2);
-            expect(compareDateUnits('hours', 'foo' as any)).toBe(NaN);
+            expect(compareDateUnits('hour', 'second')).toBe(2);
+            expect(compareDateUnits('hour', 'minute')).toBe(1);
+            expect(compareDateUnits('hour', 'hour')).toBe(0);
+            expect(compareDateUnits('hour', 'day')).toBe(-1);
+            expect(compareDateUnits('hour', 'month')).toBe(-2);
+            expect(compareDateUnits('hour', 'foo' as any)).toBe(NaN);
         });
     });
 });

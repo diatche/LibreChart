@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import moment, { Moment } from 'moment';
+import moment from 'moment';
 import {
     ITickConstraints,
 } from "../baseScale";
@@ -52,7 +52,7 @@ const kDefaultDateScale: Omit<
     Required<IDateScale>,
     'utcOffset' | 'originDate'
 > = {
-    baseUnit: 'milliseconds',
+    baseUnit: 'millisecond',
 };
 
 /**
@@ -126,13 +126,13 @@ export const optimizeDateScale = (scale?: IDateScale | IDateScaleOptimized): IDa
         optimized: true,
         scaleModified: false,
     };
-    dateScale.scaleModified = (dateScale.baseUnit !== 'milliseconds')
+    dateScale.scaleModified = (dateScale.baseUnit !== 'millisecond')
         || !dateScale.originDate.isSame(kUnixEpoch);
     return dateScale;
 };
 
 export const epochWithTimeZone = (date: moment.Moment): moment.Moment => {
-    return date.clone().startOf('year').subtract(date.year(), 'years');
+    return date.clone().startOf('year').subtract(date.year(), 'year');
 };
 
 export const getDateScaleOrigin = (dateScale: IDateScale, date: moment.Moment): moment.Moment => {
@@ -231,7 +231,7 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
         }
     }
 
-    if (minUnitAscIndex === 0 && dateScale.baseUnit === 'milliseconds') {
+    if (minUnitAscIndex === 0 && dateScale.baseUnit === 'millisecond') {
         // Use linear scale
         return linearTicks(a, b, {
             minInterval: minDuration.asMilliseconds(),

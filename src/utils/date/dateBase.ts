@@ -1,31 +1,39 @@
 
 // TODO: sync with normalised moment date units (singular)
-export type DateUnit =  'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds';
+export type DateUnit =
+    'millisecond'
+    | 'second'
+    | 'minute'
+    | 'hour'
+    | 'day'
+    | 'month'
+    | 'year';
+
 export type DateUnitMapping<T> = { [unit in DateUnit]: T };
 export type ImmutableDateUnitMapping<T> = { readonly [unit in DateUnit]: T };
 
 export const kDateUnitsAsc: DateUnit[] = [
-    'milliseconds',
-    'seconds',
-    'minutes',
-    'hours',
-    'days',
-    'months',
-    'years',
+    'millisecond',
+    'second',
+    'minute',
+    'hour',
+    'day',
+    'month',
+    'year',
 ];
 export const kDateUnitsDes = [...kDateUnitsAsc].reverse();
 export const kUnitsLength = kDateUnitsAsc.length;
-export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('seconds');
+export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('second');
 
 export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
-    seconds: 60,
-    minutes: 60,
-    hours: 24,
-    months: 12,
+    second: 60,
+    minute: 60,
+    hour: 24,
+    month: 12,
 };
 
 export const kDateNonUniform: Partial<DateUnitMapping<boolean>> = {
-    months: true,
+    month: true,
 };
 
 export const isDateUnit = (unit: any): unit is DateUnit => {
