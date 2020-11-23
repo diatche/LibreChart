@@ -6,7 +6,7 @@ import Decimal from 'decimal.js';
  * Must specify either a `minInterval`, or 
  * `maxCount`, or both.
  */
-export interface TickConstraints {
+export interface ITickConstraints {
     /**
      * The smallest tick interval.
      */
@@ -51,7 +51,7 @@ export interface TickConstraints {
  * @param options See {@link TickConstraints}
  * @returns An array of tick locations.
  */
-export type TickGenerator<C extends TickConstraints = TickConstraints> = (
+export type TickGenerator<C extends ITickConstraints = ITickConstraints> = (
     start: Decimal.Value,
     end: Decimal.Value,
     constraints: C,

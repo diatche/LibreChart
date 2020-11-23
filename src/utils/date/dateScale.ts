@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import moment, { Moment } from 'moment';
 import {
-    TickConstraints,
+    ITickConstraints,
 } from "../baseScale";
 import {
     kDateUnitsAsc,
@@ -32,12 +32,12 @@ const kUnixEpoch = moment.unix(0);
 const kMinDurationFilter = 0.9;
 const kDurationSnapThreshold = 1 - kMinDurationFilter;
 
-export interface DateScale {
+export interface IDateScale {
     baseUnit?: DateUnit;
     originDate?: moment.Moment;
 }
 
-export interface DateScaleOptimized extends Required<DateScale> {
+export interface IDateScaleOptimized extends Required<IDateScale> {
     optimized: boolean;
     scaleModified: boolean;
 }
@@ -49,7 +49,7 @@ export interface DateScaleOptimized extends Required<DateScale> {
  * origin date when optimizing the date scale.
  */
 const kDefaultDateScale: Omit<
-    Required<DateScale>,
+    Required<IDateScale>,
     'utcOffset' | 'originDate'
 > = {
     baseUnit: 'milliseconds',
@@ -63,7 +63,7 @@ const kDefaultDateScale: Omit<
  * 
  * Automatically handles `radix`.
  */
-export interface DateTickConstraints extends TickConstraints, DateScale {
+export interface IDateTickConstraints extends ITickConstraints, IDateScale {
     /**
      * Allows specifying a minimum interval using
      * any date unit.
@@ -74,7 +74,7 @@ export interface DateTickConstraints extends TickConstraints, DateScale {
     minDuration?: moment.Duration;
 }
 
-export const encodeDate = (date: moment.Moment, dateScale: DateScale): Decimal => {
+export const encodeDate = (date: moment.Moment, dateScale: IDateScale): Decimal => {
     let scale = optimizeDateScale(dateScale);
     let value: number;
     if (scale.scaleModified) {
@@ -85,7 +85,7 @@ export const encodeDate = (date: moment.Moment, dateScale: DateScale): Decimal =
     return new Decimal(value);
 };
 
-export const decodeDate = (value: Decimal.Value, dateScale: DateScale): moment.Moment => {
+export const decodeDate = (value: Decimal.Value, dateScale: IDateScale): moment.Moment => {
     let scale = optimizeDateScale(dateScale);
     let x = new Decimal(value);
     let date: moment.Moment;
@@ -101,7 +101,7 @@ export const decodeDate = (value: Decimal.Value, dateScale: DateScale): moment.M
     return date;
 };
 
-export const optimizeDateScale = (scale?: DateScale | DateScaleOptimized): DateScaleOptimized => {
+export const optimizeDateScale = (scale?: IDateScale | IDateScaleOptimized): IDateScaleOptimized => {
     if (isDateScaleOptimized(scale)) {
         return scale;
     }
@@ -120,7 +120,7 @@ export const optimizeDateScale = (scale?: DateScale | DateScaleOptimized): DateS
         let thisYear = moment().startOf('year');
         originDate = thisYear.subtract(thisYear.year() - 1970, 'year');
     }
-    let dateScale: DateScaleOptimized = {
+    let dateScale: IDateScaleOptimized = {
         baseUnit,
         originDate,
         optimized: true,
@@ -135,11 +135,11 @@ export const epochWithTimeZone = (date: moment.Moment): moment.Moment => {
     return date.clone().startOf('year').subtract(date.year(), 'years');
 };
 
-export const getDateScaleOrigin = (dateScale: DateScale, date: moment.Moment): moment.Moment => {
+export const getDateScaleOrigin = (dateScale: IDateScale, date: moment.Moment): moment.Moment => {
     return optimizeDateScale(dateScale).originDate || epochWithTimeZone(date);
 };
 
-const isDateScaleOptimized = (dateScale?: any): dateScale is DateScaleOptimized => {
+const isDateScaleOptimized = (dateScale?: any): dateScale is IDateScaleOptimized => {
     return dateScale?.optimized || false;
 };
 
@@ -152,7 +152,7 @@ const isDateScaleOptimized = (dateScale?: any): dateScale is DateScaleOptimized 
  * @param constraints See {@link DateTickConstraints}
  * @returns An array of tick locations in milliseconds.
  */
-export function dateTicks<TC extends DateTickConstraints = DateTickConstraints>(
+export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints>(
     start: Decimal.Value,
     end: Decimal.Value,
     constraints: TC,
@@ -238,7 +238,7 @@ export function dateTicks<TC extends DateTickConstraints = DateTickConstraints>(
         });
     }
 
-    let unitConstraints: TickConstraints = {}
+    let unitConstraints: ITickConstraints = {}
     let bestTicks: Decimal[] = [];
     for (let i = minUnitAscIndex; i < kUnitsLength; i++) {
         // Try to get tick intervals with this unit

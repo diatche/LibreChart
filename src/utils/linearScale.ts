@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import {
-    TickConstraints,
+    ITickConstraints,
     TickGenerator,
 } from "./baseScale";
 import { findCommonFactors, findFactors } from "./factors";
@@ -28,7 +28,7 @@ const kFactors1 = [k1];
 export const linearTicks: TickGenerator = (
     start: Decimal.Value,
     end: Decimal.Value,
-    constraints: TickConstraints,
+    constraints: ITickConstraints,
 ): Decimal[] => {
     let a = new Decimal(start);
     let b = new Decimal(end);

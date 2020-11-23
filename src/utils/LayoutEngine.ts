@@ -26,7 +26,7 @@ import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import { IAxisStyle, IChartGridStyle } from "../types";
 import { isMatch } from "./comp";
-import { TickConstraints, TickGenerator } from "./baseScale";
+import { ITickConstraints, TickGenerator } from "./baseScale";
 
 const kGridUpdateDebounceInterval = 100;
 const kAxisUpdateDebounceInterval = 100;
@@ -35,7 +35,7 @@ const kDefaultAxisThicknessStep = 10;
 
 const k0 = new Decimal(0);
 
-export interface IChartAxisInput<TC extends TickConstraints = TickConstraints> {
+export interface IChartAxisInput<TC extends ITickConstraints = ITickConstraints> {
     /**
      * Toggles axis visiblity.
      * Axis is hidden by default.
