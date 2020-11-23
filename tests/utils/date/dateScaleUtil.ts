@@ -1,7 +1,6 @@
 import moment from 'moment';
 import {
-    optimizeDateScale,
-    DateTickConstraints,
+    IDateTickConstraints,
     dateTicks,
     encodeDate,
     decodeDate,
@@ -12,7 +11,7 @@ export interface DateTickInput {
     end: moment.Moment;
     stride: moment.Duration;
     format: string;
-    constraints?: DateTickConstraints;
+    constraints?: IDateTickConstraints;
     expectedOverrides?: {
         start?: moment.Moment;
         end?: moment.Moment;
@@ -34,7 +33,7 @@ export const getExpectedDateTicks = (input: DateTickInput): string[] => {
 }
 
 export const getDateTicks = (input: DateTickInput): string[] => {
-    let constraints: DateTickConstraints = {
+    let constraints: IDateTickConstraints = {
         minDuration: input.stride,
         ...input.constraints,
     };
