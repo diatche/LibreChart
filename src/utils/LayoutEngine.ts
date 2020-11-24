@@ -21,14 +21,14 @@ import {
     IChartGridInput,
     IGridLayoutSourceProps,
 } from "../types";
-import Axis from "./Axis";
+import Axis, { AxisManyInput } from "./Axis";
 
 const kGridUpdateDebounceInterval = 100;
 
 export interface LayoutEngineProps {
     dataSources?: DataSource[];
     grid?: IChartGridInput & IGridLayoutSourceProps;
-    axes?: Axis[] | Partial<AxisTypeMapping<Axis>>;
+    axes?: AxisManyInput;
 }
 
 export default class LayoutEngine { 
@@ -135,35 +135,7 @@ export default class LayoutEngine {
     }
 
     private _validatedAxes(props: LayoutEngineProps | undefined): Partial<AxisTypeMapping<Axis>> {
-        let axisArrayOrMap: any = props?.axes;
-        if (!axisArrayOrMap) {
-            return {};
-        }
-
-        // Validate and normalize axis types
-        let axisArray: Axis[] = [];
-        let axis: Axis;
-        if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
-            axisArray = axisArrayOrMap;
-        } else {
-            let axisMap: { [key: string]: Axis } = axisArrayOrMap;
-            for (let key of Object.keys(axisMap)) {
-                axis = axisMap[key];
-                if (axis.axisType !== key) {
-                    console.warn(`Axis with type "${axis.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`);
-                }
-                axisArray.push(axis);
-            }
-        }
-
-        let axes: Partial<AxisTypeMapping<Axis>> = {};
-        for (axis of axisArray) {
-            if (!(axis instanceof Axis)) {
-                throw new Error('Invalid axis instance');
-            }
-            axes[axis.axisType] = axis;
-        }
-        return axes;
+        return Axis.createMany(props?.axes);
     }
 
     private _validatedGrid(

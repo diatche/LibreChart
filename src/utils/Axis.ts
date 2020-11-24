@@ -8,6 +8,7 @@ import Evergrid, {
     isRangeEmpty,
     isAxisHorizontal,
     isAxisType,
+    AxisTypeMapping,
 } from "evergrid";
 import {
     kAxisReuseIDs,
@@ -32,6 +33,8 @@ const kDefaultAxisThicknessStep = 10;
 const k0 = new Decimal(0);
 
 export interface IAxisProps extends Required<IAxisOptions> {}
+
+export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
 interface IAxisLengthLayoutBaseInfo {
     /** Number of major axis intervals per axis container. */
@@ -147,6 +150,50 @@ export default class Axis implements IAxisProps {
         if (!this.hidden) {
             this.layout = this._createLayoutSource(layoutSourceDefaults);
         }
+    }
+
+    static createMany(input: AxisManyInput | undefined): Partial<AxisTypeMapping<Axis>> {
+        let axisArrayOrMap: any = input;
+        if (!axisArrayOrMap) {
+            return {};
+        }
+
+        // Validate and normalize axis types
+        let axisOrOptionsArray: (Axis | IAxisOptions & { axisType?: AxisType })[] = [];
+        let axisOrOption: Axis | (IAxisOptions & { axisType?: AxisType });
+        if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
+            axisOrOptionsArray = axisArrayOrMap;
+        } else {
+            let axisMap: { [key: string]: (Axis | IAxisOptions) } = axisArrayOrMap;
+            for (let key of Object.keys(axisMap)) {
+                axisOrOption = axisMap[key];
+                if (!axisOrOption.axisType) {
+                    if (isAxisType(key)) {
+                        axisOrOption.axisType = key;
+                    } else {
+                        throw new Error('Invalid axis type');
+                    }
+                } else if (axisOrOption.axisType !== key) {
+                    console.warn(`Axis with type "${axisOrOption.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`);
+                }
+                axisOrOptionsArray.push(axisOrOption);
+            }
+        }
+
+        let axis: Axis;
+        let axes: Partial<AxisTypeMapping<Axis>> = {};
+        for (axisOrOption of axisOrOptionsArray) {
+            if (axisOrOption instanceof Axis) {
+                axis = axisOrOption;
+            } else {
+                if (!axisOrOption.axisType) {
+                    throw new Error('Axis is missing a type. Use an object with axis types as keys or use axis instances.');
+                }
+                axis = new Axis(axisOrOption.axisType, axisOrOption);
+            }
+            axes[axis.axisType] = axis;
+        }
+        return axes;
     }
 
     private _createLayoutSource(defaults: IAxisLayoutSourceProps): FlatLayoutSource | undefined {
