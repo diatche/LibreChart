@@ -28,6 +28,7 @@ export const kAxisStyleBaseDefaults: IAxisStyle = {
     majorGridLineDistanceMin: 50,
 
     minorGridLineDistanceMin: 10,
+    minorIntervalCountMax: 5,
 
     labelFontSize: 12,
     labelMargin: 3,

@@ -10,6 +10,7 @@ import {
     DateUnit,
     mapDateUnits,
     isDateUnit,
+    kDateUnitExcludedFactors,
 } from "./dateBase";
 import {
     dateIntervalLength,
@@ -193,7 +194,7 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
     let dateScale = optimizeDateScale(constraints);
     let startDate = decodeDate(a, dateScale);
     let endDate = decodeDate(b, dateScale);
-    let len = new Decimal(endDate.diff(startDate, dateScale.baseUnit));
+    let len = new Decimal(moment.duration(endDate.diff(startDate)).as(dateScale.baseUnit));
     let minIntervalTemp = k0;
     let minDuration = moment.duration(0);
 
@@ -213,15 +214,16 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
         minIntervalTemp = min;
     }
 
+    let maxCount: Decimal | undefined;
     if (constraints.maxCount) {
-        let maxCount = new Decimal(constraints.maxCount);
+        maxCount = new Decimal(constraints.maxCount);
         if (maxCount.eq(0)) {
             return [];
         }
         if (maxCount.lt(0) || maxCount.isNaN()) {
             throw new Error('Max count must be greater than or equal to zero');
         }
-        let maxCountInterval = len.div(maxCount.add(1));
+        let maxCountInterval = len.div(maxCount);
         if (maxCountInterval.gt(minIntervalTemp)) {
             minIntervalTemp = maxCountInterval;
         }
@@ -266,14 +268,14 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
         expand: constraints.expand,
     };
     let bestTicks: Decimal[] = [];
-    for (let i = minUnitAscIndex; i < kUnitsLength; i++) {
+    for (let i = kUnitsLength - 1; i >= minUnitAscIndex; i--) {
         // Try to get tick intervals with this unit
         let unit = kDateUnitsAsc[i];
         // We first snap the number to an integer, then
         // floor, because some intervals are non uniform.
         let minUnitDuration = minUnitDurations[unit];
         if (minUnitDuration < dateScale.minUnitDuration) {
-            break;
+            continue;
         }
         let unitDateScale = optimizeDateScale({
             originDate: dateScale.originDate,
@@ -281,6 +283,7 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
         });
         unitConstraints.minInterval = minUnitDuration;
         unitConstraints.radix = kDateUnitRadix[unit];
+        unitConstraints.excludeFactors = kDateUnitExcludedFactors[unit];
 
         let unitStart = snapDate(startDate, unit);
         let unitEnd = snapDate(endDate, unit);

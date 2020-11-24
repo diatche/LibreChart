@@ -12,6 +12,12 @@ export interface IAxisLayoutStyle {
     majorGridLineDistanceMin?: number;
 
     minorGridLineDistanceMin?: number;
+    
+    /**
+     * Maximum number of minor tick intervals
+     * to place between major tick intervals.
+     **/
+    minorIntervalCountMax?: number;
 
     labelFontSize?: number;
     labelMargin?: number;

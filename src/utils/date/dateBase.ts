@@ -31,8 +31,29 @@ export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
     month: 12,
 };
 
+// Factors of 12: 1, 2, 3, 4, 6, 12
+const kExcludeFactors12 = [2, 4];
+
+// Factors of 24: 1, 2, 3, 4, 6, 8, 12, 24
+const kExcludeFactors24 = [2, 4, 8];
+
+// Factors of 30: 1, 2, 3, 5, 6, 10, 15, 30
+const kExcludeFactors30 = [3, 6, 15];
+
+// Factors of 60: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60
+const kExcludeFactors60 = [3, 5, 6, 12, 20];
+
+export const kDateUnitExcludedFactors: Partial<DateUnitMapping<number[]>> = {
+    second: kExcludeFactors60,
+    minute: kExcludeFactors60,
+    hour: kExcludeFactors24,
+    day: kExcludeFactors30,
+    month: kExcludeFactors12,
+};
+
 export const kDateNonUniform: Partial<DateUnitMapping<boolean>> = {
     month: true,
+    year: true,
 };
 
 export const isDateUnit = (unit: any): unit is DateUnit => {

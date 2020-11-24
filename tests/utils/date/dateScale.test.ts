@@ -242,11 +242,11 @@ describe('scale', () => {
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
 
-        it('should divide 1 day into 2 hours when not expanding', () => {
+        it('should divide 1 day into 3 hours when not expanding', () => {
             let input: DateTickInput = {
                 start: moment('2020-01-01'),
                 end: moment('2020-01-02'),
-                stride: moment.duration(2, 'hour'),
+                stride: moment.duration(3, 'hour'),
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
                     baseUnit: 'hour',
@@ -435,6 +435,25 @@ describe('scale', () => {
                 k10.add(k1.div(24).mul(4)),
                 k10.add(k1.div(24).mul(5)),
             ].map(x => x.toFixed(6)));
+        });
+
+        // max count
+
+        it('should divide days into hours but no more than max count', () => {
+            let input: DateTickInput = {
+                start: moment('2019-12-30T12:00'),
+                end: moment('2019-12-30T18:00'),
+                stride: moment.duration(3, 'hour'),
+                format: 'YYYY-MM-DD HH:mm',
+                constraints: {
+                    baseUnit: 'day',
+                    minDuration: undefined,
+                    maxCount: 5,
+                },
+            };
+            let ticks = getDateTicks(input);
+            expect(ticks.length).toBeLessThanOrEqual(5);
+            expect(ticks).toEqual(getExpectedDateTicks(input));
         });
     });
 });

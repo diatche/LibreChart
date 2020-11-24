@@ -380,6 +380,7 @@ export default class LayoutEngine {
             majorInterval,
             {
                 ...axis.defaultTickConstraints,
+                maxCount: axis.style.minorIntervalCountMax,
                 minInterval: minorDist.div(scale).abs(),
                 expand: false,
             }
