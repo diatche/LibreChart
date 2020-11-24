@@ -33,6 +33,9 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     constructor(props: ChartProps) {
         super(props);
         this.layout = new LayoutEngine(props);
+
+        // TODO: validate property changes
+        // TODO: prevent changing axes on the fly
     }
 
     get innerView() {
