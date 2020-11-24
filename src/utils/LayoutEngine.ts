@@ -342,7 +342,7 @@ export default class LayoutEngine {
         axis: IChartAxis,
         view: Evergrid,
     ): IAxisLengthLayoutBaseInfo | undefined {
-        let { scale } = view;
+        let scale = axis.horizontal ? view.scale.x : view.scale.y;
         let visibleLocationRange = axis.layout!.getVisibleLocationRange(view);
         let visibleRange: [number, number] = axis.horizontal
             ? [visibleLocationRange[0].x, visibleLocationRange[1].x]
@@ -367,7 +367,7 @@ export default class LayoutEngine {
             visibleRange[1],
             {
                 ...axis.defaultTickConstraints,
-                minInterval: majorDist.div(scale.x).abs(),
+                minInterval: majorDist.div(scale).abs(),
                 expand: true,
             }
         );
@@ -380,16 +380,18 @@ export default class LayoutEngine {
             majorInterval,
             {
                 ...axis.defaultTickConstraints,
-                minInterval: minorDist.div(scale.x).abs(),
+                minInterval: minorDist.div(scale).abs(),
                 expand: false,
             }
         );
 
+        let minorInterval = minorTicks[Math.min(1, minorTicks.length - 1)]
+            .sub(minorTicks[0]);
+
         return {
             majorInterval,
             majorCount: majorTicks.length - 1,
-            minorInterval: minorTicks[Math.min(1, minorTicks.length - 1)]
-                .sub(minorTicks[0]),
+            minorInterval,
             minorCount: minorTicks.length - 2,
             containerLength: majorTicks[majorTicks.length - 1]
                 .sub(majorTicks[0])

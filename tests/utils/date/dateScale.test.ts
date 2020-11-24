@@ -210,19 +210,6 @@ describe('scale', () => {
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
         });
 
-        it('should divide 1 month (31 days) into 2 day intervals when not expanding', () => {
-            let input: DateTickInput = {
-                start: moment('2020-01-01'),
-                end: moment('2020-02-01'),
-                stride: moment.duration(2, 'day'),
-                format: 'YYYY-MM-DD HH:mm',
-                constraints: {
-                    baseUnit: 'day',
-                },
-            };
-            expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
-        });
-
         it('should divide 1 month (28 days) into 2 day intervals when not expanding', () => {
             let input: DateTickInput = {
                 start: moment('2019-02-01'),
@@ -235,23 +222,6 @@ describe('scale', () => {
                 expectedOverrides: {
                     start: moment('2019-02-01'),
                     end: moment('2019-03-01'),
-                },
-            };
-            expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));
-        });
-
-        it('should divide 1 month (29 days) into 2 day intervals when not expanding', () => {
-            let input: DateTickInput = {
-                start: moment('2020-02-01'),
-                end: moment('2020-03-01'),
-                stride: moment.duration(2, 'day'),
-                format: 'YYYY-MM-DD HH:mm',
-                expectedOverrides: {
-                    start: moment('2020-02-02'),
-                    end: moment('2020-03-01'),
-                },
-                constraints: {
-                    baseUnit: 'day',
                 },
             };
             expect(getDateTicks(input)).toEqual(getExpectedDateTicks(input));

@@ -12,9 +12,7 @@ import {
     isDateUnit,
 } from "./dateBase";
 import {
-    ceilDate,
     dateIntervalLength,
-    floorDate,
     snapDate,
     stepDateLinear,
 } from "./duration";
@@ -23,22 +21,43 @@ import { linearTicks } from "../linearScale";
 const k0 = new Decimal(0);
 const kUnixEpoch = moment.unix(0);
 
-/**
- * When specifying a minimum duration,
- * non-uniform durations, like months,
- * allow small rounding errors before
- * discarding the duration.
- */
-const kMinDurationFilter = 0.9;
-const kDurationSnapThreshold = 1 - kMinDurationFilter;
-
 export interface IDateScale {
+    /**
+     * The scale's base unit. 1 interval
+     * with this unit encodes to a length
+     * of 1 when encoded.
+     */
     baseUnit?: DateUnit;
+
+    /**
+     * Location of the origin date. This
+     * date encodes to zero.
+     */
     originDate?: moment.Moment;
+
+    /**
+     * Specifies how small a unit duration
+     * can be before it is discarded in favour
+     * of a smaller unit.
+     * 
+     * Smaller values will produce larger intervals.
+     */
+    minUnitDuration?: number;
 }
 
 export interface IDateScaleOptimized extends Required<IDateScale> {
+    /**
+     * This flag is set to `true` when this
+     * date scale was created with `optimizeDateScale()`.
+     * 
+     * Do not set manually.
+     **/
     optimized: boolean;
+
+    /**
+     * This is an internal optimisation flag,
+     * do not set manually. Instead use `optimizeDateScale()`.
+     */
     scaleModified: boolean;
 }
 
@@ -53,6 +72,7 @@ const kDefaultDateScale: Omit<
     'utcOffset' | 'originDate'
 > = {
     baseUnit: 'millisecond',
+    minUnitDuration: 0.5,
 };
 
 /**
@@ -105,7 +125,10 @@ export const optimizeDateScale = (scale?: IDateScale | IDateScaleOptimized): IDa
     if (isDateScaleOptimized(scale)) {
         return scale;
     }
-    let baseUnit = scale?.baseUnit || kDefaultDateScale.baseUnit;
+    let {
+        baseUnit = kDefaultDateScale.baseUnit,
+        minUnitDuration = kDefaultDateScale.minUnitDuration,
+    } = scale || {};
     if (!isDateUnit(baseUnit)) {
         throw new Error('Invalid base date unit');
     }
@@ -123,6 +146,7 @@ export const optimizeDateScale = (scale?: IDateScale | IDateScaleOptimized): IDa
     let dateScale: IDateScaleOptimized = {
         baseUnit,
         originDate,
+        minUnitDuration,
         optimized: true,
         scaleModified: false,
     };
@@ -225,7 +249,7 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
     let minUnitAscIndex = 0;
     for (let i = kUnitsLength - 1; i >= 0; i--) {
         let unit = kDateUnitsAsc[i];
-        if (minUnitDurations[unit] >= kMinDurationFilter) {
+        if (minUnitDurations[unit] >= dateScale.minUnitDuration) {
             minUnitAscIndex = i;
             break;
         }
@@ -238,17 +262,17 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
         });
     }
 
-    let unitConstraints: ITickConstraints = {}
+    let unitConstraints: ITickConstraints = {
+        expand: constraints.expand,
+    };
     let bestTicks: Decimal[] = [];
     for (let i = minUnitAscIndex; i < kUnitsLength; i++) {
         // Try to get tick intervals with this unit
         let unit = kDateUnitsAsc[i];
         // We first snap the number to an integer, then
         // floor, because some intervals are non uniform.
-        let minUnitDuration = Math.floor(
-            snapNumber(minUnitDurations[unit], kDurationSnapThreshold)
-        );
-        if (minUnitDuration < kMinDurationFilter) {
+        let minUnitDuration = minUnitDurations[unit];
+        if (minUnitDuration < dateScale.minUnitDuration) {
             break;
         }
         let unitDateScale = optimizeDateScale({
@@ -260,36 +284,9 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
 
         let unitStart = snapDate(startDate, unit);
         let unitEnd = snapDate(endDate, unit);
-
-        let uniformStart = floorDate(unitStart, minUnitDuration, unit);
-        let uniformEnd = ceilDate(unitEnd, minUnitDuration, unit);
-        let uniformTickStart = encodeDate(uniformStart, unitDateScale);
-        let uniformTickEnd = encodeDate(uniformEnd, unitDateScale);
-
-        let uniformTicks = linearTicks(
-            uniformTickStart,
-            uniformTickEnd,
-            unitConstraints
-        );
-
-        let ticks = uniformTicks;
-        if (!constraints.expand) {
-            // Filter out ticks outside of interval
-            let tickStart = encodeDate(unitStart, unitDateScale);
-            let tickEnd = encodeDate(unitEnd, unitDateScale);
-            let iStart = uniformTicks.findIndex(x => x.gte(tickStart));
-            if (iStart >= 0) {
-                let iEnd = iStart + 1;
-                for (let i = uniformTicks.length - 1; i > iStart; i--) {
-                    let x = uniformTicks[i];
-                    if (x.lte(tickEnd)) {
-                        iEnd = i + 1;
-                        break;
-                    }
-                }
-                ticks = ticks.slice(iStart, iEnd);
-            }
-        }
+        let tickStart = encodeDate(unitStart, unitDateScale);
+        let tickEnd = encodeDate(unitEnd, unitDateScale);
+        let ticks = linearTicks(tickStart, tickEnd, unitConstraints);
 
         if (unitDateScale.baseUnit !== dateScale.baseUnit) {
             // Re-encode ticks
@@ -308,18 +305,4 @@ export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints
     }
 
     return bestTicks;
-}
-
-/**
- * Returns rounded `value` if within `threshold`,
- * otherwise returns the original `value`.
- * @param value 
- * @param threshold 
- */
-const snapNumber = (value: number, threshold: number): number => {
-    let roundedValue = Math.round(value);
-    if (Math.abs(value - roundedValue) <= threshold) {
-        return roundedValue;
-    }
-    return value;
 }

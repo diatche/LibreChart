@@ -18,11 +18,11 @@ const kFactors1 = [k1];
 
 /**
  * Calculates optimal tick locations in linear space given an
- * interval and constraints (see {@link TickConstraints}).
+ * interval and constraints (see {@link ITickConstraints}).
  *  
  * @param start The inclusive start of the interval. 
  * @param end The inclusive end of the interval.
- * @param constraints See {@link TickConstraints}
+ * @param constraints See {@link ITickConstraints}
  * @returns An array of tick locations.
  */
 export const linearTicks: TickGenerator = (

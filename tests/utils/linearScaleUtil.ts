@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { TickConstraints } from '../../src/utils/baseScale';
+import { ITickConstraints } from '../../src/utils/baseScale';
 import {
     linearTicks,
 } from '../../src/utils/linearScale';
@@ -8,7 +8,7 @@ export interface LinearTickInput {
     start: Decimal.Value;
     end: Decimal.Value;
     stride: Decimal.Value;
-    constraints?: TickConstraints;
+    constraints?: ITickConstraints;
 }
 
 export const getExpectedLinearTicks = (input: LinearTickInput): string[] => {

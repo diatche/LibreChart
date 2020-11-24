@@ -126,6 +126,24 @@ describe('duration', () => {
 
     describe('roundDate', () => {
 
+        // milliseconds
+
+        it('should round date to same value with 1 millisecond', () => {
+            expect(roundDate(
+                moment.unix(0.001),
+                1,
+                'millisecond'
+            ).valueOf()).toBe(1);
+        });
+
+        it('should round date up from middle with 2 millisecond', () => {
+            expect(roundDate(
+                moment.unix(0.001),
+                2,
+                'millisecond'
+            ).valueOf()).toBe(2);
+        });
+
         // hours
 
         it('should round date down with 1 hour', () => {

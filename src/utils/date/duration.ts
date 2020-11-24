@@ -12,7 +12,7 @@ export const dateIntervalLength = (
     unit: DateUnit,
 ): number => {
     let days = 0;
-    if (compareDateUnits('day', unit) > 0) {
+    if (compareDateUnits(unit, 'day') < 0) {
         // Unit is smaller than a day.
         // First find number of whole days in diff.
         days = date.diff(origin, 'day');
@@ -62,7 +62,7 @@ export const stepDateLinear = (
         date = date.clone();
 
         // Step whole days
-        if (compareDateUnits('day', unit) > 0) {
+        if (compareDateUnits(unit, 'day') < 0) {
             // Unit is smaller than a day.
             // First step whole days
             let days = Math.floor(moment.duration(step, unit).asDays());
@@ -106,6 +106,7 @@ export const interpolatedDate = (
     date2: Moment,
     position: number,
 ): Moment => {
+    // TODO: use decimal for position
     let length = date2.diff(date1, 'ms');
     return date1.clone().add(position * length, 'ms');
 };
@@ -118,17 +119,6 @@ export const interpolatedDate = (
  */
 export const roundDateLinear = (date: Moment, unit: DateUnit): Moment => {
     return stepDateLinear(date, 0.5, unit).startOf(unit);
-};
-
-const getOriginUnit = (unit: DateUnit): DateUnit | undefined => {
-    if (compareDateUnits('second', unit) > 0) {
-        return 'second';
-    } else if (compareDateUnits('day', unit) > 0) {
-        return 'day';
-    } else if (compareDateUnits('year', unit) > 0) {
-        return 'year';
-    }
-    return undefined;
 };
 
 export const roundDate = (
@@ -145,17 +135,10 @@ export const roundDate = (
     }
 
     let {
-        originUnit = getOriginUnit(unit),
         method = Math.round,
     } = options;
 
-    let origin: moment.Moment;
-    if (originUnit) {
-        origin = date.clone().startOf(originUnit);
-    } else {
-        // Use 1 CE
-        origin = date.clone().startOf('year').subtract(date.year());
-    }
+    let origin = getRoundingOriginDate(date, unit, options);
 
     let smallerUnit = smallerDateUnit(unit) || 'millisecond';
     if (kDateNonUniform[unit]) {
@@ -272,4 +255,32 @@ export const snapDate = (date: moment.MomentInput, unit: DateUnit): Moment => {
         }
     }
     return m;
+};
+
+export const getRoundingOriginUnit = (unit: DateUnit): DateUnit | undefined => {
+    if (compareDateUnits(unit, 'second') < 0) {
+        return 'second';
+    } else if (compareDateUnits(unit, 'day') < 0) {
+        return 'day';
+    } else if (compareDateUnits(unit, 'year') < 0) {
+        return 'year';
+    }
+    return undefined;
+};
+
+export const getRoundingOriginDate = (
+    date: Moment,
+    unit: DateUnit,
+    options: { originUnit?: DateUnit } = {}
+): Moment => {
+    let {
+        originUnit = getRoundingOriginUnit(unit),
+    } = options;
+
+    if (!originUnit) {
+        // Use 1 CE in same time zone
+        return date.clone().startOf('year').subtract(date.year());
+    }
+
+    return date.clone().startOf(originUnit);
 };
