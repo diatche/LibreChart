@@ -93,12 +93,12 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
         let axisType = kReuseIDAxes[reuseID];
         let axis = this.layout.axes[axisType];
-        if (!axis?.show) {
+        if (!axis || axis.hidden) {
             return null;
         }
-        let range = this.layout.getAxisContainerRangeAtIndex(index, axisType);
-        let tickLocations = this.layout.getAxisTickLocations(range[0], range[1], axisType);
-        let isInverted = this.layout.isAxisInverted(axisType, this);
+        let range = axis.getContainerRangeAtIndex(index);
+        let tickLocations = axis.getTickLocations(range[0], range[1]);
+        let isInverted = axis.isInverted(this);
         return (
             <ChartAxis
                 {...axis.style}
@@ -106,18 +106,16 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 tickLocations={tickLocations}
                 getLabel={value => axis?.getLabel(value) || ''}
                 isInverted={isInverted}
-                onOptimalThicknessChange={thickness => this.layout.onOptimalAxisThicknessChange(
+                onOptimalThicknessChange={thickness => axis?.onOptimalThicknessChange(
                     thickness,
                     index,
-                    axisType,
-                    this,
                 )}
             />
         );
     }
 
     renderGrid() {
-        if (!this.layout.grid.show) {
+        if (this.layout.grid.hidden) {
             return null;
         }
         let hAxis = this.layout.getHorizontalGridAxis();
@@ -128,10 +126,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         return (
             <ChartGrid
                 {...this.layout.grid.style}
-                majorCountX={hAxis?.majorCount || 0}
-                minorCountX={hAxis?.minorCount || 0}
-                majorCountY={vAxis?.majorCount || 0}
-                minorCountY={vAxis?.minorCount || 0}
+                majorCountX={hAxis?.layoutInfo.majorCount || 0}
+                minorCountX={hAxis?.layoutInfo.minorCount || 0}
+                majorCountY={vAxis?.layoutInfo.majorCount || 0}
+                minorCountY={vAxis?.layoutInfo.minorCount || 0}
             />
         );
     }
