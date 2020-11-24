@@ -7,14 +7,9 @@ import { findCommonFactors, findFactors } from "./factors";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);
-const k2 = new Decimal(2);
-const k5 = new Decimal(5);
 const k10 = new Decimal(10);
 
-const kFactors10 = [k1, k2, k5, k10];
-const kFactors5 = [k1, k5];
-const kFactors2 = [k1, k2];
-const kFactors1 = [k1];
+const kFactors10 = [1, 2, 5, 10];
 
 /**
  * Calculates optimal tick locations in linear space given an
@@ -89,20 +84,22 @@ export const linearTicks: TickGenerator = (
     let aScaled = a.div(exponent).floor();
     let bScaled = b.div(exponent).ceil();
 
-    let factors: Decimal[];
+    let factors: number[];
     if (constraints.expand) {
         // Use radix factors
-        factors = findFactors(radix.toNumber())
-            .map(x => new Decimal(x));
+        factors = findFactors(radix.toNumber());
     } else {
         // Use common factors
         let scaledLen = bScaled.sub(aScaled);
-        factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber())
-            .map(x => new Decimal(x));
+        factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber());
     }
     if (factors.length === 0) {
         // Fallback to default
         factors = kFactors10;
+    }
+    if (constraints.excludeFactors?.length !== 0) {
+        let excludeFactors = new Set(constraints.excludeFactors);
+        factors = factors.filter(x => !excludeFactors.has(x));
     }
 
     type Base = {
@@ -110,7 +107,7 @@ export const linearTicks: TickGenerator = (
         end: Decimal;
         interval: Decimal;
         count: number;
-    }
+    };
 
     let bestBase: Base | undefined;
 

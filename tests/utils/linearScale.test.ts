@@ -284,5 +284,13 @@ describe('scale', () => {
                 .map(x => x.toString());
             expect(x).toEqual(['0', '30', '60']);
         });
+
+        // excludeFactors
+
+        it('should not divide 1 into intervals of 0.2 when a factor of 2 is excluded', () => {
+            let x = linearTicks(0, 1, { minInterval: 0.11, excludeFactors: [2] })
+                .map(x => x.toString());
+            expect(x).toEqual(['0', '0.5', '1']);
+        });
     });
 });

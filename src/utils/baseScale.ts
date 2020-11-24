@@ -11,11 +11,13 @@ export interface ITickConstraints {
      * The smallest tick interval.
      */
     minInterval?: Decimal.Value;
+
     /**
      * Maximum number of intervals to divide
      * the interval into.
      **/
     maxCount?: Decimal.Value;
+
     /**
      * If `true`, expands the interval enough
      * to satisfy the constraints.
@@ -27,6 +29,7 @@ export interface ITickConstraints {
      * but in this case, some ticks at the edges may be discarded.
      */
     expand?: boolean;
+
     /**
      * An integer greater than 1 specifying the base
      * to use for representing numeric values. Defaults
@@ -40,6 +43,15 @@ export interface ITickConstraints {
      * - When used with other number systems. 
      */
     radix?: Decimal.Value;
+
+    /**
+     * Factors to exclude when looking for optimal
+     * tick locations.
+     * 
+     * For example, if you don't want an interval of
+     * 2 between tick marks, specify `[2]`.
+     */
+    excludeFactors?: number[];
 }
 
 /**
