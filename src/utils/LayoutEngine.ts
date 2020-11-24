@@ -12,6 +12,7 @@ import Evergrid, {
     zeroPoint,
     isRangeEmpty,
     isAxisHorizontal,
+    kAllAxisTypes,
 } from "evergrid";
 import DataSource from "./DataSource";
 import {
@@ -183,6 +184,12 @@ export default class LayoutEngine {
 
     scheduleUpdate(chart: Chart) {
         this._debouncedUpdate(chart);
+
+        // Also schedule thickness updates
+        // to reduce jank.
+        for (let axisType of kAllAxisTypes) {
+            this.scheduleAxisThicknessUpdate(axisType);
+        }
     }
     
     private _debouncedUpdate = debounce(
@@ -256,16 +263,9 @@ export default class LayoutEngine {
         thickness: number,
         index: number,
         axisType: AxisType,
-        chart: Chart,
     ) {
         // Save optimal thicknesses until an
         // update is triggered.
-
-        let view = chart.innerView;
-        if (!view) {
-            return;
-        }
-
         const axis = this.axes[axisType]!;
 
         // Apply thickness step
@@ -273,11 +273,11 @@ export default class LayoutEngine {
 
         if (thickness !== axis.optimalThicknesses[index]) {
             axis.optimalThicknesses[index] = thickness;
-            this.scheduleAxisThicknessUpdate(axisType, view);
+            this.scheduleAxisThicknessUpdate(axisType);
         }
     }
 
-    scheduleAxisThicknessUpdate(axisType: AxisType, view: Evergrid) {
+    scheduleAxisThicknessUpdate(axisType: AxisType) {
         if (!this.axes[axisType]?.layout) {
             return;
         }
@@ -590,7 +590,7 @@ export default class LayoutEngine {
             thickness$: new Animated.Value(0),
             optimalThicknesses: {},
             onOptimalThicknessChange: (thickness, index, chart) => (
-                this.onOptimalAxisThicknessChange(thickness, index, axisType, chart)
+                this.onOptimalAxisThicknessChange(thickness, index, axisType)
             ),
             getLabel,
             tickGenerator,
