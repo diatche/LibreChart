@@ -12,6 +12,7 @@ import {
     mapDateUnits,
     isDateUnit,
     kDateUnitExcludedFactors,
+    kDateUnitUniformMs,
 } from "./dateBase";
 import {
     dateIntervalLength,
@@ -202,10 +203,11 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
             return this.linearScale.getTicks(msStart, msEnd, {
                 minInterval: new Decimal(minDuration.asMilliseconds()),
             }).map(tick => ({
-                location: tick.location,
-                interval: moment.duration(tick.interval.toNumber()),
                 value: this.decodeValue(tick.value),
-            }));
+                valueInterval: moment.duration(tick.valueInterval.toNumber()),
+                location: tick.location,
+                locationInterval: tick.valueInterval,
+            } as DateTickType));
         }
     
         let unitConstraints: ITickConstraints = {
@@ -247,20 +249,23 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
             let ticks: DateTickType[];
             if (unitDateScaleOverrides) {
                 // Re-encode ticks
+                let locationIntervalCoef = kDateUnitUniformMs[unit].div(kDateUnitUniformMs[this.baseUnit]);
                 ticks = linearTicks.map(tick => {
                     let date = this.decodeDate(tick.value, unitDateScaleOverrides);
                     return {
                         value: date,
-                        interval: tickDuration,
+                        valueInterval: tickDuration,
                         location: this.encodeDate(date),
-                    };
+                        locationInterval: tick.locationInterval.mul(locationIntervalCoef),
+                    } as DateTickType;
                 });
             } else {
                 ticks = linearTicks.map(tick => ({
-                    location: tick.location,
-                    interval: tickDuration,
                     value: this.decodeValue(tick.value),
-                }));
+                    valueInterval: tickDuration,
+                    location: tick.location,
+                    locationInterval: tick.locationInterval,
+                } as DateTickType));
             }
             
             if (ticks.length > 1) {
@@ -274,15 +279,6 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
         return bestTicks;
     }
 
-    getNextTick(tick: DateTickType): DateTickType {
-        let value = tick.value.clone().add(tick.interval);
-        return {
-            value,
-            location: this.encodeValue(value),
-            interval: tick.interval,
-        };
-    }
-
     getDateScaleOrigin(date: Moment): Moment {
         return this.originDate || DateScale.epochWithTimeZone(date);
     };
@@ -290,6 +286,10 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
     static epochWithTimeZone(date: Moment): Moment {
         return date.clone().startOf('year').subtract(date.year(), 'year');
     };
+
+    addInterval(value: Moment, interval: Duration): Moment {
+        return value.clone().add(interval);
+    }
 
     encodeValue(date: Moment): Decimal {
         return this.encodeDate(date);

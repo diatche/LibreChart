@@ -3,8 +3,9 @@ import { IMatcher } from './comp';
 
 export interface ITick<T, D> {
     value: T;
-    interval: D;
+    valueInterval: D;
     location: Decimal;
+    locationInterval: Decimal;
 }
 
 /**
@@ -113,6 +114,15 @@ export default class Scale<T, D = T, C extends ITickConstraints = ITickConstrain
     }
 
     getNextTick(tick: ITick<T, D>): ITick<T, D> {
+        return {
+            value: this.addInterval(tick.value, tick.valueInterval),
+            valueInterval: tick.valueInterval,
+            location: tick.location.add(tick.locationInterval),
+            locationInterval: tick.locationInterval,
+        };
+    }
+
+    addInterval(value: T, interval: D): T {
         throw new Error('Not implemented');
     }
 

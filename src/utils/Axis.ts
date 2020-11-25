@@ -420,7 +420,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let majorStartTick = majorTicks[0];
         let majorEndTick = majorTicks[Math.min(1, majorTicks.length - 1)];
         let majorLocationInterval = majorEndTick.location.sub(majorStartTick.location);
-        let majorValueInterval = majorStartTick.interval;
+        let majorValueInterval = majorStartTick.valueInterval;
         let majorLength = majorTicks[majorTicks.length - 1].location.sub(majorStartTick.location);
 
         let minorTicks = this.scale.getTicks(
@@ -436,7 +436,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let minorStartTick = minorTicks[0];
         let minorEndTick = minorTicks[Math.min(1, minorTicks.length - 1)];
         let minorLocationInterval = minorEndTick.location.sub(minorStartTick.location);
-        let minorValueInterval = minorStartTick.interval;
+        let minorValueInterval = minorStartTick.valueInterval;
 
         return {
             majorLocationInterval,
@@ -504,9 +504,11 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let startValue = this.scale.decodeValue(start);
         let tick: ITick<T, D> = {
             value: startValue,
+            valueInterval: valueInterval,
             location: start,
-            interval: valueInterval,
-        }
+            locationInterval: locationInterval,
+        };
+        
         let ticks = [tick];
         for (let i = 0; i < count - 1; i++) {
             tick = this.scale.getNextTick(tick);

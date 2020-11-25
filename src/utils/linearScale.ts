@@ -159,22 +159,18 @@ export default class LinearScale extends Scale<Decimal> {
             let location = bestBase.start.add(bestBase.interval.mul(i));
             if (location.gte(start) && location.lte(end)) {
                 ticks.push({
-                    location,
-                    interval: bestBase.interval,
                     value: location,
+                    valueInterval: bestBase.interval,
+                    location,
+                    locationInterval: bestBase.interval,
                 });
             }
         }
         return ticks;
     }
 
-    getNextTick(tick: LinearTickType): LinearTickType {
-        let value = tick.value.add(tick.interval);
-        return {
-            value,
-            location: value,
-            interval: tick.interval,
-        };
+    addInterval(value: Decimal, interval: Decimal): Decimal {
+        return value.add(interval);
     }
 
     encodeValue(value: Decimal): Decimal {

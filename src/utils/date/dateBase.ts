@@ -25,6 +25,20 @@ export const kDateUnitsDes = kDateUnitsAsc.slice().reverse();
 export const kUnitsLength = kDateUnitsAsc.length;
 export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('second');
 
+/**
+ * Number of milliseconds in a date unit when
+ * forcing a uniform interval.
+ */
+export const kDateUnitUniformMs: DateUnitMapping<Decimal> = {
+    millisecond: new Decimal(1),
+    second: new Decimal(1000),      // 1000 ms
+    minute: new Decimal(60000),     // 60 s
+    hour: new Decimal(3600000),     // 60 m
+    day: new Decimal(86400000),     // 24 h
+    month: new Decimal(2592000000), // 30 d
+    year: new Decimal(31104000000), // 12 M
+};
+
 export const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
     second: new Decimal(60),
     minute: new Decimal(60),
