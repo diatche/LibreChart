@@ -3,7 +3,7 @@ import moment, { Moment } from "moment";
 import { IAxisOptions } from "../../types";
 import Axis from "../Axis";
 import { DateUnit } from "./dateBase";
-import DateScale from "./dateScale";
+import DateScale from "./DateScale";
 
 const kBaseDateUnit: DateUnit = 'day';
 const kOriginDate = moment().startOf('year');

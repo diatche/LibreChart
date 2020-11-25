@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import Scale, {
     ITick,
     ITickConstraints,
-} from "./baseScale";
+} from "./Scale";
 import {
     findCommonFactors,
     findFactors,

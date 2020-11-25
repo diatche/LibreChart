@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
-import { ITickConstraints } from '../../src/utils/baseScale';
-import LinearScale from '../../src/utils/linearScale';
+import { ITickConstraints } from '../../src/utils/Scale';
+import LinearScale from '../../src/utils/LinearScale';
 
 export interface LinearTickInput {
     start: Decimal.Value;

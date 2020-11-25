@@ -3,7 +3,7 @@ import moment, { Moment } from 'moment';
 import Scale, {
     ITick,
     ITickConstraints,
-} from "../baseScale";
+} from "../Scale";
 import {
     kDateUnitsAsc,
     kUnitsLength,
@@ -18,7 +18,7 @@ import {
     snapDate,
     stepDateLinear,
 } from "./duration";
-import LinearScale from "../linearScale";
+import LinearScale from "../LinearScale";
 
 const k0 = new Decimal(0);
 

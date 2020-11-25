@@ -1,5 +1,5 @@
 import moment from 'moment-timezone';
-import DateScale from '../../../src/utils/date/dateScale';
+import DateScale from '../../../src/utils/date/DateScale';
 import {
     DateTickInput,
     getDateTicks,

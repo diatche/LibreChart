@@ -8,7 +8,7 @@ import {
 import { ColorValue } from "react-native";
 import Scale, {
     ITick,
-} from "./utils/baseScale";
+} from "./utils/Scale";
 
 export interface IDecimalPoint {
     x: Decimal;

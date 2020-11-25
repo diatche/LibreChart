@@ -23,8 +23,8 @@ import {
     IAxisStyle,
 } from "../types";
 import { isMatch } from "./comp";
-import Scale, { ITick } from "./baseScale";
-import LinearScale from "./linearScale";
+import Scale, { ITick } from "./Scale";
+import LinearScale from "./LinearScale";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;

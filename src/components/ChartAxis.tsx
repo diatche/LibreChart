@@ -14,7 +14,7 @@ import {
     ViewStyle,
 } from 'react-native';
 import { IAxisStyle } from '../types';
-import { ITick } from '../utils/baseScale';
+import { ITick } from '../utils/Scale';
 
 export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
     type: AxisType;

@@ -1,7 +1,7 @@
 import moment from 'moment';
 import DateScale, {
     IDateTickConstraints,
-} from '../../../src/utils/date/dateScale';
+} from '../../../src/utils/date/DateScale';
 
 export interface DateTickInput {
     start: moment.Moment;

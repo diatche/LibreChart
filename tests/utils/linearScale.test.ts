@@ -1,4 +1,4 @@
-import LinearScale from '../../src/utils/linearScale';
+import LinearScale from '../../src/utils/LinearScale';
 import {
     $,
     LinearTickInput,
