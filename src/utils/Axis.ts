@@ -32,7 +32,7 @@ const kDefaultAxisThicknessStep = 10;
 
 const k0 = new Decimal(0);
 
-export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
+export interface IAxisProps<T, D> extends Required<IAxisOptions<T, D>> {}
 
 export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
@@ -90,21 +90,21 @@ interface IAxisWidthLayoutInfo {
 
 interface IAxisLayoutInfo extends IAxisLengthLayoutInfo, IAxisWidthLayoutInfo {}
 
-export default class Axis<T = any> implements IAxisProps<T> {
+export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     axisType: AxisType;
     hidden: boolean;
-    getTickLabel: IAxisProps<T>['getTickLabel'];
-    scale: Scale<T>;
+    getTickLabel: IAxisProps<T, D>['getTickLabel'];
+    scale: Scale<T, D>;
     layoutSourceDefaults: IAxisLayoutSourceProps;
     style: IAxisStyle;
     isHorizontal: boolean;
     layoutInfo: IAxisLayoutInfo;
     layout?: FlatLayoutSource;
 
-    constructor(axisType: AxisType, options?: IAxisOptions<T>) {
+    constructor(axisType: AxisType, options?: IAxisOptions<T, D>) {
         let {
             hidden = false,
-            getTickLabel = (tick: ITick<T>) => String(tick.value),
+            getTickLabel = (tick: ITick<any, any>) => String(tick.value),
             scale = new LinearScale(),
             layoutSourceDefaults = {},
             style = {},
@@ -471,7 +471,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
      * @param end Exclusive end of interval.
      * @returns Tick locations.
      */
-    getTicksInLocationRange(start: Decimal, end: Decimal): ITick<T>[] {
+    getTicksInLocationRange(start: Decimal, end: Decimal): ITick<T, D>[] {
         if (start.gte(end)) {
             return [];
         }

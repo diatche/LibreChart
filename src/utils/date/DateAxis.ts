@@ -1,5 +1,5 @@
 import { AxisType } from "evergrid";
-import moment, { Moment } from "moment";
+import moment, { Duration, Moment } from "moment";
 import { IAxisOptions } from "../../types";
 import Axis from "../Axis";
 import { DateUnit } from "./dateBase";
@@ -8,9 +8,9 @@ import DateScale from "./DateScale";
 const kBaseDateUnit: DateUnit = 'day';
 const kOriginDate = moment().startOf('year');
 
-export default class DateAxis extends Axis<Moment> {
+export default class DateAxis extends Axis<Moment, Duration> {
 
-    constructor(axisType: AxisType, options?: IAxisOptions<Moment>) {
+    constructor(axisType: AxisType, options?: IAxisOptions<Moment, Duration>) {
         options = {
             scale: new DateScale({
                 baseUnit: kBaseDateUnit,

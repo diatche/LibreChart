@@ -1,7 +1,8 @@
 import Decimal from 'decimal.js';
 
-export interface ITick<T> {
+export interface ITick<T, D> {
     value: T;
+    interval: D;
     location: Decimal;
 }
 
@@ -59,7 +60,16 @@ export interface ITickConstraints {
     excludeFactors?: number[];
 }
 
-export default class Scale<T, C extends ITickConstraints = ITickConstraints> {
+/**
+ * Scale base class.
+ * 
+ * Generic types:
+ * 
+ * - `T`: Value type.
+ * - `D`: Value interval type (defaults to `T`).
+ * - `C`: Constraints type conforming to ITickConstraints (optional).
+ */
+export default class Scale<T, D = T, C extends ITickConstraints = ITickConstraints> {
 
     defaults: Partial<C>;
 
@@ -80,7 +90,7 @@ export default class Scale<T, C extends ITickConstraints = ITickConstraints> {
      * @param constraints See {@link ITickConstraints}
      * @returns An array of tick locations.
      */
-    getTicks(start: T, end: T, constraints: C): ITick<T>[] {
+    getTicks(start: T, end: T, constraints: C): ITick<T, D>[] {
         throw new Error('Not implemented');
     }
 

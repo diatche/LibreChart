@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import moment, { Moment } from 'moment';
+import moment, { Duration, Moment } from 'moment';
 import Scale, {
     ITick,
     ITickConstraints,
@@ -21,6 +21,7 @@ import {
 import LinearScale from "../LinearScale";
 
 const k0 = new Decimal(0);
+const kEmptyDuration = moment.duration(0);
 
 export interface IDateScale {
     /**
@@ -62,10 +63,12 @@ export interface IDateTickConstraints extends ITickConstraints, IDateScale {
      * See [Moment.js Duration documentation](https://momentjs.com/docs/#/durations/)
      * for possible values.
      */
-    minDuration?: moment.Duration;
+    minDuration?: Duration;
 }
 
-export default class DateScale extends Scale<Moment, IDateTickConstraints> implements Required<IDateScale> {
+type DateTickType = ITick<Moment, Duration>;
+
+export default class DateScale extends Scale<Moment, Duration, IDateTickConstraints> implements Required<IDateScale> {
     baseUnit: DateUnit;
     originDate: Moment;
     minUnitDuration: number;
@@ -112,7 +115,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
      * @param constraints See {@link DateTickConstraints}
      * @returns An array of tick locations in milliseconds.
      */
-    getTicks(startDate: Moment, endDate: Moment, constraints: IDateTickConstraints): ITick<Moment>[] {
+    getTicks(startDate: Moment, endDate: Moment, constraints: IDateTickConstraints): DateTickType[] {
         if (endDate.isBefore(startDate)) {
             return [];
         }
@@ -196,6 +199,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
                 minInterval: new Decimal(minDuration.asMilliseconds()),
             }).map(tick => ({
                 location: tick.location,
+                interval: moment.duration(tick.interval.toNumber()),
                 value: this.decodeValue(tick.value),
             }));
         }
@@ -203,7 +207,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
         let unitConstraints: ITickConstraints = {
             expand: constraints.expand,
         };
-        let bestTicks: ITick<Moment>[] = [];
+        let bestTicks: DateTickType[] = [];
         for (let i = kUnitsLength - 1; i >= minUnitAscIndex; i--) {
             // Try to get tick intervals with this unit
             let unit = kDateUnitsAsc[i];
@@ -225,20 +229,32 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
             let tickStart = this.encodeDate(unitStart, unitDateScaleOverrides);
             let tickEnd = this.encodeDate(unitEnd, unitDateScaleOverrides);
             let linearTicks = this.linearScale.getTicks(tickStart, tickEnd, unitConstraints);
+            
+            let tickInterval = 0;
+            if (linearTicks.length > 1) {
+                tickInterval = linearTicks[1].value.sub(linearTicks[0].value).toNumber();
+            }
 
-            let ticks: ITick<Moment>[];
+            let tickDuration = kEmptyDuration;
+            if (tickInterval > 0) {
+                tickDuration = moment.duration(tickInterval, unit);
+            }
+
+            let ticks: DateTickType[];
             if (unitDateScaleOverrides) {
                 // Re-encode ticks
                 ticks = linearTicks.map(tick => {
                     let date = this.decodeDate(tick.value, unitDateScaleOverrides);
                     return {
                         value: date,
+                        interval: tickDuration,
                         location: this.encodeDate(date),
                     };
                 });
             } else {
                 ticks = linearTicks.map(tick => ({
                     location: tick.location,
+                    interval: tickDuration,
                     value: this.decodeValue(tick.value),
                 }));
             }

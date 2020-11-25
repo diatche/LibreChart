@@ -14,7 +14,9 @@ const k10 = new Decimal(10);
 
 const kFactors10 = [1, 2, 5, 10];
 
-export default class LinearScale extends Scale<Decimal, ITickConstraints> {
+type LinearTickType = ITick<Decimal, Decimal>;
+
+export default class LinearScale extends Scale<Decimal> {
 
     /**
      * Calculates optimal tick locations in linear space given an
@@ -25,7 +27,7 @@ export default class LinearScale extends Scale<Decimal, ITickConstraints> {
      * @param constraints See {@link ITickConstraints}
      * @returns An array of tick locations.
      */
-    getTicks(start: Decimal, end: Decimal, constraints: ITickConstraints): ITick<Decimal>[] {
+    getTicks(start: Decimal, end: Decimal, constraints: ITickConstraints): LinearTickType[] {
         if (end.lt(start)) {
             return [];
         }
@@ -148,12 +150,13 @@ export default class LinearScale extends Scale<Decimal, ITickConstraints> {
             end = bestBase.end;
         }
     
-        let ticks: ITick<Decimal>[] = [];
+        let ticks: LinearTickType[] = [];
         for (let i = 0; i <= bestBase.count; i++) {
             let location = bestBase.start.add(bestBase.interval.mul(i));
             if (location.gte(start) && location.lte(end)) {
                 ticks.push({
                     location,
+                    interval: bestBase.interval,
                     value: location,
                 });
             }

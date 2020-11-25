@@ -57,20 +57,20 @@ export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 
-export interface IAxisOptions<T = any> {
+export interface IAxisOptions<T = any, D = T> {
     /**
      * Toggles axis visiblity.
      * Axis is visible by default.
      **/
     hidden?: boolean;
 
-    getTickLabel?: (tick: ITick<T>) => string;
+    getTickLabel?: (tick: ITick<T, D>) => string;
 
     /**
      * Customises the tick location.
      * Be default, linear ticks are used.
      */
-    scale?: Scale<T>;
+    scale?: Scale<T, D>;
 
     layoutSourceDefaults?: IAxisLayoutSourceProps;
 

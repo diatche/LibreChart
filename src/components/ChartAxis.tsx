@@ -16,23 +16,23 @@ import {
 import { IAxisStyle } from '../types';
 import { ITick } from '../utils/Scale';
 
-export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
+export interface ChartAxisProps<T, D> extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
-    ticks: ITick<T>[];
+    ticks: ITick<T, D>[];
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
     /** Return a label for the tick. */
-    getTickLabel: (tick: ITick<T>) => string;
+    getTickLabel: (tick: ITick<T, D>) => string;
 }
 
 interface ChartAxisState {}
 
-export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>, ChartAxisState> {
+export default class ChartAxis<T, D> extends React.PureComponent<ChartAxisProps<T, D>, ChartAxisState> {
 
-    getTickLabel(tick: ITick<T>): string {
+    getTickLabel(tick: ITick<T, D>): string {
         // TODO: cache labels until prop change
         try {
             return this.props.getTickLabel(tick);
