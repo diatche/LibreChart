@@ -138,7 +138,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
         }
     
         if (constraints.minInterval) {
-            let min = new Decimal(constraints.minInterval || 0);
+            let min = constraints.minInterval;
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
@@ -147,7 +147,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
     
         let maxCount: Decimal | undefined;
         if (constraints.maxCount) {
-            maxCount = new Decimal(constraints.maxCount);
+            maxCount = constraints.maxCount;
             if (maxCount.eq(0)) {
                 return [];
             }
@@ -193,7 +193,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
             let msStart = new Decimal(startDate.valueOf() - this.originDate.valueOf());
             let msEnd = new Decimal(endDate.valueOf() - this.originDate.valueOf());
             return this.linearScale.getTicks(msStart, msEnd, {
-                minInterval: minDuration.asMilliseconds(),
+                minInterval: new Decimal(minDuration.asMilliseconds()),
             }).map(tick => ({
                 location: tick.location,
                 value: this.decodeValue(tick.value),
@@ -216,7 +216,7 @@ export default class DateScale extends Scale<Moment, IDateTickConstraints> imple
             let unitDateScaleOverrides: IDateScale | undefined = unit !== this.baseUnit
                 ? { baseUnit: unit }
                 : undefined;
-            unitConstraints.minInterval = minUnitDuration;
+            unitConstraints.minInterval = new Decimal(minUnitDuration);
             unitConstraints.radix = kDateUnitRadix[unit];
             unitConstraints.excludeFactors = kDateUnitExcludedFactors[unit];
     

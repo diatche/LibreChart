@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 
 export type DateUnit =
     'millisecond'
@@ -24,11 +25,11 @@ export const kDateUnitsDes = kDateUnitsAsc.slice().reverse();
 export const kUnitsLength = kDateUnitsAsc.length;
 export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('second');
 
-export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
-    second: 60,
-    minute: 60,
-    hour: 24,
-    month: 12,
+export const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
+    second: new Decimal(60),
+    minute: new Decimal(60),
+    hour: new Decimal(24),
+    month: new Decimal(12),
 };
 
 // Factors of 12: 1, 2, 3, 4, 6, 12

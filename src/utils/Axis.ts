@@ -419,7 +419,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
             majorStartTick.value,
             majorEndTick.value,
             {
-                maxCount: this.style.minorIntervalCountMax,
+                maxCount: new Decimal(this.style.minorIntervalCountMax),
                 minInterval: minorDist.div(scale).abs(),
                 expand: false,
             }

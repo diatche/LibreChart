@@ -29,7 +29,7 @@ export const getLinearTicks = (input: LinearTickInput): string[] => {
         $(input.start),
         $(input.end),
         input.constraints || {
-            minInterval: input.stride,
+            minInterval: $(input.stride),
         }
     ).map(x => x.toString());
 }

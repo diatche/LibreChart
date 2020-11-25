@@ -15,13 +15,13 @@ export interface ITickConstraints {
     /**
      * The smallest tick interval.
      */
-    minInterval?: Decimal.Value;
+    minInterval?: Decimal;
 
     /**
      * Maximum number of intervals to divide
      * the interval into.
      **/
-    maxCount?: Decimal.Value;
+    maxCount?: Decimal;
 
     /**
      * If `true`, expands the interval enough
@@ -47,7 +47,7 @@ export interface ITickConstraints {
      * - When used with months (use a radix of 12).
      * - When used with other number systems. 
      */
-    radix?: Decimal.Value;
+    radix?: Decimal;
 
     /**
      * Factors to exclude when looking for optimal

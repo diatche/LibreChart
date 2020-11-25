@@ -42,15 +42,15 @@ export default class LinearScale extends Scale<Decimal, ITickConstraints> {
             ...constraints,
         };
         if (constraints.minInterval) {
-            let minMs = new Decimal(constraints.minInterval);
-            if (minMs.lt(0) || minMs.isNaN() || !minMs.isFinite()) {
+            let min = constraints.minInterval;
+            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
-            minInterval = minMs;
+            minInterval = min;
         }
     
         if (constraints.maxCount) {
-            let maxCount = new Decimal(constraints.maxCount);
+            let maxCount = constraints.maxCount;
             if (maxCount.eq(0)) {
                 return [];
             }
@@ -70,7 +70,7 @@ export default class LinearScale extends Scale<Decimal, ITickConstraints> {
         let radix = k10;
         let radixLog10 = k1;
         if (constraints.radix) {
-            radix = new Decimal(constraints.radix);
+            radix = constraints.radix;
             if (!radix.eq(k10)) {
                 radixLog10 = Decimal.log10(radix);
             }
