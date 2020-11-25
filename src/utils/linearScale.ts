@@ -169,11 +169,11 @@ export default class LinearScale extends Scale<Decimal> {
     }
 
     getNextTick(tick: LinearTickType): LinearTickType {
-        let value = tick.value.add(k1);
+        let value = tick.value.add(tick.interval);
         return {
             value,
             location: value,
-            interval: k1,
+            interval: tick.interval,
         };
     }
 
