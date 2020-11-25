@@ -22,7 +22,7 @@ import {
     IAxisOptions,
     IAxisStyle,
 } from "../types";
-import { isMatch } from "./comp";
+import { IMatcher, isMatch } from "./comp";
 import Scale, { ITick } from "./Scale";
 import LinearScale from "./LinearScale";
 
@@ -36,22 +36,26 @@ export interface IAxisProps<T, D> extends Required<IAxisOptions<T, D>> {}
 
 export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
-interface IAxisLengthLayoutBaseInfo {
+interface IAxisLengthLayoutBaseInfo<D> {
     /** Number of major axis intervals per axis container. */
     majorCount: number;
     /** Major axis interval distance in content coordinates. */
-    majorInterval: Decimal;
+    majorLocationInterval: Decimal;
+    /** Major axis interval distance in value coordinates. */
+    majorValueInterval: D;
 
     /** Number of minor axis intervals per axis container. */
     minorCount: number;
     /** Minor axis interval distance in content coordinates. */
-    minorInterval: Decimal;
+    minorLocationInterval: Decimal;
+    /** Minor axis interval distance in value coordinates. */
+    minorValueInterval: D;
 
     /** Grid container length in content coordinates. */
     containerLength: number;
 }
 
-interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
+interface IAxisLengthLayoutInfo<D> extends IAxisLengthLayoutBaseInfo<D> {
     /** Animated axis container length in content coordinates. */
     readonly containerLength$: Animated.Value;
     /**
@@ -88,7 +92,7 @@ interface IAxisWidthLayoutInfo {
     onOptimalThicknessChange: (thickness: number, index: number) => void;
 }
 
-interface IAxisLayoutInfo extends IAxisLengthLayoutInfo, IAxisWidthLayoutInfo {}
+interface IAxisLayoutInfo<D> extends IAxisLengthLayoutInfo<D>, IAxisWidthLayoutInfo {}
 
 export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     axisType: AxisType;
@@ -98,7 +102,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     layoutSourceDefaults: IAxisLayoutSourceProps;
     style: IAxisStyle;
     isHorizontal: boolean;
-    layoutInfo: IAxisLayoutInfo;
+    layoutInfo: IAxisLayoutInfo<D>;
     layout?: FlatLayoutSource;
 
     constructor(axisType: AxisType, options?: IAxisOptions<T, D>) {
@@ -121,9 +125,11 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         this.isHorizontal = isAxisHorizontal(this.axisType),
 
         this.layoutInfo = {
-            majorInterval: k0,
+            majorLocationInterval: k0,
             majorCount: 0,
-            minorInterval: k0,
+            majorValueInterval: this.scale.zeroInterval,
+            minorLocationInterval: k0,
+            minorValueInterval: this.scale.zeroInterval,
             minorCount: 0,
             containerLength: 0,
             containerLength$: new Animated.Value(0),
@@ -284,7 +290,8 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         }
 
         let axisLengthInfo = this._getLengthInfo(view);
-        if (!axisLengthInfo || isMatch(this, axisLengthInfo)) {
+        let matchers = this._getScaleMatchers();
+        if (!axisLengthInfo || isMatch(this, axisLengthInfo, matchers)) {
             // No changes
             return false;
         }
@@ -292,7 +299,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         Object.assign(this.layoutInfo, axisLengthInfo);
         this.layoutInfo.containerLength$.setValue(axisLengthInfo.containerLength);
         this.layoutInfo.negHalfMajorInterval$.setValue(
-            axisLengthInfo.majorInterval.div(2).neg().toNumber()
+            axisLengthInfo.majorLocationInterval.div(2).neg().toNumber()
         );
 
         this.layout.updateItems(view, updateOptions);
@@ -381,7 +388,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
             .map(x => this.scale.decodeValue(new Decimal(x))) as [T, T];
     }
 
-    private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo | undefined {
+    private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo<D> | undefined {
         let scale = this.isHorizontal ? view.scale.x : view.scale.y;
         let visibleRange = this.getVisibleLocationRange(view);
         let visibleValueRange = visibleRange
@@ -412,7 +419,8 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
 
         let majorStartTick = majorTicks[0];
         let majorEndTick = majorTicks[Math.min(1, majorTicks.length - 1)];
-        let majorInterval = majorEndTick.location.sub(majorStartTick.location);
+        let majorLocationInterval = majorEndTick.location.sub(majorStartTick.location);
+        let majorValueInterval = majorStartTick.interval;
         let majorLength = majorTicks[majorTicks.length - 1].location.sub(majorStartTick.location);
 
         let minorTicks = this.scale.getTicks(
@@ -427,22 +435,32 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
 
         let minorStartTick = minorTicks[0];
         let minorEndTick = minorTicks[Math.min(1, minorTicks.length - 1)];
-        let minorInterval = minorEndTick.location.sub(minorStartTick.location);
+        let minorLocationInterval = minorEndTick.location.sub(minorStartTick.location);
+        let minorValueInterval = minorStartTick.interval;
 
         return {
-            majorInterval,
+            majorLocationInterval,
+            majorValueInterval,
             majorCount: majorTicks.length - 1,
-            minorInterval,
+            minorLocationInterval,
+            minorValueInterval,
             minorCount: minorTicks.length - 2,
             containerLength: majorLength.toNumber(),
         };
     }
 
     private _resetLengthInfo() {
-        this.layoutInfo.majorInterval = k0;
+        this.layoutInfo.majorLocationInterval = k0;
         this.layoutInfo.majorCount = 0;
         this.layoutInfo.containerLength = 0;
         this.layoutInfo.containerLength$.setValue(0);
+    }
+
+    private _getScaleMatchers(): IMatcher[] {
+        return [
+            this.scale.getValueMatcher(),
+            this.scale.getIntervalMatcher(),
+        ];
     }
     
     /**
@@ -453,7 +471,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
      * @returns The grid container's range in content coordinates.
      */
     getContainerRangeAtIndex(index: number): [Decimal, Decimal] {
-        let interval = this.layoutInfo.majorInterval || k0;
+        let interval = this.layoutInfo.majorLocationInterval || k0;
         let count = this.layoutInfo.majorCount || 0;
         if (count === 0 || interval.lte(0)) {
             return [k0, k0];
@@ -475,28 +493,26 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         if (start.gte(end)) {
             return [];
         }
-        let interval = this.layoutInfo.majorInterval || k0;
+        let locationInterval = this.layoutInfo.majorLocationInterval || k0;
         let count = this.layoutInfo.majorCount || 0;
-        if (count === 0 || interval.lte(0)) {
+        if (count === 0 || locationInterval.lte(0)) {
             return [];
         }
+        let valueInterval = this.layoutInfo.majorValueInterval;
 
         // Get all ticks in interval
-        let locations: Decimal[] = [];
-        let len = interval.mul(count);
-        let location = start.div(len).floor().mul(len);
-        if (location.gte(start)) {
-            locations.push(location);
+        let startValue = this.scale.decodeValue(start);
+        let tick: ITick<T, D> = {
+            value: startValue,
+            location: start,
+            interval: valueInterval,
         }
-        location = location.add(interval);
-        while (location.lt(end)) {
-            locations.push(location);
-            location = location.add(interval);
+        let ticks = [tick];
+        for (let i = 0; i < count - 1; i++) {
+            tick = this.scale.getNextTick(tick);
+            ticks.push(tick);
         }
-        return locations.map(location => ({
-            location,
-            value: this.scale.decodeValue(location),
-        }));
+        return ticks;
     }
 
     /**

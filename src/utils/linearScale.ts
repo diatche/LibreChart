@@ -18,6 +18,10 @@ type LinearTickType = ITick<Decimal, Decimal>;
 
 export default class LinearScale extends Scale<Decimal> {
 
+    get zeroInterval(): Decimal {
+        return k0;
+    }
+
     /**
      * Calculates optimal tick locations in linear space given an
      * interval and constraints (see {@link ITickConstraints}).
@@ -164,11 +168,36 @@ export default class LinearScale extends Scale<Decimal> {
         return ticks;
     }
 
+    getNextTick(tick: LinearTickType): LinearTickType {
+        let value = tick.value.add(k1);
+        return {
+            value,
+            location: value,
+            interval: k1,
+        };
+    }
+
     encodeValue(value: Decimal): Decimal {
         return value;
     }
 
     decodeValue(value: Decimal): Decimal {
         return value;
+    }
+
+    isValue(value: any): value is Decimal {
+        return Decimal.isDecimal(value);
+    }
+
+    isInterval(interval: any): interval is Decimal {
+        return Decimal.isDecimal(interval);
+    }
+
+    isValueEqual(v1: Decimal, v2: Decimal): boolean {
+        return v1.eq(v2);
+    }
+
+    isIntervalEqual(i1: Decimal, i2: Decimal): boolean {
+        return i1.eq(i2);
     }
 }

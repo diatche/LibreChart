@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import { IMatcher } from './comp';
 
 export interface ITick<T, D> {
     value: T;
@@ -81,6 +82,10 @@ export default class Scale<T, D = T, C extends ITickConstraints = ITickConstrain
         this.defaults = { ...options?.defaults };
     }
 
+    get zeroInterval(): D {
+        throw new Error('Not implemented');
+    }
+
     /**
      * Calculates optimal ticks given an interval and
      * constraints (see {@link ITickConstraints}).
@@ -107,11 +112,45 @@ export default class Scale<T, D = T, C extends ITickConstraints = ITickConstrain
         return this.getTicks(start, end, constraints).map(t => t.location);
     }
 
+    getNextTick(tick: ITick<T, D>): ITick<T, D> {
+        throw new Error('Not implemented');
+    }
+
     encodeValue(value: T): Decimal {
         throw new Error('Not implemented');
     }
 
     decodeValue(value: Decimal): T {
         throw new Error('Not implemented');
+    }
+
+    isValue(value: any): value is T {
+        throw new Error('Not implemented');
+    }
+
+    isInterval(interval: any): interval is D {
+        throw new Error('Not implemented');
+    }
+
+    isValueEqual(value1: T, value2: T): boolean {
+        throw new Error('Not implemented');
+    }
+
+    isIntervalEqual(interval1: D, interval2: D): boolean {
+        throw new Error('Not implemented');
+    }
+
+    getValueMatcher(): IMatcher<T> {
+        return {
+            isType: x => this.isValue(x),
+            isEqual: (a, b) => this.isValueEqual(a, b),
+        };
+    }
+
+    getIntervalMatcher(): IMatcher<D> {
+        return {
+            isType: x => this.isInterval(x),
+            isEqual: (a, b) => this.isIntervalEqual(a, b),
+        };
     }
 }

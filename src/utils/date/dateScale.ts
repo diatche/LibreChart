@@ -106,6 +106,10 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
         this.linearScale = new LinearScale();
     }
 
+    get zeroInterval(): Duration {
+        return kEmptyDuration;
+    }
+
     /**
      * Calculates optimal tick locations for dates given an
      * interval and constraints (see {@link DateTickConstraints}).
@@ -270,6 +274,15 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
         return bestTicks;
     }
 
+    getNextTick(tick: DateTickType): DateTickType {
+        let value = tick.value.clone().add(tick.interval);
+        return {
+            value,
+            location: this.encodeValue(value),
+            interval: tick.interval,
+        };
+    }
+
     getDateScaleOrigin(date: Moment): Moment {
         return this.originDate || DateScale.epochWithTimeZone(date);
     };
@@ -306,5 +319,21 @@ export default class DateScale extends Scale<Moment, Duration, IDateTickConstrai
             throw new Error('Unable to decode date');
         }
         return date;
+    }
+
+    isValue(value: any): value is Moment {
+        return moment.isMoment(value);
+    }
+
+    isInterval(interval: any): interval is Duration {
+        return moment.isDuration(interval);
+    }
+
+    isValueEqual(v1: Moment, v2: Moment): boolean {
+        return v1.isSame(v2);
+    }
+
+    isIntervalEqual(i1: Duration, i2: Duration): boolean {
+        return i1.asMilliseconds() === i2.asMilliseconds();
     }
 }
