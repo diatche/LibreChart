@@ -71,7 +71,7 @@ export interface ITickConstraints {
  * - `D`: Value interval type (defaults to `T`).
  * - `C`: Constraints type conforming to ITickConstraints (optional).
  */
-export default class Scale<T, D = T, C extends ITickConstraints = ITickConstraints> {
+export default abstract class Scale<T, D = T, C extends ITickConstraints = ITickConstraints> {
 
     defaults: Partial<C>;
 
@@ -83,9 +83,7 @@ export default class Scale<T, D = T, C extends ITickConstraints = ITickConstrain
         this.defaults = { ...options?.defaults };
     }
 
-    get zeroInterval(): D {
-        throw new Error('Not implemented');
-    }
+    abstract get zeroInterval(): D;
 
     /**
      * Calculates optimal ticks given an interval and
@@ -96,9 +94,7 @@ export default class Scale<T, D = T, C extends ITickConstraints = ITickConstrain
      * @param constraints See {@link ITickConstraints}
      * @returns An array of tick locations.
      */
-    getTicks(start: T, end: T, constraints: C): ITick<T, D>[] {
-        throw new Error('Not implemented');
-    }
+    abstract getTicks(start: T, end: T, constraints: C): ITick<T, D>[];
 
     /**
      * Calculates optimal ticks locations given an
@@ -122,33 +118,19 @@ export default class Scale<T, D = T, C extends ITickConstraints = ITickConstrain
         };
     }
 
-    addInterval(value: T, interval: D): T {
-        throw new Error('Not implemented');
-    }
+    abstract addInterval(value: T, interval: D): T;
 
-    encodeValue(value: T): Decimal {
-        throw new Error('Not implemented');
-    }
+    abstract encodeValue(value: T): Decimal;
 
-    decodeValue(value: Decimal): T {
-        throw new Error('Not implemented');
-    }
+    abstract decodeValue(value: Decimal): T;
 
-    isValue(value: any): value is T {
-        throw new Error('Not implemented');
-    }
+    abstract isValue(value: any): value is T;
 
-    isInterval(interval: any): interval is D {
-        throw new Error('Not implemented');
-    }
+    abstract isInterval(interval: any): interval is D;
 
-    isValueEqual(value1: T, value2: T): boolean {
-        throw new Error('Not implemented');
-    }
+    abstract isValueEqual(value1: T, value2: T): boolean;
 
-    isIntervalEqual(interval1: D, interval2: D): boolean {
-        throw new Error('Not implemented');
-    }
+    abstract isIntervalEqual(interval1: D, interval2: D): boolean;
 
     getValueMatcher(): IMatcher<T> {
         return {
