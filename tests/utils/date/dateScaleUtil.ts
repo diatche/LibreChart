@@ -1,9 +1,6 @@
 import moment from 'moment';
-import {
+import DateScale, {
     IDateTickConstraints,
-    dateTicks,
-    encodeDate,
-    decodeDate,
 } from '../../../src/utils/date/dateScale';
 
 export interface DateTickInput {
@@ -37,11 +34,9 @@ export const getDateTicks = (input: DateTickInput): string[] => {
         minDuration: input.stride,
         ...input.constraints,
     };
-    return dateTicks(
-        encodeDate(input.start, constraints),
-        encodeDate(input.end, constraints),
+    return new DateScale(constraints).getTicks(
+        input.start,
+        input.end,
         constraints
-    ).map(x => (
-        decodeDate(x, constraints).format(input.format)
-    ));
+    ).map(({ value: date }) => date.format(input.format));
 }

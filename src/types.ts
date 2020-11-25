@@ -1,9 +1,13 @@
 import Decimal from "decimal.js";
-import { AxisType, FlatLayoutSourceProps, GridLayoutSource, GridLayoutSourceProps } from "evergrid";
-import { ColorValue } from "react-native";
 import {
-    ITickConstraints,
-    TickGenerator,
+    AxisType,
+    FlatLayoutSourceProps,
+    GridLayoutSource,
+    GridLayoutSourceProps,
+} from "evergrid";
+import { ColorValue } from "react-native";
+import Scale, {
+    ITick,
 } from "./utils/baseScale";
 
 export interface IDecimalPoint {
@@ -53,25 +57,20 @@ export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 
-export interface IAxisOptions<TC extends ITickConstraints = ITickConstraints> {
+export interface IAxisOptions<T = any> {
     /**
      * Toggles axis visiblity.
      * Axis is visible by default.
      **/
     hidden?: boolean;
 
-    getLabel?: (value: Decimal) => string;
+    getTickLabel?: (tick: ITick<T>) => string;
 
     /**
      * Customises the tick location.
      * Be default, linear ticks are used.
      */
-    tickGenerator?: TickGenerator<TC>;
-
-    /**
-     * Use these defaults when generating ticks.
-     */
-    defaultTickConstraints?: Partial<TC>;
+    scale?: Scale<T>;
 
     layoutSourceDefaults?: IAxisLayoutSourceProps;
 

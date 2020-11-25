@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
-import moment from 'moment';
-import {
+import moment, { Moment } from 'moment';
+import Scale, {
+    ITick,
     ITickConstraints,
 } from "../baseScale";
 import {
@@ -17,10 +18,9 @@ import {
     snapDate,
     stepDateLinear,
 } from "./duration";
-import { linearTicks } from "../linearScale";
+import LinearScale from "../linearScale";
 
 const k0 = new Decimal(0);
-const kUnixEpoch = moment.unix(0);
 
 export interface IDateScale {
     /**
@@ -46,36 +46,6 @@ export interface IDateScale {
     minUnitDuration?: number;
 }
 
-export interface IDateScaleOptimized extends Required<IDateScale> {
-    /**
-     * This flag is set to `true` when this
-     * date scale was created with `optimizeDateScale()`.
-     * 
-     * Do not set manually.
-     **/
-    optimized: boolean;
-
-    /**
-     * This is an internal optimisation flag,
-     * do not set manually. Instead use `optimizeDateScale()`.
-     */
-    scaleModified: boolean;
-}
-
-/**
- * Date scale defaults.
- * 
- * To preserve origin date time zone, create the
- * origin date when optimizing the date scale.
- */
-const kDefaultDateScale: Omit<
-    Required<IDateScale>,
-    'utcOffset' | 'originDate'
-> = {
-    baseUnit: 'millisecond',
-    minUnitDuration: 0.5,
-};
-
 /**
  * Date tick calculation constraints and options.
  * 
@@ -95,217 +65,230 @@ export interface IDateTickConstraints extends ITickConstraints, IDateScale {
     minDuration?: moment.Duration;
 }
 
-export const encodeDate = (date: moment.Moment, dateScale: IDateScale): Decimal => {
-    let scale = optimizeDateScale(dateScale);
-    let value: number;
-    if (scale.scaleModified) {
-        value = dateIntervalLength(scale.originDate, date, scale.baseUnit);
-    } else {
-        value = date.valueOf();
-    }
-    return new Decimal(value);
-};
+export default class DateScale extends Scale<Moment, IDateTickConstraints> implements Required<IDateScale> {
+    baseUnit: DateUnit;
+    originDate: Moment;
+    minUnitDuration: number;
 
-export const decodeDate = (value: Decimal.Value, dateScale: IDateScale): moment.Moment => {
-    let scale = optimizeDateScale(dateScale);
-    let x = new Decimal(value);
-    let date: moment.Moment;
-    if (scale.scaleModified) {
-        // Rescale
-        date = stepDateLinear(scale.originDate, x.toNumber(), scale.baseUnit);
-    } else {
-        date = moment(x.toNumber());
-    }
-    if (!date.isValid()) {
-        throw new Error('Unable to decode date');
-    }
-    return date;
-};
+    linearScale: LinearScale;
 
-export const optimizeDateScale = (scale?: IDateScale | IDateScaleOptimized): IDateScaleOptimized => {
-    if (isDateScaleOptimized(scale)) {
-        return scale;
-    }
-    let {
-        baseUnit = kDefaultDateScale.baseUnit,
-        minUnitDuration = kDefaultDateScale.minUnitDuration,
-    } = scale || {};
-    if (!isDateUnit(baseUnit)) {
-        throw new Error('Invalid base date unit');
-    }
-    let originDate: moment.Moment;
-    if (scale?.originDate) {
-        originDate = scale?.originDate;
-        if (!moment.isMoment(originDate) || !originDate.isValid()) {
-            throw new Error('Invalid origin date');
+    constructor(
+        options?: {
+            defaults?: Partial<IDateTickConstraints>;
+        } & IDateScale
+    ) {
+        super(options);
+
+        let {
+            baseUnit = 'millisecond',
+            minUnitDuration = 0.5,
+            originDate,
+        } = options || {};
+        if (!isDateUnit(baseUnit)) {
+            throw new Error('Invalid base date unit');
         }
-    } else {
-        // Use unix date with current time zone
-        let thisYear = moment().startOf('year');
-        originDate = thisYear.subtract(thisYear.year() - 1970, 'year');
-    }
-    let dateScale: IDateScaleOptimized = {
-        baseUnit,
-        originDate,
-        minUnitDuration,
-        optimized: true,
-        scaleModified: false,
-    };
-    dateScale.scaleModified = (dateScale.baseUnit !== 'millisecond')
-        || !dateScale.originDate.isSame(kUnixEpoch);
-    return dateScale;
-};
-
-export const epochWithTimeZone = (date: moment.Moment): moment.Moment => {
-    return date.clone().startOf('year').subtract(date.year(), 'year');
-};
-
-export const getDateScaleOrigin = (dateScale: IDateScale, date: moment.Moment): moment.Moment => {
-    return optimizeDateScale(dateScale).originDate || epochWithTimeZone(date);
-};
-
-const isDateScaleOptimized = (dateScale?: any): dateScale is IDateScaleOptimized => {
-    return dateScale?.optimized || false;
-};
-
-/**
- * Calculates optimal tick locations for dates given an
- * interval and constraints (see {@link DateTickConstraints}).
- *  
- * @param start The inclusive start of the date interval in milliseconds. 
- * @param end The inclusive end of the date interval in milliseconds.
- * @param constraints See {@link DateTickConstraints}
- * @returns An array of tick locations in milliseconds.
- */
-export function dateTicks<TC extends IDateTickConstraints = IDateTickConstraints>(
-    start: Decimal.Value,
-    end: Decimal.Value,
-    constraints: TC,
-): Decimal[] {
-    let a = new Decimal(start);
-    let b = new Decimal(end);
-    if (b.lt(a)) {
-        return [];
-    }
-    if (a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
-        throw new Error('Invalid interval');
-    }
-
-    let dateScale = optimizeDateScale(constraints);
-    let startDate = decodeDate(a, dateScale);
-    let endDate = decodeDate(b, dateScale);
-    let len = new Decimal(moment.duration(endDate.diff(startDate)).as(dateScale.baseUnit));
-    let minIntervalTemp = k0;
-    let minDuration = moment.duration(0);
-
-    if (constraints.minDuration) {
-        let min = constraints.minDuration;
-        if (!moment.isDuration(min) || !min.isValid() || min.asMilliseconds() <= 0) {
-            throw new Error('Minimum duration must be finite and with a positive length');
+        if (originDate) {
+            if (!moment.isMoment(originDate) || !originDate.isValid()) {
+                throw new Error('Invalid origin date');
+            }
+        } else {
+            // Use unix date with current time zone
+            let thisYear = moment().startOf('year');
+            originDate = thisYear.subtract(thisYear.year() - 1970, 'year');
         }
-        minDuration = min;
-    }
 
-    if (constraints.minInterval) {
-        let min = new Decimal(constraints.minInterval);
-        if (min.lt(0) || min.isNaN() || !min.isFinite()) {
-            throw new Error('Minimum interval must be finite and with a positive length');
-        }
-        minIntervalTemp = min;
+        this.baseUnit = baseUnit;
+        this.originDate = originDate;
+        this.minUnitDuration = minUnitDuration;
+        this.linearScale = new LinearScale();
     }
-
-    let maxCount: Decimal | undefined;
-    if (constraints.maxCount) {
-        maxCount = new Decimal(constraints.maxCount);
-        if (maxCount.eq(0)) {
-            return [];
-        }
-        if (maxCount.lt(0) || maxCount.isNaN()) {
-            throw new Error('Max count must be greater than or equal to zero');
-        }
-        let maxCountInterval = len.div(maxCount);
-        if (maxCountInterval.gt(minIntervalTemp)) {
-            minIntervalTemp = maxCountInterval;
-        }
-    }
-
-    // Convert min interval to duration
-    if (!minIntervalTemp.eq(0)) {
-        let min = moment.duration(minIntervalTemp.toNumber(), dateScale.baseUnit);
-        if (min.asMilliseconds() > minDuration.asMilliseconds()) {
-            minDuration = min;
-        }
-    }
-
-    if (minDuration.asMilliseconds() === 0) {
-        throw new Error('Must specify either a minimum interval, or a minimum duration, or a maximum interval count');
-    }
-
-    // Get durations in units
-    let minUnitDurations = mapDateUnits(u => minDuration.as(u));
 
     /**
-     * The largest non-zero unit of minInterval,
-     * specified as an index of `kDateUnitsAsc`.
-     **/
-    let minUnitAscIndex = 0;
-    for (let i = kUnitsLength - 1; i >= 0; i--) {
-        let unit = kDateUnitsAsc[i];
-        if (minUnitDurations[unit] >= dateScale.minUnitDuration) {
-            minUnitAscIndex = i;
-            break;
+     * Calculates optimal tick locations for dates given an
+     * interval and constraints (see {@link DateTickConstraints}).
+     *  
+     * @param start The inclusive start of the date interval in milliseconds. 
+     * @param end The inclusive end of the date interval in milliseconds.
+     * @param constraints See {@link DateTickConstraints}
+     * @returns An array of tick locations in milliseconds.
+     */
+    getTicks(startDate: Moment, endDate: Moment, constraints: IDateTickConstraints): ITick<Moment>[] {
+        if (endDate.isBefore(startDate)) {
+            return [];
         }
+        if (!endDate.isValid() || !startDate.isValid()) {
+            throw new Error('Invalid interval');
+        }
+    
+        constraints = {
+            ...this.defaults,
+            ...constraints,
+        };
+
+        let len = new Decimal(moment.duration(endDate.diff(startDate)).as(this.baseUnit));
+        let minIntervalTemp = k0;
+        let minDuration = moment.duration(0);
+    
+        if (constraints.minDuration) {
+            let min = constraints.minDuration;
+            if (!moment.isDuration(min) || !min.isValid() || min.asMilliseconds() <= 0) {
+                throw new Error('Minimum duration must be finite and with a positive length');
+            }
+            minDuration = min;
+        }
+    
+        if (constraints.minInterval) {
+            let min = new Decimal(constraints.minInterval || 0);
+            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
+                throw new Error('Minimum interval must be finite and with a positive length');
+            }
+            minIntervalTemp = min;
+        }
+    
+        let maxCount: Decimal | undefined;
+        if (constraints.maxCount) {
+            maxCount = new Decimal(constraints.maxCount);
+            if (maxCount.eq(0)) {
+                return [];
+            }
+            if (maxCount.lt(0) || maxCount.isNaN()) {
+                throw new Error('Max count must be greater than or equal to zero');
+            }
+            let maxCountInterval = len.div(maxCount);
+            if (maxCountInterval.gt(minIntervalTemp)) {
+                minIntervalTemp = maxCountInterval;
+            }
+        }
+    
+        // Convert min interval to duration
+        if (!minIntervalTemp.eq(0)) {
+            let min = moment.duration(minIntervalTemp.toNumber(), this.baseUnit);
+            if (min.asMilliseconds() > minDuration.asMilliseconds()) {
+                minDuration = min;
+            }
+        }
+    
+        if (minDuration.asMilliseconds() === 0) {
+            throw new Error('Must specify either a minimum interval, or a minimum duration, or a maximum interval count');
+        }
+    
+        // Get durations in units
+        let minUnitDurations = mapDateUnits(u => minDuration.as(u));
+    
+        /**
+         * The largest non-zero unit of minInterval,
+         * specified as an index of `kDateUnitsAsc`.
+         **/
+        let minUnitAscIndex = 0;
+        for (let i = kUnitsLength - 1; i >= 0; i--) {
+            let unit = kDateUnitsAsc[i];
+            if (minUnitDurations[unit] >= this.minUnitDuration) {
+                minUnitAscIndex = i;
+                break;
+            }
+        }
+    
+        if (minUnitAscIndex === 0 && this.baseUnit === 'millisecond') {
+            // Use linear scale
+            let msStart = new Decimal(startDate.valueOf() - this.originDate.valueOf());
+            let msEnd = new Decimal(endDate.valueOf() - this.originDate.valueOf());
+            return this.linearScale.getTicks(msStart, msEnd, {
+                minInterval: minDuration.asMilliseconds(),
+            }).map(tick => ({
+                location: tick.location,
+                value: this.decodeValue(tick.value),
+            }));
+        }
+    
+        let unitConstraints: ITickConstraints = {
+            expand: constraints.expand,
+        };
+        let bestTicks: ITick<Moment>[] = [];
+        for (let i = kUnitsLength - 1; i >= minUnitAscIndex; i--) {
+            // Try to get tick intervals with this unit
+            let unit = kDateUnitsAsc[i];
+            // We first snap the number to an integer, then
+            // floor, because some intervals are non uniform.
+            let minUnitDuration = minUnitDurations[unit];
+            if (minUnitDuration < this.minUnitDuration) {
+                continue;
+            }
+            let unitDateScaleOverrides: IDateScale | undefined = unit !== this.baseUnit
+                ? { baseUnit: unit }
+                : undefined;
+            unitConstraints.minInterval = minUnitDuration;
+            unitConstraints.radix = kDateUnitRadix[unit];
+            unitConstraints.excludeFactors = kDateUnitExcludedFactors[unit];
+    
+            let unitStart = snapDate(startDate, unit);
+            let unitEnd = snapDate(endDate, unit);
+            let tickStart = this.encodeDate(unitStart, unitDateScaleOverrides);
+            let tickEnd = this.encodeDate(unitEnd, unitDateScaleOverrides);
+            let linearTicks = this.linearScale.getTicks(tickStart, tickEnd, unitConstraints);
+
+            let ticks: ITick<Moment>[];
+            if (unitDateScaleOverrides) {
+                // Re-encode ticks
+                ticks = linearTicks.map(tick => {
+                    let date = this.decodeDate(tick.value, unitDateScaleOverrides);
+                    return {
+                        value: date,
+                        location: this.encodeDate(date),
+                    };
+                });
+            } else {
+                ticks = linearTicks.map(tick => ({
+                    location: tick.location,
+                    value: this.decodeValue(tick.value),
+                }));
+            }
+            
+            if (ticks.length > 1) {
+                bestTicks = ticks;
+                break;
+            } else if (ticks.length > bestTicks.length) {
+                bestTicks = ticks;
+            }
+        }
+    
+        return bestTicks;
     }
 
-    if (minUnitAscIndex === 0 && dateScale.baseUnit === 'millisecond') {
-        // Use linear scale
-        return linearTicks(a, b, {
-            minInterval: minDuration.asMilliseconds(),
-        });
-    }
-
-    let unitConstraints: ITickConstraints = {
-        expand: constraints.expand,
+    getDateScaleOrigin(date: Moment): Moment {
+        return this.originDate || DateScale.epochWithTimeZone(date);
     };
-    let bestTicks: Decimal[] = [];
-    for (let i = kUnitsLength - 1; i >= minUnitAscIndex; i--) {
-        // Try to get tick intervals with this unit
-        let unit = kDateUnitsAsc[i];
-        // We first snap the number to an integer, then
-        // floor, because some intervals are non uniform.
-        let minUnitDuration = minUnitDurations[unit];
-        if (minUnitDuration < dateScale.minUnitDuration) {
-            continue;
-        }
-        let unitDateScale = optimizeDateScale({
-            originDate: dateScale.originDate,
-            baseUnit: unit,
-        });
-        unitConstraints.minInterval = minUnitDuration;
-        unitConstraints.radix = kDateUnitRadix[unit];
-        unitConstraints.excludeFactors = kDateUnitExcludedFactors[unit];
 
-        let unitStart = snapDate(startDate, unit);
-        let unitEnd = snapDate(endDate, unit);
-        let tickStart = encodeDate(unitStart, unitDateScale);
-        let tickEnd = encodeDate(unitEnd, unitDateScale);
-        let ticks = linearTicks(tickStart, tickEnd, unitConstraints);
+    static epochWithTimeZone(date: Moment): Moment {
+        return date.clone().startOf('year').subtract(date.year(), 'year');
+    };
 
-        if (unitDateScale.baseUnit !== dateScale.baseUnit) {
-            // Re-encode ticks
-            ticks = ticks.map(x => {
-                let date = decodeDate(x, unitDateScale);
-                return encodeDate(date, dateScale);
-            });
-        }
-        
-        if (ticks.length > 1) {
-            bestTicks = ticks;
-            break;
-        } else if (ticks.length > bestTicks.length) {
-            bestTicks = ticks;
-        }
+    encodeValue(date: Moment): Decimal {
+        return this.encodeDate(date);
     }
 
-    return bestTicks;
+    encodeDate(date: Moment, overrides?: IDateScale): Decimal {
+        let value = dateIntervalLength(
+            overrides?.originDate || this.originDate,
+            date,
+            overrides?.baseUnit || this.baseUnit,
+        );
+        return new Decimal(value);
+    }
+
+    decodeValue(value: Decimal): Moment {
+        return this.decodeDate(value);
+    }
+
+    decodeDate(value: Decimal, overrides?: IDateScale): Moment {
+        let x = new Decimal(value);
+        let date = stepDateLinear(
+            overrides?.originDate || this.originDate,
+            x.toNumber(),
+            overrides?.baseUnit || this.baseUnit,
+        );
+        if (!date.isValid()) {
+            throw new Error('Unable to decode date');
+        }
+        return date;
+    }
 }

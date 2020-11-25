@@ -15,7 +15,6 @@ import {
     kAxisStyleLightDefaults,
 } from '../const';
 import { Chart } from "../internal";
-import { linearTicks } from "./linearScale";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import {
@@ -24,7 +23,8 @@ import {
     IAxisStyle,
 } from "../types";
 import { isMatch } from "./comp";
-import { ITickConstraints } from "./baseScale";
+import Scale, { ITick } from "./baseScale";
+import LinearScale from "./linearScale";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -32,7 +32,7 @@ const kDefaultAxisThicknessStep = 10;
 
 const k0 = new Decimal(0);
 
-export interface IAxisProps extends Required<IAxisOptions> {}
+export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
 
 export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
@@ -90,24 +90,22 @@ interface IAxisWidthLayoutInfo {
 
 interface IAxisLayoutInfo extends IAxisLengthLayoutInfo, IAxisWidthLayoutInfo {}
 
-export default class Axis implements IAxisProps {
+export default class Axis<T = any> implements IAxisProps<T> {
     axisType: AxisType;
     hidden: boolean;
-    getLabel: IAxisProps['getLabel'];
-    tickGenerator: IAxisProps['tickGenerator'];
-    defaultTickConstraints: ITickConstraints;
+    getTickLabel: IAxisProps<T>['getTickLabel'];
+    scale: Scale<T>;
     layoutSourceDefaults: IAxisLayoutSourceProps;
     style: IAxisStyle;
     isHorizontal: boolean;
     layoutInfo: IAxisLayoutInfo;
     layout?: FlatLayoutSource;
 
-    constructor(axisType: AxisType, options?: IAxisOptions) {
+    constructor(axisType: AxisType, options?: IAxisOptions<T>) {
         let {
             hidden = false,
-            getLabel = (value: Decimal) => value.toString(),
-            tickGenerator = linearTicks,
-            defaultTickConstraints = {},
+            getTickLabel = (tick: ITick<T>) => String(tick.value),
+            scale = new LinearScale(),
             layoutSourceDefaults = {},
             style = {},
         } = options || {};
@@ -118,9 +116,8 @@ export default class Axis implements IAxisProps {
 
         this.axisType = axisType;
         this.hidden = hidden;
-        this.getLabel = getLabel;
-        this.tickGenerator = tickGenerator;
-        this.defaultTickConstraints = defaultTickConstraints;
+        this.getTickLabel = getTickLabel;
+        this.scale = scale as any;
         this.isHorizontal = isAxisHorizontal(this.axisType),
 
         this.layoutInfo = {
@@ -152,19 +149,19 @@ export default class Axis implements IAxisProps {
         }
     }
 
-    static createMany(input: AxisManyInput | undefined): Partial<AxisTypeMapping<Axis>> {
+    static createMany<T = any>(input: AxisManyInput | undefined): Partial<AxisTypeMapping<Axis<T>>> {
         let axisArrayOrMap: any = input;
         if (!axisArrayOrMap) {
             return {};
         }
 
         // Validate and normalize axis types
-        let axisOrOptionsArray: (Axis | IAxisOptions & { axisType?: AxisType })[] = [];
-        let axisOrOption: Axis | (IAxisOptions & { axisType?: AxisType });
+        let axisOrOptionsArray: (Axis<T> | IAxisOptions<T> & { axisType?: AxisType })[] = [];
+        let axisOrOption: Axis<T> | (IAxisOptions<T> & { axisType?: AxisType });
         if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
             axisOrOptionsArray = axisArrayOrMap;
         } else {
-            let axisMap: { [key: string]: (Axis | IAxisOptions) } = axisArrayOrMap;
+            let axisMap: { [key: string]: (Axis<T> | IAxisOptions<T>) } = axisArrayOrMap;
             for (let key of Object.keys(axisMap)) {
                 axisOrOption = axisMap[key];
                 if (!axisOrOption.axisType) {
@@ -180,8 +177,8 @@ export default class Axis implements IAxisProps {
             }
         }
 
-        let axis: Axis;
-        let axes: Partial<AxisTypeMapping<Axis>> = {};
+        let axis: Axis<T>;
+        let axes: Partial<AxisTypeMapping<Axis<T>>> = {};
         for (axisOrOption of axisOrOptionsArray) {
             if (axisOrOption instanceof Axis) {
                 axis = axisOrOption;
@@ -271,6 +268,14 @@ export default class Axis implements IAxisProps {
                     stickyEdge: 'right',
                 });
         }
+    }
+
+    encodeValue(value: T): Decimal {
+        return value as any;
+    }
+
+    decodeValue(value: Decimal): T {
+        return value as any;
     }
 
     update(view: Evergrid, updateOptions: IItemUpdateManyOptions): boolean {
@@ -364,12 +369,23 @@ export default class Axis implements IAxisProps {
         }
     }
 
+    getVisibleLocationRange(view: Evergrid): [number, number] {
+        let r = this.layout!.getVisibleLocationRange(view);
+        return this.isHorizontal
+            ? [r[0].x, r[1].x]
+            : [r[0].y, r[1].y];
+    }
+
+    getVisibleValueRange(view: Evergrid): [T, T] {
+        return this.getVisibleLocationRange(view)
+            .map(x => this.scale.decodeValue(new Decimal(x))) as [T, T];
+    }
+
     private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo | undefined {
         let scale = this.isHorizontal ? view.scale.x : view.scale.y;
-        let visibleLocationRange = this.layout!.getVisibleLocationRange(view);
-        let visibleRange: [number, number] = this.isHorizontal
-            ? [visibleLocationRange[0].x, visibleLocationRange[1].x]
-            : [visibleLocationRange[0].y, visibleLocationRange[1].y];
+        let visibleRange = this.getVisibleLocationRange(view);
+        let visibleValueRange = visibleRange
+            .map(x => this.scale.decodeValue(new Decimal(x))) as [T, T];
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
@@ -385,41 +401,40 @@ export default class Axis implements IAxisProps {
         let minorDist = new Decimal(minorGridLineDistanceMin);
 
         // Work out tick mark distance
-        let majorTicks = this.tickGenerator(
-            visibleRange[0],
-            visibleRange[1],
+        let majorTicks = this.scale.getTicks(
+            visibleValueRange[0],
+            visibleValueRange[1],
             {
-                ...this.defaultTickConstraints,
                 minInterval: majorDist.div(scale).abs(),
                 expand: true,
             }
         );
 
-        let majorInterval = majorTicks[Math.min(1, majorTicks.length - 1)]
-                .sub(majorTicks[0]);
+        let majorStartTick = majorTicks[0];
+        let majorEndTick = majorTicks[Math.min(1, majorTicks.length - 1)];
+        let majorInterval = majorEndTick.location.sub(majorStartTick.location);
+        let majorLength = majorTicks[majorTicks.length - 1].location.sub(majorStartTick.location);
 
-        let minorTicks = this.tickGenerator(
-            k0,
-            majorInterval,
+        let minorTicks = this.scale.getTicks(
+            majorStartTick.value,
+            majorEndTick.value,
             {
-                ...this.defaultTickConstraints,
                 maxCount: this.style.minorIntervalCountMax,
                 minInterval: minorDist.div(scale).abs(),
                 expand: false,
             }
         );
 
-        let minorInterval = minorTicks[Math.min(1, minorTicks.length - 1)]
-            .sub(minorTicks[0]);
+        let minorStartTick = minorTicks[0];
+        let minorEndTick = minorTicks[Math.min(1, minorTicks.length - 1)];
+        let minorInterval = minorEndTick.location.sub(minorStartTick.location);
 
         return {
             majorInterval,
             majorCount: majorTicks.length - 1,
             minorInterval,
             minorCount: minorTicks.length - 2,
-            containerLength: majorTicks[majorTicks.length - 1]
-                .sub(majorTicks[0])
-                .toNumber(),
+            containerLength: majorLength.toNumber(),
         };
     }
 
@@ -449,18 +464,15 @@ export default class Axis implements IAxisProps {
     }
 
     /**
-     * Returns all ticks in the specified interval
-     * for an this.
+     * Returns all ticks in the specified location
+     * range
      * 
      * @param start Inclusive start of interval.
      * @param end Exclusive end of interval.
      * @returns Tick locations.
      */
-    getTickLocations(start: Decimal.Value, end: Decimal.Value): Decimal[] {
-        let a = new Decimal(start);
-        let b = new Decimal(end);
-
-        if (a.gte(b)) {
+    getTicksInLocationRange(start: Decimal, end: Decimal): ITick<T>[] {
+        if (start.gte(end)) {
             return [];
         }
         let interval = this.layoutInfo.majorInterval || k0;
@@ -470,18 +482,21 @@ export default class Axis implements IAxisProps {
         }
 
         // Get all ticks in interval
-        let ticks: Decimal[] = [];
+        let locations: Decimal[] = [];
         let len = interval.mul(count);
-        let tick = a.div(len).floor().mul(len);
-        if (tick.gte(a)) {
-            ticks.push(tick);
+        let location = start.div(len).floor().mul(len);
+        if (location.gte(start)) {
+            locations.push(location);
         }
-        tick = tick.add(interval);
-        while (tick.lt(b)) {
-            ticks.push(tick);
-            tick = tick.add(interval);
+        location = location.add(interval);
+        while (location.lt(end)) {
+            locations.push(location);
+            location = location.add(interval);
         }
-        return ticks;
+        return locations.map(location => ({
+            location,
+            value: this.scale.decodeValue(location),
+        }));
     }
 
     /**

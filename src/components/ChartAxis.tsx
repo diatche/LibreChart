@@ -14,36 +14,37 @@ import {
     ViewStyle,
 } from 'react-native';
 import { IAxisStyle } from '../types';
+import { ITick } from '../utils/baseScale';
 
-export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
+export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
-    tickLocations: Decimal[];
+    ticks: ITick<T>[];
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
-    /** Return a label for the value. */
-    getLabel: (value: Decimal) => string;
+    /** Return a label for the tick. */
+    getTickLabel: (tick: ITick<T>) => string;
 }
 
 interface ChartAxisState {}
 
-export default class ChartAxis extends React.PureComponent<ChartAxisProps, ChartAxisState> {
+export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>, ChartAxisState> {
 
-    getLabel(value: Decimal): string {
+    getTickLabel(tick: ITick<T>): string {
         // TODO: cache labels until prop change
         try {
-            return this.props.getLabel(value);
+            return this.props.getTickLabel(tick);
         } catch (error) {
-            console.error('Error in getLabel(): ' + error.message);
+            console.error('Uncaught error while getting tick label: ' + error.message);
             return '';
         }
     }
 
-    getLabels(): string[] {
+    getTickLabels(): string[] {
         // TODO: cache labels until prop change
-        return this.props.tickLocations.map(x => this.getLabel(x));
+        return this.props.ticks.map(x => this.getTickLabel(x));
     }
 
     /**
@@ -234,7 +235,7 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
         let labelInnerContainerStyle = this.getLabelInnerContainerStyle();
         let tickStyle = this.getTickStyle();
         let labelStyle = this.getLabelStyle();
-        let labels = this.getLabels();
+        let labels = this.getTickLabels();
 
         let ticks: React.ReactNode[] = [];
         let labelInnerContainers: React.ReactNode[] = [];

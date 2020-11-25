@@ -100,14 +100,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             return null;
         }
         let range = axis.getContainerRangeAtIndex(index);
-        let tickLocations = axis.getTickLocations(range[0], range[1]);
+        let ticks = axis.getTicksInLocationRange(range[0], range[1]);
         let isInverted = axis.isInverted(this);
         return (
             <ChartAxis
                 {...axis.style}
                 type={axisType}
-                tickLocations={tickLocations}
-                getLabel={value => axis?.getLabel(value) || ''}
+                ticks={ticks}
+                getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness => axis?.onOptimalThicknessChange(
                     thickness,

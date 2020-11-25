@@ -1,34 +1,22 @@
 import { AxisType } from "evergrid";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import { IAxisOptions } from "../../types";
 import Axis from "../Axis";
 import { DateUnit } from "./dateBase";
-import {
-    dateTicks,
-    decodeDate,
-    IDateTickConstraints,
-    optimizeDateScale,
-} from "./dateScale";
+import DateScale from "./dateScale";
 
 const kBaseDateUnit: DateUnit = 'day';
 const kOriginDate = moment().startOf('year');
-const kDateScale = optimizeDateScale({
-    baseUnit: kBaseDateUnit,
-    originDate: kOriginDate,
-});
-const kDefaultTickConstraints: IDateTickConstraints = {
-    ...kDateScale,
-    // maxCount: 6,
-}
 
-export default class DateAxis extends Axis {
+export default class DateAxis extends Axis<Moment> {
 
-    constructor(axisType: AxisType, options?: IAxisOptions) {
+    constructor(axisType: AxisType, options?: IAxisOptions<Moment>) {
         options = {
-            tickGenerator: dateTicks,
-            defaultTickConstraints: kDefaultTickConstraints,
-            getLabel: x => {
-                let date = decodeDate(x, kDateScale);
+            scale: new DateScale({
+                baseUnit: kBaseDateUnit,
+                originDate: kOriginDate,
+            }),
+            getTickLabel: ({ value: date }) => {
                 // return formatDate(date, { unit: kSmallerDateUnit });
                 return date.format('lll');
             },
