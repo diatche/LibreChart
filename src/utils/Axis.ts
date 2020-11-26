@@ -276,11 +276,11 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         }
     }
 
-    encodeValue(value: T): Decimal {
+    locationOfValue(value: T): Decimal {
         return value as any;
     }
 
-    decodeValue(value: Decimal): T {
+    valueAtLocation(value: Decimal): T {
         return value as any;
     }
 
@@ -385,14 +385,14 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
 
     getVisibleValueRange(view: Evergrid): [T, T] {
         return this.getVisibleLocationRange(view)
-            .map(x => this.scale.decodeValue(new Decimal(x))) as [T, T];
+            .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
     }
 
     private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo<D> | undefined {
         let scale = this.isHorizontal ? view.scale.x : view.scale.y;
         let visibleRange = this.getVisibleLocationRange(view);
         let visibleValueRange = visibleRange
-            .map(x => this.scale.decodeValue(new Decimal(x))) as [T, T];
+            .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
@@ -501,7 +501,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let valueInterval = this.layoutInfo.majorValueInterval;
 
         // Get all ticks in interval
-        let startValue = this.scale.decodeValue(start);
+        let startValue = this.scale.valueAtLocation(start);
         let tick: ITickLocation<T> = {
             value: startValue,
             valueInterval: valueInterval,

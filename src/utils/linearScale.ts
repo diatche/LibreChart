@@ -1,9 +1,9 @@
 import Decimal from "decimal.js";
 import Scale, {
-    ITickInterval,
     ITickLocation,
-    ITickConstraints,
+    ITickScaleConstraints,
     ITickScale,
+    IScaleOptions,
 } from "./Scale";
 import {
     findCommonFactors,
@@ -20,11 +20,30 @@ type LinearTickScaleType = ITickScale<Decimal, Decimal>;
 
 export default class LinearScale extends Scale<Decimal> {
 
-    originValue() { return k0 };
+    constructor(options?: IScaleOptions<Decimal>) {
+        super(options);
+
+        this.tickScale = {
+            origin: {
+                value: k0,
+                location: k0,
+            },
+            interval: {
+                valueInterval: k1,
+                locationInterval: k1,
+            },
+        }
+    }
+
+    zeroValue() { return k0 };
     zeroValueInterval() { return k0 };
 
-    getTickScale(start: Decimal, end: Decimal, constraints: ITickConstraints): LinearTickScaleType {
-        if (end.lt(start)) {
+    getTickScale(
+        start: Decimal,
+        end: Decimal,
+        constraints: ITickScaleConstraints<Decimal>
+    ): LinearTickScaleType {
+        if (end.lte(start)) {
             return this.emptyScale();
         }
         if (start.isNaN() || !end.isFinite() || end.isNaN() || !end.isFinite()) {
@@ -39,12 +58,25 @@ export default class LinearScale extends Scale<Decimal> {
             ...this.defaults,
             ...constraints,
         };
-        if (constraints.minInterval) {
-            let min = constraints.minInterval;
+
+        if (constraints.minInterval?.valueInterval) {
+            let min = constraints.minInterval.valueInterval;
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
-            minInterval = min;
+            if (min.gt(minInterval)) {
+                minInterval = min;
+            }
+        }
+
+        if (constraints.minInterval?.locationInterval) {
+            let min = constraints.minInterval.locationInterval;
+            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
+                throw new Error('Minimum interval must be finite and with a positive length');
+            }
+            if (min.gt(minInterval)) {
+                minInterval = min;
+            }
         }
     
         if (constraints.maxCount) {
@@ -55,9 +87,9 @@ export default class LinearScale extends Scale<Decimal> {
             if (maxCount.lt(0) || maxCount.isNaN()) {
                 throw new Error('Max count must be greater than or equal to zero');
             }
-            let maxCountInterval = len.div(maxCount);
-            if (maxCountInterval.gt(minInterval)) {
-                minInterval = maxCountInterval;
+            let min = len.div(maxCount);
+            if (min.gt(minInterval)) {
+                minInterval = min;
             }
         }
     
@@ -117,12 +149,12 @@ export default class LinearScale extends Scale<Decimal> {
                 if (interval.lt(minInterval)) {
                     continue;
                 }
-        
+
                 let start = mStart.mul(exponent);
                 bestScale = {
                     origin: {
-                        location: start,
                         value: start,
+                        location: start,
                     },
                     interval: {
                         locationInterval: interval,
@@ -141,24 +173,23 @@ export default class LinearScale extends Scale<Decimal> {
         return bestScale;
     }
 
-    addIntervalToValue(value: Decimal, scale: LinearTickScaleType): Decimal {
-        return value.add(scale.interval.valueInterval);
+    addIntervalToValue(value: Decimal, interval: Decimal): Decimal {
+        return value.add(interval);
     }
 
-    floorValue(value: Decimal, scale: LinearTickScaleType): Decimal {
-        return value.sub(scale.origin.location)
-            .div(scale.interval.locationInterval)
+    floorValue(value: Decimal): Decimal {
+        return value
+            .div(this.tickScale.interval.valueInterval)
             .floor()
-            .mul(scale.interval.locationInterval)
-            .add(scale.origin.location);
+            .mul(this.tickScale.interval.valueInterval);
     }
 
-    encodeValue(value: Decimal): Decimal {
+    locationOfValue(value: Decimal): Decimal {
         return value;
     }
 
-    decodeValue(value: Decimal): Decimal {
-        return value;
+    valueAtLocation(location: Decimal): Decimal {
+        return location;
     }
 
     isValue(value: any): value is Decimal {
@@ -171,6 +202,10 @@ export default class LinearScale extends Scale<Decimal> {
 
     isValueEqual(v1: Decimal, v2: Decimal): boolean {
         return v1.eq(v2);
+    }
+
+    compareValues(a: Decimal, b: Decimal): number {
+        return a.sub(b).toNumber();
     }
 
     isIntervalEqual(i1: Decimal, i2: Decimal): boolean {

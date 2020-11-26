@@ -52,6 +52,12 @@ export const kDateUnitUniformMs: DateUnitMapping<Decimal> = {
     year: new Decimal(31104000000), // 12 M
 };
 
+/**
+ * The maximum fraction between adjacent date units'
+ * uniform millisecond interval.
+ */
+export const kDateUnitUniformMaxFraction = new Decimal(1000);
+
 export const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
     second: new Decimal(60),
     minute: new Decimal(60),

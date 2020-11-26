@@ -66,6 +66,24 @@ describe('duration', () => {
             );
             expect(diff).toBe(672);
         });
+
+        it('should diff minutes', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01T10:00'),
+                moment('2020-01-01T10:01'),
+                'minute'
+            );
+            expect(diff).toBe(1);
+        });
+
+        it('should diff seconds', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01T10:00'),
+                moment('2020-01-01T10:01'),
+                'second'
+            );
+            expect(diff).toBe(60);
+        });
     })
 
     describe('interpolatedDate', () => {

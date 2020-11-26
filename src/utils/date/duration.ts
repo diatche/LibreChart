@@ -8,6 +8,15 @@ import {
     smallerDateUnit,
 } from './dateBase';
 
+export interface IRoundingBaseOptions {
+    originUnit?: DateUnit;
+    originDate?: Moment;
+}
+
+export interface IRoundingOptions extends IRoundingBaseOptions {
+    method?: (x: number) => number;
+}
+
 export const dateIntervalLength = (
     origin: Moment,
     date: Moment,
@@ -127,10 +136,7 @@ export const roundDate = (
     date: Moment,
     value: number,
     unit: DateUnit,
-    options: {
-        originUnit?: DateUnit;
-        method?: (x: number) => number;
-    } = {}
+    options: IRoundingOptions = {}
 ): Moment => {
     if (value < 1 || value % 1 !== 0) {
         throw new Error('Rounding value must be a positive integer');
@@ -203,9 +209,7 @@ export const floorDate = (
     date: Moment,
     value: number,
     unit: DateUnit,
-    options: {
-        originUnit?: DateUnit;
-    } = {}
+    options: IRoundingBaseOptions = {},
 ): Moment => {
     if (value < 1 || value % 1 !== 0) {
         throw new Error('Rounding value must be a positive integer');
@@ -224,9 +228,7 @@ export const ceilDate = (
     date: Moment,
     value: number,
     unit: DateUnit,
-    options?: {
-        originUnit?: DateUnit;
-    }
+    options?: IRoundingBaseOptions,
 ): Moment => {
     let fDate = floorDate(date, value, unit, options);
     if (fDate.isSame(date)) {
@@ -273,8 +275,11 @@ export const getRoundingOriginUnit = (unit: DateUnit): DateUnit | undefined => {
 export const getRoundingOriginDate = (
     date: Moment,
     unit: DateUnit,
-    options: { originUnit?: DateUnit } = {}
+    options: IRoundingBaseOptions = {},
 ): Moment => {
+    if (options.originDate) {
+        return options.originDate;
+    }
     let {
         originUnit = getRoundingOriginUnit(unit),
     } = options;
@@ -292,7 +297,7 @@ export const dateUnitsWithDuration = (duration: moment.Duration): [number, DateU
     let unitValue = 0;
     for (let calUnit of kCalendarUnitsDes) {
         let value = duration.get(calUnit);
-        if (value === 0) {
+        if (value === 0 || isNaN(value)) {
             continue;
         }
         if (isDateUnit(calUnit)) {

@@ -5,18 +5,13 @@ import {
     getDateTicks,
     getExpectedDateTicks,
 } from './dateScaleUtil';
-import {
-    $,
-    getExpectedLinearTicks,
-    LinearTickInput,
-} from '../linearScaleUtil';
+import { $, getExpectedLinearTicks, LinearTickInput } from '../linearScaleUtil';
 import Decimal from 'decimal.js';
 
 const k1 = new Decimal(1);
 const k10 = new Decimal(10);
 
 describe('DateScale', () => {
-
     beforeAll(() => {
         // Fix time zone to test DST
         let zoneName = 'NZ';
@@ -24,14 +19,13 @@ describe('DateScale', () => {
         moment.tz.setDefault(zoneName);
     });
 
-    describe('encodeDate', () => {
-
+    describe('locationOfValue', () => {
         it('should scale and offset the date with day base unit', () => {
             let scale = new DateScale({
                 originDate: moment('2000-01-01'),
                 baseUnit: 'day',
             });
-            let x = scale.encodeDate(moment('2000-01-02 12:00'));
+            let x = scale.locationOfValue(moment('2000-01-02 12:00'));
             expect(x.toString()).toBe('1.5');
         });
 
@@ -40,7 +34,7 @@ describe('DateScale', () => {
                 originDate: moment('2000-01-01'),
                 baseUnit: 'hour',
             });
-            let x = scale.encodeDate(moment('2000-01-01 02:30'));
+            let x = scale.locationOfValue(moment('2000-01-01 02:30'));
             expect(x.toString()).toBe('2.5');
         });
 
@@ -49,7 +43,7 @@ describe('DateScale', () => {
                 originDate: moment('1999-01-01'),
                 baseUnit: 'hour',
             });
-            let x = scale.encodeDate(moment('2000-01-01 02:30'));
+            let x = scale.locationOfValue(moment('2000-01-01 02:30'));
             expect(x.toString()).toBe('8762.5');
         });
 
@@ -58,19 +52,18 @@ describe('DateScale', () => {
             let scale = new DateScale({
                 baseUnit: 'hour',
             });
-            let x = scale.encodeDate(moment('2000-01-01 02:30'));
+            let x = scale.locationOfValue(moment('2000-01-01 02:30'));
             expect(x.toString()).toBe('262970.5');
         });
     });
 
-    describe('decodeDate', () => {
-
+    describe('valueAtLocation', () => {
         it('should revert scale and offset the date with day base unit', () => {
             let scale = new DateScale({
                 originDate: moment('2000-01-01'),
                 baseUnit: 'day',
             });
-            let x = scale.decodeDate(new Decimal(1.5));
+            let x = scale.valueAtLocation(new Decimal(1.5));
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-02 12:00');
         });
 
@@ -79,7 +72,7 @@ describe('DateScale', () => {
                 originDate: moment('2000-01-01'),
                 baseUnit: 'hour',
             });
-            let x = scale.decodeDate(new Decimal(2.5));
+            let x = scale.valueAtLocation(new Decimal(2.5));
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
 
@@ -88,7 +81,7 @@ describe('DateScale', () => {
                 originDate: moment('1999-01-01'),
                 baseUnit: 'hour',
             });
-            let x = scale.decodeDate(new Decimal(8762.5));
+            let x = scale.valueAtLocation(new Decimal(8762.5));
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
 
@@ -97,13 +90,12 @@ describe('DateScale', () => {
                 baseUnit: 'hour',
             });
             // Default origin is Unix Epoch.
-            let x = scale.decodeDate(new Decimal(262970.5));
+            let x = scale.valueAtLocation(new Decimal(262970.5));
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
     });
 
     describe('getTicks', () => {
-
         // divide into years
 
         it('should divide years into decades when not expanding', () => {
@@ -359,8 +351,11 @@ describe('DateScale', () => {
             let start = moment('2020-01-01 10:00:00:000');
             let end = moment('2020-01-01 10:00:00:001');
 
-            let ticks = scale.getTickScale(start, end, { minInterval: $(0.1) })
-                .map(x => x.location.toString());
+            let ticks = scale
+                .getTicks(start, end, {
+                    minInterval: { locationInterval: $(0.1) },
+                })
+                .map((x) => x.location.toString());
 
             let linearInput: LinearTickInput = {
                 start: start.valueOf(),
@@ -377,11 +372,14 @@ describe('DateScale', () => {
             let scale = new DateScale({
                 baseUnit: 'millisecond',
             });
-            
+
             let start = moment('2020-01-01 10:00');
             let end = moment('2020-01-01 10:00');
-            let ticks = scale.getTickScale(start, end, { minInterval: k1 })
-                .map(x => x.location.toString());
+            let ticks = scale
+                .getTicks(start, end, {
+                    minInterval: { locationInterval: k1 },
+                })
+                .map((x) => x.location.toString());
 
             expect(ticks).toEqual([]);
         });
@@ -393,8 +391,11 @@ describe('DateScale', () => {
 
             let start = moment('2020-01-01 10:00');
             let end = moment('2020-01-01 09:00');
-            let ticks = scale.getTickScale(start, end, { minInterval: k1 })
-                .map(x => x.location.toString());
+            let ticks = scale
+                .getTicks(start, end, {
+                    minInterval: { locationInterval: k1 },
+                })
+                .map((x) => x.location.toString());
 
             expect(ticks).toEqual([]);
         });
@@ -410,12 +411,15 @@ describe('DateScale', () => {
 
             let start = moment('2020-01-11');
             let end = moment('2020-01-16');
-            let ticks = scale.getTickScale(start, end, { minInterval: k1 })
-                .map(x => x.location.toNumber());
+            let ticks = scale
+                .getTicks(start, end, {
+                    minInterval: { locationInterval: k1 },
+                })
+                .map((x) => x.location.toNumber());
             expect(ticks).toEqual([10, 11, 12, 13, 14, 15]);
 
             // Check that origin date has not been modified
-            expect(originDate.format('YYYY-MM-DD')).toBe('2020-01-01')
+            expect(originDate.format('YYYY-MM-DD')).toBe('2020-01-01');
         });
 
         it('should divide into hours with day base unit', () => {
@@ -427,20 +431,11 @@ describe('DateScale', () => {
 
             let start = moment('2020-01-11 00:00');
             let end = moment('2020-01-11 05:00');
-            let ticks = scale.getTickScale(start, end, {
-                minDuration: moment.duration(1, 'hour'),
+            let ticks = scale.getTicks(start, end, {
+                minInterval: { valueInterval: moment.duration(1, 'hour') },
             });
-            let locations = ticks.map(x => x.location.toFixed(6));
-            let dates = ticks.map(x => x.value.format('YYYY-MM-DD HH:mm'));
-
-            expect(locations).toEqual([
-                10,
-                k10.add(k1.div(24)),
-                k10.add(k1.div(24).mul(2)),
-                k10.add(k1.div(24).mul(3)),
-                k10.add(k1.div(24).mul(4)),
-                k10.add(k1.div(24).mul(5)),
-            ].map(x => x.toFixed(6)));
+            let locations = ticks.map((x) => x.location.toFixed(6));
+            let dates = ticks.map((x) => x.value.format('YYYY-MM-DD HH:mm'));
 
             expect(dates).toEqual([
                 '2020-01-11 00:00',
@@ -448,8 +443,19 @@ describe('DateScale', () => {
                 '2020-01-11 02:00',
                 '2020-01-11 03:00',
                 '2020-01-11 04:00',
-                '2020-01-11 05:00'
+                '2020-01-11 05:00',
             ]);
+
+            expect(locations).toEqual(
+                [
+                    10,
+                    k10.add(k1.div(24)),
+                    k10.add(k1.div(24).mul(2)),
+                    k10.add(k1.div(24).mul(3)),
+                    k10.add(k1.div(24).mul(4)),
+                    k10.add(k1.div(24).mul(5)),
+                ].map((x) => x.toFixed(6)),
+            );
         });
 
         // max count
@@ -462,7 +468,7 @@ describe('DateScale', () => {
                 format: 'YYYY-MM-DD HH:mm',
                 constraints: {
                     baseUnit: 'day',
-                    minDuration: undefined,
+                    minInterval: undefined,
                     maxCount: $(5),
                 },
             };
