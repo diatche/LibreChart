@@ -2,6 +2,8 @@ import moment, { Moment } from 'moment';
 import {
     compareDateUnits,
     DateUnit,
+    isDateUnit,
+    kCalendarUnitsDes,
     kDateNonUniform,
     smallerDateUnit,
 } from './dateBase';
@@ -283,4 +285,25 @@ export const getRoundingOriginDate = (
     }
 
     return date.clone().startOf(originUnit);
+};
+
+export const dateUnitsWithDuration = (duration: moment.Duration): [number, DateUnit] => {
+    let dateUnit: DateUnit | undefined;
+    let unitValue = 0;
+    for (let calUnit of kCalendarUnitsDes) {
+        let value = duration.get(calUnit);
+        if (value === 0) {
+            continue;
+        }
+        if (isDateUnit(calUnit)) {
+            if (dateUnit) {
+                throw new Error(`Durations with multiple units is not supported`);
+            }
+            dateUnit = calUnit;
+            unitValue = value;
+        } else {
+            throw new Error(`Duration unit ${calUnit} is not supported`);
+        }
+    }
+    return [unitValue, dateUnit || 'millisecond'];
 };

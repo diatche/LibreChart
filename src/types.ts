@@ -7,7 +7,7 @@ import {
 } from "evergrid";
 import { ColorValue } from "react-native";
 import Scale, {
-    ITick,
+    ITickLocation,
 } from "./utils/Scale";
 
 export interface IDecimalPoint {
@@ -64,7 +64,7 @@ export interface IAxisOptions<T = any, D = T> {
      **/
     hidden?: boolean;
 
-    getTickLabel?: (tick: ITick<T, D>) => string;
+    getTickLabel?: (tick: ITickLocation<T>) => string;
 
     /**
      * Customises the tick location.

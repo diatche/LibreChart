@@ -23,7 +23,7 @@ import {
     IAxisStyle,
 } from "../types";
 import { IMatcher, isMatch } from "./comp";
-import Scale, { ITick } from "./Scale";
+import Scale, { ITickLocation } from "./Scale";
 import LinearScale from "./LinearScale";
 
 const kAxisUpdateDebounceInterval = 100;
@@ -108,7 +108,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     constructor(axisType: AxisType, options?: IAxisOptions<T, D>) {
         let {
             hidden = false,
-            getTickLabel = (tick: ITick<any, any>) => String(tick.value),
+            getTickLabel = (tick: ITickLocation<any, any>) => String(tick.value),
             scale = new LinearScale(),
             layoutSourceDefaults = {},
             style = {},
@@ -127,9 +127,9 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         this.layoutInfo = {
             majorLocationInterval: k0,
             majorCount: 0,
-            majorValueInterval: this.scale.zeroInterval,
+            majorValueInterval: this.scale.emptyInterval,
             minorLocationInterval: k0,
-            minorValueInterval: this.scale.zeroInterval,
+            minorValueInterval: this.scale.emptyInterval,
             minorCount: 0,
             containerLength: 0,
             containerLength$: new Animated.Value(0),
@@ -408,7 +408,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let minorDist = new Decimal(minorGridLineDistanceMin);
 
         // Work out tick mark distance
-        let majorTicks = this.scale.getTicks(
+        let majorTicks = this.scale.getTickScale(
             visibleValueRange[0],
             visibleValueRange[1],
             {
@@ -423,7 +423,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let majorValueInterval = majorStartTick.valueInterval;
         let majorLength = majorTicks[majorTicks.length - 1].location.sub(majorStartTick.location);
 
-        let minorTicks = this.scale.getTicks(
+        let minorTicks = this.scale.getTickScale(
             majorStartTick.value,
             majorEndTick.value,
             {
@@ -489,7 +489,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
      * @param end Exclusive end of interval.
      * @returns Tick locations.
      */
-    getTicksInLocationRange(start: Decimal, end: Decimal): ITick<T, D>[] {
+    getTicksInLocationRange(start: Decimal, end: Decimal): ITickLocation<T>[] {
         if (start.gte(end)) {
             return [];
         }
@@ -502,7 +502,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
 
         // Get all ticks in interval
         let startValue = this.scale.decodeValue(start);
-        let tick: ITick<T, D> = {
+        let tick: ITickLocation<T> = {
             value: startValue,
             valueInterval: valueInterval,
             location: start,

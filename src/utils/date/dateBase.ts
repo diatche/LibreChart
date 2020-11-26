@@ -8,6 +8,7 @@ export type DateUnit =
     | 'day'
     | 'month'
     | 'year';
+export type CalendarUnit = DateUnit | 'week';
 
 export type DateUnitMapping<T> = { [unit in DateUnit]: T };
 export type ImmutableDateUnitMapping<T> = { readonly [unit in DateUnit]: T };
@@ -22,8 +23,20 @@ export const kDateUnitsAsc: DateUnit[] = [
     'year',
 ];
 export const kDateUnitsDes = kDateUnitsAsc.slice().reverse();
-export const kUnitsLength = kDateUnitsAsc.length;
-export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('second');
+export const kDateUnitsLength = kDateUnitsAsc.length;
+
+export const kCalendarUnitsAsc: CalendarUnit[] = [
+    'millisecond',
+    'second',
+    'minute',
+    'hour',
+    'day',
+    'week',
+    'month',
+    'year',
+];
+export const kCalendarUnitsDes = kCalendarUnitsAsc.slice().reverse();
+export const kCalendarUnitsLength = kCalendarUnitsAsc.length;
 
 /**
  * Number of milliseconds in a date unit when

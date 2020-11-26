@@ -359,7 +359,7 @@ describe('DateScale', () => {
             let start = moment('2020-01-01 10:00:00:000');
             let end = moment('2020-01-01 10:00:00:001');
 
-            let ticks = scale.getTicks(start, end, { minInterval: $(0.1) })
+            let ticks = scale.getTickScale(start, end, { minInterval: $(0.1) })
                 .map(x => x.location.toString());
 
             let linearInput: LinearTickInput = {
@@ -380,7 +380,7 @@ describe('DateScale', () => {
             
             let start = moment('2020-01-01 10:00');
             let end = moment('2020-01-01 10:00');
-            let ticks = scale.getTicks(start, end, { minInterval: k1 })
+            let ticks = scale.getTickScale(start, end, { minInterval: k1 })
                 .map(x => x.location.toString());
 
             expect(ticks).toEqual([]);
@@ -393,7 +393,7 @@ describe('DateScale', () => {
 
             let start = moment('2020-01-01 10:00');
             let end = moment('2020-01-01 09:00');
-            let ticks = scale.getTicks(start, end, { minInterval: k1 })
+            let ticks = scale.getTickScale(start, end, { minInterval: k1 })
                 .map(x => x.location.toString());
 
             expect(ticks).toEqual([]);
@@ -410,7 +410,7 @@ describe('DateScale', () => {
 
             let start = moment('2020-01-11');
             let end = moment('2020-01-16');
-            let ticks = scale.getTicks(start, end, { minInterval: k1 })
+            let ticks = scale.getTickScale(start, end, { minInterval: k1 })
                 .map(x => x.location.toNumber());
             expect(ticks).toEqual([10, 11, 12, 13, 14, 15]);
 
@@ -427,7 +427,7 @@ describe('DateScale', () => {
 
             let start = moment('2020-01-11 00:00');
             let end = moment('2020-01-11 05:00');
-            let ticks = scale.getTicks(start, end, {
+            let ticks = scale.getTickScale(start, end, {
                 minDuration: moment.duration(1, 'hour'),
             });
             let locations = ticks.map(x => x.location.toFixed(6));

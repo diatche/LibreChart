@@ -14,25 +14,25 @@ import {
     ViewStyle,
 } from 'react-native';
 import { IAxisStyle } from '../types';
-import { ITick } from '../utils/Scale';
+import { ITickLocation } from '../utils/Scale';
 
 export interface ChartAxisProps<T, D> extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
-    ticks: ITick<T, D>[];
+    ticks: ITickLocation<T>[];
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
     /** Return a label for the tick. */
-    getTickLabel: (tick: ITick<T, D>) => string;
+    getTickLabel: (tick: ITickLocation<T>) => string;
 }
 
 interface ChartAxisState {}
 
 export default class ChartAxis<T, D> extends React.PureComponent<ChartAxisProps<T, D>, ChartAxisState> {
 
-    getTickLabel(tick: ITick<T, D>): string {
+    getTickLabel(tick: ITickLocation<T>): string {
         // TODO: cache labels until prop change
         try {
             return this.props.getTickLabel(tick);

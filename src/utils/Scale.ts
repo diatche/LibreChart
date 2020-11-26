@@ -1,11 +1,21 @@
 import Decimal from 'decimal.js';
 import { IMatcher } from './comp';
 
-export interface ITick<T, D> {
+const k0 = new Decimal(0);
+
+export interface ITickLocation<T> {
     value: T;
-    valueInterval: D;
     location: Decimal;
+}
+
+export interface ITickInterval<D> {
+    valueInterval: D;
     locationInterval: Decimal;
+}
+
+export interface ITickScale<T, D> {
+    origin: ITickLocation<T>;
+    interval: ITickInterval<D>;
 }
 
 /**
@@ -83,22 +93,93 @@ export default abstract class Scale<T, D = T, C extends ITickConstraints = ITick
         this.defaults = { ...options?.defaults };
     }
 
-    abstract get zeroInterval(): D;
+    abstract originValue(): T;
+    abstract zeroValueInterval(): D;
+
+    emptyScale(): ITickScale<T, D> {
+        return {
+           origin: {
+               value: this.originValue(),
+               location: k0,
+           },
+           interval: {
+               valueInterval: this.zeroValueInterval(),
+               locationInterval: k0,
+           },
+        };
+    }
 
     /**
-     * Calculates optimal ticks given an interval and
-     * constraints (see {@link ITickConstraints}).
+     * Calculates an optimal tick scale given a value interval
+     * and constraints (see {@link ITickConstraints}).
+     * 
+     * The scale can be used to generate tick in a value or location
+     * range.
      *  
-     * @param start The inclusive start of the interval. 
-     * @param end The inclusive end of the interval.
+     * @param start The inclusive start of the value interval. 
+     * @param end The inclusive end of the value interval.
      * @param constraints See {@link ITickConstraints}
-     * @returns An array of tick locations.
+     * @returns A tick scale.
      */
-    abstract getTicks(start: T, end: T, constraints: C): ITick<T, D>[];
+    abstract getTickScale(start: T, end: T, constraints: C): ITickScale<T, D>;
 
     /**
-     * Calculates optimal ticks locations given an
+     * Returns all ticks in the specified location
+     * range.
+     * 
+     * @param start Inclusive start of interval.
+     * @param end Exclusive end of interval.
+     * @param scale The tick interval.
+     * @returns Tick locations.
+     */
+    getTicksInLocationRange(start: Decimal, end: Decimal, scale: ITickScale<T, D>): ITickLocation<T>[] {
+        if (start.gte(end)) {
+            return [];
+        }
+        if (scale.interval.locationInterval.lte(0)) {
+            return [];
+        }
+
+        // Get all ticks in interval
+        let startLocation = this.floorLocation(start, scale);
+        let startValue = this.decodeValue(startLocation, scale);
+        let tick: ITickLocation<T> = {
+            value: startValue,
+            location: start,
+        };
+        
+        let ticks: ITickLocation<T>[] = [];
+        while (tick.location.lt(end)) {
+            if (tick.location.gte(start)) {
+                ticks.push(tick);
+            }
+            tick = this.getNextTick(tick, scale);
+        }
+        return ticks;
+    }
+
+    /**
+     * Calculates an optimal tick interval given a value interval
+     * and constraints (see {@link ITickConstraints}).
+     * 
+     * @deprecated Use `getTickScale()` and `getTicksInLocationRange()` instead.
+     * 
+     * @param start 
+     * @param end 
+     * @param constraints 
+     */
+    getTicks(start: T, end: T, constraints: C): ITickLocation<T>[] {
+        let interval = this.getTickScale(start, end, constraints);
+        let startLoc = this.encodeValue(start, interval);
+        let endLoc = this.encodeValue(start, interval);
+        return this.getTicksInLocationRange(startLoc, endLoc, interval);
+    }
+
+    /**
+     * Calculates optimal ticks locations given a value
      * interval and constraints (see {@link ITickConstraints}).
+     * 
+     * @deprecated Use `getTickScale()` and `getTicksInLocationRange()` instead.
      *  
      * @param start The inclusive start of the interval. 
      * @param end The inclusive end of the interval.
@@ -109,20 +190,28 @@ export default abstract class Scale<T, D = T, C extends ITickConstraints = ITick
         return this.getTicks(start, end, constraints).map(t => t.location);
     }
 
-    getNextTick(tick: ITick<T, D>): ITick<T, D> {
+    getNextTick(tick: ITickLocation<T>, scale: ITickScale<T, D>): ITickLocation<T> {
         return {
-            value: this.addInterval(tick.value, tick.valueInterval),
-            valueInterval: tick.valueInterval,
-            location: tick.location.add(tick.locationInterval),
-            locationInterval: tick.locationInterval,
+            value: this.addIntervalToValue(tick.value, scale),
+            location: tick.location.add(scale.interval.locationInterval),
         };
     }
 
-    abstract addInterval(value: T, interval: D): T;
+    abstract addIntervalToValue(value: T, scale: ITickScale<T, D>): T;
 
-    abstract encodeValue(value: T): Decimal;
+    abstract floorValue(value: T, scale: ITickScale<T, D>): T;
 
-    abstract decodeValue(value: Decimal): T;
+    floorLocation(location: Decimal, scale: ITickScale<T, D>): Decimal {
+        return location.sub(scale.origin.location)
+            .div(scale.interval.locationInterval)
+            .floor()
+            .mul(scale.interval.locationInterval)
+            .add(scale.origin.location);
+    }
+
+    abstract encodeValue(value: T, scale: ITickScale<T, D>): Decimal;
+
+    abstract decodeValue(value: Decimal, scale: ITickScale<T, D>): T;
 
     abstract isValue(value: any): value is T;
 

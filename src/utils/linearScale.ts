@@ -1,7 +1,9 @@
 import Decimal from "decimal.js";
 import Scale, {
-    ITick,
+    ITickInterval,
+    ITickLocation,
     ITickConstraints,
+    ITickScale,
 } from "./Scale";
 import {
     findCommonFactors,
@@ -14,26 +16,16 @@ const k10 = new Decimal(10);
 
 const kFactors10 = [1, 2, 5, 10];
 
-type LinearTickType = ITick<Decimal, Decimal>;
+type LinearTickScaleType = ITickScale<Decimal, Decimal>;
 
 export default class LinearScale extends Scale<Decimal> {
 
-    get zeroInterval(): Decimal {
-        return k0;
-    }
+    originValue() { return k0 };
+    zeroValueInterval() { return k0 };
 
-    /**
-     * Calculates optimal tick locations in linear space given an
-     * interval and constraints (see {@link ITickConstraints}).
-     *  
-     * @param start The inclusive start of the interval. 
-     * @param end The inclusive end of the interval.
-     * @param constraints See {@link ITickConstraints}
-     * @returns An array of tick locations.
-     */
-    getTicks(start: Decimal, end: Decimal, constraints: ITickConstraints): LinearTickType[] {
+    getTickScale(start: Decimal, end: Decimal, constraints: ITickConstraints): LinearTickScaleType {
         if (end.lt(start)) {
-            return [];
+            return this.emptyScale();
         }
         if (start.isNaN() || !end.isFinite() || end.isNaN() || !end.isFinite()) {
             throw new Error('Invalid interval');
@@ -58,7 +50,7 @@ export default class LinearScale extends Scale<Decimal> {
         if (constraints.maxCount) {
             let maxCount = constraints.maxCount;
             if (maxCount.eq(0)) {
-                return [];
+                return this.emptyScale();
             }
             if (maxCount.lt(0) || maxCount.isNaN()) {
                 throw new Error('Max count must be greater than or equal to zero');
@@ -111,14 +103,7 @@ export default class LinearScale extends Scale<Decimal> {
             factors = factors.filter(x => !excludeFactors.has(x));
         }
     
-        type Base = {
-            start: Decimal;
-            end: Decimal;
-            interval: Decimal;
-            count: number;
-        };
-    
-        let bestBase: Base | undefined;
+        let bestScale: LinearTickScaleType | undefined;
     
         do {
             for (let i = 0; i < factors.length; i++) {
@@ -133,44 +118,39 @@ export default class LinearScale extends Scale<Decimal> {
                     continue;
                 }
         
-                bestBase = {
-                    start: mStart.mul(exponent),
-                    end: mEnd.mul(exponent),
-                    interval,
-                    count: count.toNumber(),
+                let start = mStart.mul(exponent);
+                bestScale = {
+                    origin: {
+                        location: start,
+                        value: start,
+                    },
+                    interval: {
+                        locationInterval: interval,
+                        valueInterval: interval,
+                    },
                 };
                 break;
             }
-            if (!bestBase) {
+            if (!bestScale) {
                 exponent = exponent.mul(radix);
                 aScaled = aScaled.div(radix);
                 bScaled = bScaled.div(radix);
             }
-        } while (!bestBase);
+        } while (!bestScale);
     
-        let { expand = false } = constraints || {};
-        if (expand) {
-            start = bestBase.start;
-            end = bestBase.end;
-        }
-    
-        let ticks: LinearTickType[] = [];
-        for (let i = 0; i <= bestBase.count; i++) {
-            let location = bestBase.start.add(bestBase.interval.mul(i));
-            if (location.gte(start) && location.lte(end)) {
-                ticks.push({
-                    value: location,
-                    valueInterval: bestBase.interval,
-                    location,
-                    locationInterval: bestBase.interval,
-                });
-            }
-        }
-        return ticks;
+        return bestScale;
     }
 
-    addInterval(value: Decimal, interval: Decimal): Decimal {
-        return value.add(interval);
+    addIntervalToValue(value: Decimal, scale: LinearTickScaleType): Decimal {
+        return value.add(scale.interval.valueInterval);
+    }
+
+    floorValue(value: Decimal, scale: LinearTickScaleType): Decimal {
+        return value.sub(scale.origin.location)
+            .div(scale.interval.locationInterval)
+            .floor()
+            .mul(scale.interval.locationInterval)
+            .add(scale.origin.location);
     }
 
     encodeValue(value: Decimal): Decimal {

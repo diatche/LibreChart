@@ -34,7 +34,7 @@ export const getDateTicks = (input: DateTickInput): string[] => {
         minDuration: input.stride,
         ...input.constraints,
     };
-    return new DateScale(constraints).getTicks(
+    return new DateScale(constraints).getTickScale(
         input.start,
         input.end,
         constraints

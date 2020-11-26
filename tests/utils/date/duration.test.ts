@@ -2,6 +2,7 @@ import moment from 'moment-timezone';
 import {
     ceilDate,
     dateIntervalLength,
+    dateUnitsWithDuration,
     floorDate,
     interpolatedDate,
     roundDate,
@@ -541,6 +542,37 @@ describe('duration', () => {
                 2,
                 'month'
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
+        });
+    });
+
+    describe('dateUnitsWithDuration', () => {
+
+        it('should convert valid durations', () => {
+            expect(dateUnitsWithDuration(moment.duration(0))).toEqual([0, 'millisecond']);
+            expect(dateUnitsWithDuration(moment.duration(2))).toEqual([2, 'millisecond']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'ms'))).toEqual([2, 'millisecond']);
+
+            expect(dateUnitsWithDuration(moment.duration(2, 'second'))).toEqual([2, 'second']);
+            expect(dateUnitsWithDuration(moment.duration(0, 'second'))).toEqual([0, 'millisecond']);
+
+            expect(dateUnitsWithDuration(moment.duration(2, 'minute'))).toEqual([2, 'minute']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'hour'))).toEqual([2, 'hour']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'day'))).toEqual([2, 'day']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'month'))).toEqual([2, 'month']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'year'))).toEqual([2, 'year']);
+        });
+
+        it('should throw with invalid durations', () => {
+            expect(() => {
+                dateUnitsWithDuration(moment.duration(1, 'week'));
+            }).toThrow();
+
+            expect(() => {
+                let duration = moment.duration(
+                    moment('2020-02-01').diff(moment('2020-03-01'))
+                );
+                dateUnitsWithDuration(duration);
+            }).toThrow();
         });
     });
 });
