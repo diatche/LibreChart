@@ -1,5 +1,5 @@
 {
-  "name": "liberty-chart",
+  "name": "librechart",
   "version": "0.1.0",
   "description": "Highly performant charts for Expo, React Native and web.",
   "main": "dist/reactnative/index.js",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/diatche/liberty-chart.git"
+    "url": "git+https://github.com/diatche/librechart.git"
   },
   "keywords": [
     "React-native",
@@ -32,9 +32,9 @@
   "author": "Pavel Diatchenko <diatche@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/diatche/liberty-chart/issues"
+    "url": "https://github.com/diatche/librechart/issues"
   },
-  "homepage": "https://github.com/diatche/liberty-chart#readme",
+  "homepage": "https://github.com/diatche/librechart#readme",
   "peerDependencies": {
     "evergrid": "*",
     "react": ">=16.11.0",
