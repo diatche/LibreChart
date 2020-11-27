@@ -4,7 +4,8 @@ import {
     DateUnit,
     isDateUnit,
     kCalendarUnitsDes,
-    kDateNonUniform,
+    kDateUnitsDes,
+    kDateUnitUniformMs,
     smallerDateUnit,
 } from './dateBase';
 
@@ -138,71 +139,100 @@ export const roundDate = (
     unit: DateUnit,
     options: IRoundingOptions = {}
 ): Moment => {
-    if (value < 1 || value % 1 !== 0) {
-        throw new Error('Rounding value must be a positive integer');
+    if (value <= 0) {
+        throw new Error('Rounding value must be positive');
     }
 
     let {
         method = Math.round,
     } = options;
 
-    let origin = getRoundingOriginDate(date, unit, options);
-
-    let smallerUnit = smallerDateUnit(unit) || 'millisecond';
-    if (kDateNonUniform[unit]) {
-        // Find matching period for non-uniform interval
-        let periodStart = origin;
-        let periodEdge = origin;
-        let periodEnd = periodStart.clone().add(1, unit);
-        let indexStart = 0;
-        let indexEdge = 0;
-        let indexEnd = 1;
-        let dateIndex = -1;
-        if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
-            let periodLength = periodEnd.diff(periodStart, smallerUnit);
-            dateIndex = date.diff(periodStart, smallerUnit) / periodLength + indexStart;
-        } else {
-            while (date.isAfter(periodStart) || indexStart % value !== 0) {
-                periodStart = periodEnd;
-                periodEnd = periodStart.clone().add(1, unit);
-                indexStart = indexEnd;
-                indexEnd += 1;
-                if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
-                    let periodLength = periodEnd.diff(periodStart, smallerUnit);
-                    dateIndex = date.diff(periodStart, smallerUnit) / periodLength + indexStart;
-                    break;
-                }
-            }
-        }
-        while (indexEnd % value !== 0) {
-            periodEdge = periodEnd;
-            periodEnd = periodEnd.clone().add(1, unit);
-            indexEdge = indexEnd;
-            indexEnd += 1;
-            if (date.isSameOrAfter(periodEdge) && date.isSameOrBefore(periodEnd)) {
-                let periodLength = periodEnd.diff(periodEdge, smallerUnit);
-                dateIndex = date.diff(periodEdge, smallerUnit) / periodLength + indexEdge;
-            }
-        }
-        if (dateIndex < indexStart || dateIndex > indexEnd) {
-            throw new Error('Date rounding error');
-        }
-        // Round indexes instead of intervals
-        let indexLength = indexEnd - indexStart;
-        let dateRelativeIndex = dateIndex - indexStart;
-        let roundedDateIndex = method(dateRelativeIndex / indexLength) * indexLength;
-        let roundedDate = periodStart.clone().add(roundedDateIndex, unit);
-        return roundedDate;
-    } else {
-        // Use ms with uniform interval
-        let interval = moment.duration(value, unit).as(smallerUnit);
-        let duration = date.diff(origin, smallerUnit) / interval;
-        let roundedDuration = method(duration);
-        let roundedDate = origin.clone().add(roundedDuration * interval, smallerUnit);
-        // In case of DST, round one more time
-        roundedDate = roundDateLinear(roundedDate, unit);
+    if (unit === 'year') {
+        // Use years as a unit of 1 and
+        // set the origin at year zero.
+        let year = date.year();
+        let partialDate = date.clone();
+        partialDate.year(0);
+        let partialMs = getUniformMs(partialDate);
+        let partialYear = partialMs / kDateUnitUniformMs['year'];
+        year += partialYear;
+        year = method(year / value) * value;
+        let roundedDate = date.clone().startOf('year');
+        roundedDate.year(year);
         return roundedDate;
     }
+
+    let origin = getRoundingOriginDate(date, unit, options);
+
+    if (unit === 'millisecond') {
+        let diffMs = date.diff(origin, 'ms', true);
+        let roundedMs = method(diffMs / value) * value;
+        let roundedDate = origin.clone().add(roundedMs, 'ms');
+        return roundedDate;
+    }
+
+    let diff = moment.duration(date.diff(origin));
+    let diffMs = getUniformMs(diff);
+    let diffUnit = diffMs / kDateUnitUniformMs[unit];
+    diffUnit = method(diffUnit / value) * value;
+    let roundedMs = diffUnit * kDateUnitUniformMs[unit];
+    return addUniformMs(origin, roundedMs);
+
+    // let smallerUnit = smallerDateUnit(unit) || 'millisecond';
+    // if (kDateNonUniform[unit]) {
+    //     // Find matching period for non-uniform interval
+    //     let periodStart = origin;
+    //     let periodEdge = origin;
+    //     let periodEnd = periodStart.clone().add(1, unit);
+    //     let indexStart = 0;
+    //     let indexEdge = 0;
+    //     let indexEnd = 1;
+    //     let dateIndex = -1;
+    //     if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
+    //         let periodLength = periodEnd.diff(periodStart, smallerUnit);
+    //         dateIndex = date.diff(periodStart, smallerUnit) / periodLength + indexStart;
+    //     } else {
+    //         while (date.isAfter(periodStart) || indexStart % value !== 0) {
+    //             periodStart = periodEnd;
+    //             periodEnd = periodStart.clone().add(1, unit);
+    //             indexStart = indexEnd;
+    //             indexEnd += 1;
+    //             if (date.isSameOrAfter(periodStart) && date.isSameOrBefore(periodEnd)) {
+    //                 let periodLength = periodEnd.diff(periodStart, smallerUnit);
+    //                 dateIndex = date.diff(periodStart, smallerUnit) / periodLength + indexStart;
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     while (indexEnd % value !== 0) {
+    //         periodEdge = periodEnd;
+    //         periodEnd = periodEnd.clone().add(1, unit);
+    //         indexEdge = indexEnd;
+    //         indexEnd += 1;
+    //         if (date.isSameOrAfter(periodEdge) && date.isSameOrBefore(periodEnd)) {
+    //             let periodLength = periodEnd.diff(periodEdge, smallerUnit);
+    //             dateIndex = date.diff(periodEdge, smallerUnit) / periodLength + indexEdge;
+    //         }
+    //     }
+    //     if (dateIndex < indexStart || dateIndex > indexEnd) {
+    //         throw new Error('Date rounding error');
+    //     }
+    //     // Round indexes instead of intervals
+    //     let indexLength = indexEnd - indexStart;
+    //     let dateRelativeIndex = dateIndex - indexStart;
+    //     let roundedDateIndex = method(dateRelativeIndex / indexLength) * indexLength;
+    //     let roundedDate = periodStart.clone().add(roundedDateIndex, unit);
+    //     return roundedDate;
+    // } else {
+    //     // Use ms with uniform interval
+    //     let interval = moment.duration(value, unit).as(smallerUnit);
+    //     let duration = date.diff(origin, smallerUnit) / interval;
+    //     let roundedDuration = method(duration);
+    //     let roundedDate = origin.clone().add(roundedDuration * interval, smallerUnit);
+    //     // In case of DST, round one more time
+    //     roundedDate = roundDateLinear(roundedDate, unit);
+    //     return roundedDate;
+    // }
 };
 
 export const floorDate = (
@@ -211,8 +241,8 @@ export const floorDate = (
     unit: DateUnit,
     options: IRoundingBaseOptions = {},
 ): Moment => {
-    if (value < 1 || value % 1 !== 0) {
-        throw new Error('Rounding value must be a positive integer');
+    if (value <= 0) {
+        throw new Error('Rounding value must be positive');
     }
     if (value === 1) {
         return date.clone().startOf(unit);
@@ -285,8 +315,7 @@ export const getRoundingOriginDate = (
     } = options;
 
     if (!originUnit) {
-        // Use 1 CE in same time zone
-        return date.clone().startOf('year').subtract(date.year());
+        return moment.invalid();
     }
 
     return date.clone().startOf(originUnit);
@@ -311,4 +340,34 @@ export const dateUnitsWithDuration = (duration: moment.Duration): [number, DateU
         }
     }
     return [unitValue, dateUnit || 'millisecond'];
+};
+
+export const getUniformMs = (duration: moment.Duration | Moment): number => {
+    let ms = 0;
+    for (let dateUnit of kDateUnitsDes) {
+        let value = duration.get(dateUnit);
+        if (value === 0 || isNaN(value)) {
+            continue;
+        }
+        ms += value * kDateUnitUniformMs[dateUnit];
+    }
+    return ms;
+};
+
+export const addUniformMs = (date: Moment, ms: number): Moment => {
+    let msLeft = ms;
+    let d = date.clone();
+    for (let dateUnit of kDateUnitsDes) {
+        let unitMs = kDateUnitUniformMs[dateUnit];
+        if (unitMs <= msLeft) {
+            let value = Math.floor(msLeft / unitMs);
+            let valueMs = value * unitMs;
+            msLeft -= valueMs;
+            d.add(value, dateUnit);
+        }
+        if (msLeft <= 0) {
+            break;
+        }
+    }
+    return d;
 };

@@ -1,6 +1,5 @@
 import Decimal from "decimal.js";
 import Scale, {
-    ITickLocation,
     ITickScaleConstraints,
     ITickScale,
     IScaleOptions,
@@ -43,7 +42,7 @@ export default class LinearScale extends Scale<Decimal> {
     getTickScale(
         start: Decimal,
         end: Decimal,
-        constraints: ITickScaleConstraints<Decimal>
+        constraints?: ITickScaleConstraints<Decimal>
     ): LinearTickScaleType {
         if (end.lte(start)) {
             return this.emptyScale();
@@ -57,7 +56,7 @@ export default class LinearScale extends Scale<Decimal> {
         let minInterval = k0;
     
         constraints = {
-            ...this.defaults,
+            ...this.constraints,
             ...constraints,
         };
 

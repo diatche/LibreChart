@@ -39,17 +39,9 @@ export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(A
 interface IAxisLengthLayoutBaseInfo<D> {
     /** Number of major axis intervals per axis container. */
     majorCount: number;
-    /** Major axis interval distance in content coordinates. */
-    majorLocationInterval: Decimal;
-    /** Major axis interval distance in value coordinates. */
-    majorValueInterval: D;
 
     /** Number of minor axis intervals per axis container. */
     minorCount: number;
-    /** Minor axis interval distance in content coordinates. */
-    minorLocationInterval: Decimal;
-    /** Minor axis interval distance in value coordinates. */
-    minorValueInterval: D;
 
     /** Grid container length in content coordinates. */
     containerLength: number;
@@ -108,7 +100,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     constructor(axisType: AxisType, options?: IAxisOptions<T, D>) {
         let {
             hidden = false,
-            getTickLabel = (tick: ITickLocation<any, any>) => String(tick.value),
+            getTickLabel = (tick: ITickLocation<any>) => String(tick.value),
             scale = new LinearScale(),
             layoutSourceDefaults = {},
             style = {},
@@ -125,11 +117,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         this.isHorizontal = isAxisHorizontal(this.axisType),
 
         this.layoutInfo = {
-            majorLocationInterval: k0,
             majorCount: 0,
-            majorValueInterval: this.scale.emptyInterval,
-            minorLocationInterval: k0,
-            minorValueInterval: this.scale.emptyInterval,
             minorCount: 0,
             containerLength: 0,
             containerLength$: new Animated.Value(0),
@@ -276,13 +264,13 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         }
     }
 
-    locationOfValue(value: T): Decimal {
-        return value as any;
-    }
+    // locationOfValue(value: T): Decimal {
+    //     return value as any;
+    // }
 
-    valueAtLocation(value: Decimal): T {
-        return value as any;
-    }
+    // valueAtLocation(value: Decimal): T {
+    //     return value as any;
+    // }
 
     update(view: Evergrid, updateOptions: IItemUpdateManyOptions): boolean {
         if (!this.layout) {
@@ -299,7 +287,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         Object.assign(this.layoutInfo, axisLengthInfo);
         this.layoutInfo.containerLength$.setValue(axisLengthInfo.containerLength);
         this.layoutInfo.negHalfMajorInterval$.setValue(
-            axisLengthInfo.majorLocationInterval.div(2).neg().toNumber()
+            this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber()
         );
 
         this.layout.updateItems(view, updateOptions);
@@ -383,75 +371,84 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
             : [r[0].y, r[1].y];
     }
 
-    getVisibleValueRange(view: Evergrid): [T, T] {
-        return this.getVisibleLocationRange(view)
-            .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
-    }
+    // getVisibleValueRange(view: Evergrid): [T, T] {
+    //     return this.getVisibleLocationRange(view)
+    //         .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
+    // }
 
     private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo<D> | undefined {
-        let scale = this.isHorizontal ? view.scale.x : view.scale.y;
+        let viewScale = this.isHorizontal ? view.scale.x : view.scale.y;
         let visibleRange = this.getVisibleLocationRange(view);
-        let visibleValueRange = visibleRange
-            .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
             return;
         }
-
+        
         let {
             majorGridLineDistanceMin,
             minorGridLineDistanceMin,
         } = this.style;
-
+        
         let majorDist = new Decimal(majorGridLineDistanceMin);
         let minorDist = new Decimal(minorGridLineDistanceMin);
 
-        // Work out tick mark distance
-        let majorTicks = this.scale.getTickScale(
-            visibleValueRange[0],
-            visibleValueRange[1],
+        let startLocation = new Decimal(visibleRange[0]);
+        let endLocation = new Decimal(visibleRange[1]);
+        let startValue = this.scale.valueAtLocation(startLocation);
+        let endValue = this.scale.valueAtLocation(endLocation);
+
+        // Update tick scale
+        this.scale.updateTickScale(
+            startValue,
+            endValue,
             {
-                minInterval: majorDist.div(scale).abs(),
-                expand: true,
+                minInterval: {
+                    locationInterval: majorDist.div(viewScale).abs(),
+                },
+                minorTickConstraints: [{
+                    minInterval: {
+                        locationInterval: minorDist.div(viewScale).abs(),
+                    },
+                }],
             }
         );
-
-        let majorStartTick = majorTicks[0];
-        let majorEndTick = majorTicks[Math.min(1, majorTicks.length - 1)];
-        let majorLocationInterval = majorEndTick.location.sub(majorStartTick.location);
-        let majorValueInterval = majorStartTick.valueInterval;
-        let majorLength = majorTicks[majorTicks.length - 1].location.sub(majorStartTick.location);
-
-        let minorTicks = this.scale.getTickScale(
-            majorStartTick.value,
-            majorEndTick.value,
-            {
-                maxCount: new Decimal(this.style.minorIntervalCountMax),
-                minInterval: minorDist.div(scale).abs(),
-                expand: false,
-            }
+        
+        // Count ticks
+        let valueRange = this.scale.spanValueRange(
+            startValue,
+            endValue,
         );
+        let majorCount = this.scale.countTicksInValueRange(
+            valueRange[0],
+            valueRange[1],
+        );
+        let minorCount = 0;
+        let minorInterval = this.scale.minorTickScales[0].interval.locationInterval;
+        if (majorCount && !minorInterval.isZero()) {
+            minorCount = minorInterval
+                .div(this.scale.tickScale.interval.locationInterval)
+                .round()
+                .toNumber();
+        }
 
-        let minorStartTick = minorTicks[0];
-        let minorEndTick = minorTicks[Math.min(1, minorTicks.length - 1)];
-        let minorLocationInterval = minorEndTick.location.sub(minorStartTick.location);
-        let minorValueInterval = minorStartTick.valueInterval;
+        // Get container length
+        let locationRange = this.scale.spanLocationRange(
+            startLocation,
+            endLocation,
+        );
+        let containerLength = locationRange[1].sub(locationRange[0]).toNumber();
 
         return {
-            majorLocationInterval,
-            majorValueInterval,
-            majorCount: majorTicks.length - 1,
-            minorLocationInterval,
-            minorValueInterval,
-            minorCount: minorTicks.length - 2,
-            containerLength: majorLength.toNumber(),
+            majorCount,
+            minorCount,
+            containerLength,
         };
     }
 
     private _resetLengthInfo() {
-        this.layoutInfo.majorLocationInterval = k0;
         this.layoutInfo.majorCount = 0;
+        this.layoutInfo.minorCount = 0;
         this.layoutInfo.containerLength = 0;
         this.layoutInfo.containerLength$.setValue(0);
     }
@@ -471,7 +468,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
      * @returns The grid container's range in content coordinates.
      */
     getContainerRangeAtIndex(index: number): [Decimal, Decimal] {
-        let interval = this.layoutInfo.majorLocationInterval || k0;
+        let interval = this.scale.tickScale.interval.locationInterval;
         let count = this.layoutInfo.majorCount || 0;
         if (count === 0 || interval.lte(0)) {
             return [k0, k0];
@@ -479,42 +476,6 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let len = interval.mul(count);
         let start = new Decimal(index).mul(len);
         return [start, start.add(len)];
-    }
-
-    /**
-     * Returns all ticks in the specified location
-     * range
-     * 
-     * @param start Inclusive start of interval.
-     * @param end Exclusive end of interval.
-     * @returns Tick locations.
-     */
-    getTicksInLocationRange(start: Decimal, end: Decimal): ITickLocation<T>[] {
-        if (start.gte(end)) {
-            return [];
-        }
-        let locationInterval = this.layoutInfo.majorLocationInterval || k0;
-        let count = this.layoutInfo.majorCount || 0;
-        if (count === 0 || locationInterval.lte(0)) {
-            return [];
-        }
-        let valueInterval = this.layoutInfo.majorValueInterval;
-
-        // Get all ticks in interval
-        let startValue = this.scale.valueAtLocation(start);
-        let tick: ITickLocation<T> = {
-            value: startValue,
-            valueInterval: valueInterval,
-            location: start,
-            locationInterval: locationInterval,
-        };
-        
-        let ticks = [tick];
-        for (let i = 0; i < count - 1; i++) {
-            tick = this.scale.getNextTick(tick);
-            ticks.push(tick);
-        }
-        return ticks;
     }
 
     /**

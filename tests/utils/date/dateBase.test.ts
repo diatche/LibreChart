@@ -1,19 +1,20 @@
 import {
-    compareDateUnits, kDateUnitUniformMs,
+    compareDateUnits, kDateUnitUniformDecimalMs,
 } from '../../../src/utils/date/dateBase';
 
 describe('dateBase', () => {
 
-    describe('kDateUnitUniformMs', () => {
+    describe('kDateUnitUniformDecimalMs', () => {
 
         it ('should have correct values', () => {
-            expect(kDateUnitUniformMs['year'].div(kDateUnitUniformMs['month']).toNumber()).toBe(12);
-            expect(kDateUnitUniformMs['month'].div(kDateUnitUniformMs['day']).toNumber()).toBe(30);
-            expect(kDateUnitUniformMs['day'].div(kDateUnitUniformMs['hour']).toNumber()).toBe(24);
-            expect(kDateUnitUniformMs['hour'].div(kDateUnitUniformMs['minute']).toNumber()).toBe(60);
-            expect(kDateUnitUniformMs['minute'].div(kDateUnitUniformMs['second']).toNumber()).toBe(60);
-            expect(kDateUnitUniformMs['second'].div(kDateUnitUniformMs['millisecond']).toNumber()).toBe(1000);
-            expect(kDateUnitUniformMs['millisecond'].toNumber()).toBe(1);
+            const ms = kDateUnitUniformDecimalMs;
+            expect(ms['year'].div(ms['month']).toNumber()).toBe(12);
+            expect(ms['month'].div(ms['day']).toNumber()).toBe(30);
+            expect(ms['day'].div(ms['hour']).toNumber()).toBe(24);
+            expect(ms['hour'].div(ms['minute']).toNumber()).toBe(60);
+            expect(ms['minute'].div(ms['second']).toNumber()).toBe(60);
+            expect(ms['second'].div(ms['millisecond']).toNumber()).toBe(1000);
+            expect(ms['millisecond'].toNumber()).toBe(1);
         });
     });
 

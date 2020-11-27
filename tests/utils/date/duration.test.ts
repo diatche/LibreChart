@@ -4,6 +4,7 @@ import {
     dateIntervalLength,
     dateUnitsWithDuration,
     floorDate,
+    getRoundingOriginDate,
     interpolatedDate,
     roundDate,
     stepDateLinear,
@@ -287,14 +288,14 @@ describe('duration', () => {
 
         it('should round date down with 1 month (31 days)', () => {
             expect(roundDate(
-                moment('2020-01-16'),
+                moment('2020-01-15'),
                 1,
                 'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
         it('should round date down with 1 month (31 days) with postive time zone', () => {
-            let date = moment.utc('2020-01-16T21:59');
+            let date = moment.utc('2020-01-15T21:59');
             date.utcOffset(120);
             let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(120);
@@ -303,7 +304,7 @@ describe('duration', () => {
         });
 
         it('should round date down with 1 month (31 days) with negative time zone', () => {
-            let date = moment.utc('2020-01-17T01:59');
+            let date = moment.utc('2020-01-15T01:59');
             date.utcOffset(-120);
             let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(-120);
@@ -358,7 +359,7 @@ describe('duration', () => {
         it('should round date up with 1 month (30 days) accross DST', () => {
             expect(moment('2020-04-01T00:00').utcOffset()).not.toEqual(moment('2020-05-01T00:00').utcOffset());
             expect(roundDate(
-                moment('2020-04-16'),
+                moment('2020-04-17'),
                 1,
                 'month'
             ).format(kDateFormat)).toBe('2020-05-01 00:00:00');
@@ -366,7 +367,7 @@ describe('duration', () => {
 
         it('should round date down with 2 month', () => {
             expect(roundDate(
-                moment('2020-01-31T23:59'),
+                moment('2020-01-29T23:59'),
                 2,
                 'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
@@ -380,11 +381,45 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
 
+        // years
+
+        it('should round old date down with 1 years', () => {
+            expect(roundDate(
+                moment('1900-06-01'),
+                1,
+                'year'
+            ).format(kDateFormat)).toBe('1900-01-01 00:00:00');
+        });
+
+        it('should round old date up from middle with 1 years', () => {
+            expect(roundDate(
+                moment('1900-07-01'),
+                1,
+                'year'
+            ).format(kDateFormat)).toBe('1901-01-01 00:00:00');
+        });
+
+        it('should round old date down with 10 years', () => {
+            expect(roundDate(
+                moment('1904-01-01'),
+                10,
+                'year'
+            ).format(kDateFormat)).toBe('1900-01-01 00:00:00');
+        });
+
+        it('should round old date up from middle with 10 years', () => {
+            expect(roundDate(
+                moment('1905-01-01'),
+                10,
+                'year'
+            ).format(kDateFormat)).toBe('1910-01-01 00:00:00');
+        });
+
         // errors
 
-        it('should throw an error when a non-interger value is used', () => {
+        it('should throw an error when a negative value is used', () => {
             expect(() => {
-                roundDate(moment('2020-01-01'), 0.5, 'millisecond');
+                roundDate(moment('2020-01-01'), -1, 'millisecond');
             }).toThrow();
         });
     });
@@ -469,9 +504,9 @@ describe('duration', () => {
 
         // errors
 
-        it('should throw an error when a non-interger value is used', () => {
+        it('should throw an error when a negative value is used', () => {
             expect(() => {
-                floorDate(moment('2020-01-01'), 0.5, 'millisecond');
+                floorDate(moment('2020-01-01'), -1, 'millisecond');
             }).toThrow();
         });
     });

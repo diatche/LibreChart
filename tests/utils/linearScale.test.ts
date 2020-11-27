@@ -7,8 +7,6 @@ import {
     getExpectedLinearTicks,
 } from './linearScaleUtil';
 
-const linearScale = new LinearScale();
-
 const k1 = new Decimal(1);
 
 describe('LinearScale', () => {
@@ -35,7 +33,7 @@ describe('LinearScale', () => {
         });
 
         it('should ignore infinite max count', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(1), {
                     minInterval: { valueInterval: $(0.5) },
                     maxCount: $(Infinity),
@@ -45,7 +43,7 @@ describe('LinearScale', () => {
         });
 
         it('should divide 1 into intervals of 0.2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(1), {
                     minInterval: { valueInterval: $(0.11) },
                 })
@@ -54,7 +52,7 @@ describe('LinearScale', () => {
         });
 
         it('should divide 1 into intervals of 0.5 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(1), {
                     minInterval: { valueInterval: $(0.21) },
                 })
@@ -63,7 +61,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 1 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(1), {
                     minInterval: { valueInterval: $(1.1) },
                 })
@@ -74,7 +72,7 @@ describe('LinearScale', () => {
         // divide 5
 
         it('should divide 5 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(5), {
                     minInterval: { valueInterval: k1 },
                 })
@@ -83,7 +81,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 5 into intervals of 2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(5), {
                     minInterval: { valueInterval: $(1.1) },
                 })
@@ -92,7 +90,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 5 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(5), {
                     minInterval: { valueInterval: $(5.1) },
                 })
@@ -103,7 +101,7 @@ describe('LinearScale', () => {
         // divide 3
 
         it('should divide 3 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(3), {
                     minInterval: { valueInterval: $(1) },
                 })
@@ -112,7 +110,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 3 into intervals of 2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(3), {
                     minInterval: { valueInterval: $(1.1) },
                 })
@@ -121,7 +119,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 3 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(3), {
                     minInterval: { valueInterval: $(3.1) },
                 })
@@ -132,7 +130,7 @@ describe('LinearScale', () => {
         // divide 4
 
         it('should divide 4 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(4), {
                     minInterval: { valueInterval: $(1) },
                 })
@@ -141,7 +139,7 @@ describe('LinearScale', () => {
         });
 
         it('should divide 4 into intervals of 2 when 1 does not fit and not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(4), {
                     minInterval: { valueInterval: $(1.1) },
                 })
@@ -150,7 +148,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 4 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(4), {
                     minInterval: { valueInterval: $(4.1) },
                 })
@@ -161,7 +159,7 @@ describe('LinearScale', () => {
         // divide 7
 
         it('should divide 7 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(7), {
                     minInterval: { valueInterval: $(1) },
                 })
@@ -170,7 +168,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 7 into intervals of 2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(7), {
                     minInterval: { valueInterval: $(1.1) },
                 })
@@ -179,7 +177,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 7 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(7), {
                     minInterval: { valueInterval: $(7.1) },
                 })
@@ -190,7 +188,7 @@ describe('LinearScale', () => {
         // divide 0.5
 
         it('should divide 0.5 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0.0), $(0.5), {
                     minInterval: { valueInterval: $(0.1) },
                 })
@@ -199,7 +197,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 0.5 into intervals of 0.2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0.0), $(0.5), {
                     minInterval: { valueInterval: $(0.11) },
                 })
@@ -208,7 +206,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 0.5 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0.0), $(0.5), {
                     minInterval: { valueInterval: $(0.51) },
                 })
@@ -234,7 +232,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 1.5 into intervals of 0.2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0.0), $(1.5), {
                     minInterval: { valueInterval: $(0.11) },
                 })
@@ -243,7 +241,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 1.5 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0.0), $(1.5), {
                     minInterval: { valueInterval: $(1.51) },
                 })
@@ -254,7 +252,7 @@ describe('LinearScale', () => {
         // divide 10..15
 
         it('should divide 10..15 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(10), $(15), {
                     minInterval: { valueInterval: $(1) },
                 })
@@ -263,7 +261,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 10..15 into intervals of 2 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(10), $(15), {
                     minInterval: { valueInterval: $(1.1) },
                 })
@@ -272,7 +270,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide 10..15 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(10), $(15), {
                     minInterval: { valueInterval: $(5.1) },
                 })
@@ -283,7 +281,7 @@ describe('LinearScale', () => {
         // divide -10..-5
 
         it('should divide -10..-5 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(-10), $(-5), {
                     minInterval: { valueInterval: $(1) },
                 })
@@ -294,7 +292,7 @@ describe('LinearScale', () => {
         // divide -10..10
 
         it('should divide -10..10 into intervals of 1 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(-10), $(10), {
                     minInterval: { valueInterval: $(1) },
                 })
@@ -332,7 +330,7 @@ describe('LinearScale', () => {
         });
 
         it('should divide -10..10 into intervals of 10 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(-10), $(10), {
                     minInterval: { valueInterval: $(5.1) },
                 })
@@ -341,7 +339,7 @@ describe('LinearScale', () => {
         });
 
         it('should divide -10..10 into intervals of 20 with min distance when not expanding', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(-10), $(10), {
                     minInterval: { valueInterval: $(10.1) },
                 })
@@ -350,7 +348,7 @@ describe('LinearScale', () => {
         });
 
         it('should not divide -10..10 with large min distance', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(-10), $(10), {
                     minInterval: { valueInterval: $(20.1) },
                 })
@@ -361,7 +359,7 @@ describe('LinearScale', () => {
         // empty interval
 
         it('should return empty array for point interval', () => {
-            let x = linearScale.getTickLocations($(0), $(0), {
+            let x = new LinearScale().getTickLocations($(0), $(0), {
                 minInterval: { valueInterval: $(0.1) },
             });
             expect(x).toEqual([]);
@@ -370,7 +368,7 @@ describe('LinearScale', () => {
         // empty interval
 
         it('should return empty array for reverse interval', () => {
-            let x = linearScale.getTickLocations($(1), $(0), {
+            let x = new LinearScale().getTickLocations($(1), $(0), {
                 minInterval: { valueInterval: $(0.1) },
             });
             expect(x).toEqual([]);
@@ -379,7 +377,7 @@ describe('LinearScale', () => {
         // expand
 
         it('should fall back to tick interval of 2 when expanding uneven interval', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0.1), $(4.9), {
                     minInterval: { valueInterval: $(1.1) },
                     expand: true,
@@ -391,7 +389,7 @@ describe('LinearScale', () => {
         // radix 24
 
         it('should divide 24 into intervals of 12 with min distance when not expanding with radix of 24', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(24), {
                     minInterval: { valueInterval: $(10) },
                     radix: $(24),
@@ -403,7 +401,7 @@ describe('LinearScale', () => {
         // radix 60
 
         it('should divide 60 into intervals of 30 with min distance when not expanding with radix of 60', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(60), {
                     minInterval: { valueInterval: $(30) },
                     radix: $(60),
@@ -415,7 +413,7 @@ describe('LinearScale', () => {
         // excludeFactors
 
         it('should not divide 1 into intervals of 0.2 when a factor of 2 is excluded', () => {
-            let x = linearScale
+            let x = new LinearScale()
                 .getTickLocations($(0), $(1), {
                     minInterval: { valueInterval: $(0.11) },
                     excludeFactors: [2],

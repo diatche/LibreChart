@@ -19,6 +19,44 @@ describe('DateScale', () => {
         moment.tz.setDefault(zoneName);
     });
 
+    describe('compareValues', () => {
+        it('should return the correct order', () => {
+            let scale = new DateScale();
+            expect(scale.compareValues(moment.unix(1), moment.unix(2))).toBe(-1000);
+            expect(scale.compareValues(moment.unix(1), moment.unix(1))).toBe(0);
+            expect(scale.compareValues(moment.unix(2), moment.unix(1))).toBe(1000);
+        });
+    });
+
+    describe('nextValue', () => {
+        it('should return the next value with whole interval', () => {
+            let scale = new DateScale({
+                baseUnit: 'day',
+            });
+            expect(
+                scale.nextValue(moment('2020-01-01')).format('YYYY-MM-DD HH:mm')
+            ).toBe('2020-01-02 00:00');
+        });
+
+        it('should return the next value with partial interval', () => {
+            let scale = new DateScale({
+                baseUnit: 'hour',
+            });
+            scale.updateTickScale(
+                moment('2020-01-01'),
+                moment('2020-01-01 01:00'),
+                { 
+                    minInterval: {
+                        valueInterval: moment.duration(10, 'minute'),
+                    },
+                },
+            );
+            expect(
+                scale.nextValue(moment('2020-01-01')).format('YYYY-MM-DD HH:mm')
+            ).toBe('2020-01-01 00:10');
+        });
+    });
+
     describe('locationOfValue', () => {
         it('should scale and offset the date with day base unit', () => {
             let scale = new DateScale({
@@ -340,7 +378,7 @@ describe('DateScale', () => {
 
         // divide milliseconds
 
-        it('should divide 1 millisecond when not expanding', () => {
+        it('should not divide 1 millisecond when not expanding', () => {
             // The default origin date is on unix epoch, but is in
             // the current time zone. Use the UTC unix epoch instead.
             let scale = new DateScale({
@@ -360,7 +398,7 @@ describe('DateScale', () => {
             let linearInput: LinearTickInput = {
                 start: start.valueOf(),
                 end: end.valueOf(),
-                stride: 0.1,
+                stride: 1,
             };
 
             expect(ticks).toEqual(getExpectedLinearTicks(linearInput));

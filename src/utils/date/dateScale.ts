@@ -13,8 +13,7 @@ import {
     mapDateUnits,
     isDateUnit,
     kDateUnitExcludedFactors,
-    kDateUnitUniformMs,
-    kDateUnitUniformMaxFraction,
+    kDateUnitUniformDecimalMs,
 } from "./dateBase";
 import {
     dateIntervalLength,
@@ -108,7 +107,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
     getTickScale(
         startDate: Moment,
         endDate: Moment,
-        constraints: ITickScaleConstraints<Duration>
+        constraints?: ITickScaleConstraints<Duration>
     ): DateTickScaleType {
         if (endDate.isSameOrBefore(startDate)) {
             return this.emptyScale();
@@ -118,7 +117,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         }
     
         constraints = {
-            ...this.defaults,
+            ...this.constraints,
             ...constraints,
         };
 
@@ -186,13 +185,16 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         }
     
         if (minUnitAscIndex === 0 && this.baseUnit === 'millisecond') {
-            // Use linear scale
+            // Use linear scale.
+            // Note that the minimum interval supported by moment
+            // is 1 millisecond.
             let originDateMs = new Decimal(this.originDate.valueOf());
             let msStart = new Decimal(startDate.valueOf()).sub(originDateMs);
             let msEnd = new Decimal(endDate.valueOf()).sub(originDateMs);
+            let minInterval = Decimal.max(1, minDuration.asMilliseconds());
             let linearScale = this.linearScale.getTickScale(msStart, msEnd, {
                 minInterval: {
-                    valueInterval: new Decimal(minDuration.asMilliseconds()),
+                    valueInterval: minInterval,
                 },
             });
             let origin = linearScale.origin.value.add(originDateMs);
@@ -327,7 +329,8 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         let locationIntervalCoef = k1;
         if (unit !== this.baseUnit) {
             // Re-scale interval
-            locationIntervalCoef = kDateUnitUniformMs[unit].div(kDateUnitUniformMs[this.baseUnit]);
+            locationIntervalCoef = kDateUnitUniformDecimalMs[unit]
+                .div(kDateUnitUniformDecimalMs[this.baseUnit]);
         }
         
         return {

@@ -100,7 +100,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             return null;
         }
         let range = axis.getContainerRangeAtIndex(index);
-        let ticks = axis.getTicksInLocationRange(range[0], range[1]);
+        let ticks = axis.scale.getTicksInLocationRange(range[0], range[1]);
         let isInverted = axis.isInverted(this);
         return (
             <ChartAxis

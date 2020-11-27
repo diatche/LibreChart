@@ -2,7 +2,6 @@ import Decimal from 'decimal.js';
 import { IMatcher, isMatch } from './comp';
 
 const k0 = new Decimal(0);
-const k1 = new Decimal(1);
 
 export interface ITickLocation<T> {
     value: T;
@@ -71,11 +70,19 @@ export interface ITickScaleConstraints<D> {
      * 2 between tick marks, specify `[2]`.
      */
     excludeFactors?: number[];
+
+    minorTickConstraints?: ITickScaleConstraints<D>[];
 }
 
 export interface IScaleOptions<T, D = T> {
-    // onChange?: (scale: ITickScale<T, D>, previousScale: ITickScale<T, D>) => void;
-    defaults?: ITickScaleConstraints<D>;
+    /**
+     * The number of minor tick sets.
+     * Specifying 1 will create a single minor
+     * tick scale, which aligns with the main tick
+     * scale. Defaults to zero.
+     */
+    minorTickDepth?: number;
+    constraints?: ITickScaleConstraints<D>;
 }
 
 /**
@@ -91,14 +98,17 @@ export interface IScaleOptions<T, D = T> {
 export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
 
     abstract tickScale: ITickScale<T, D>;
+    readonly minorTickScales: ITickScale<T, D>[];
 
-    // onChange?: (scale: ITickScale<T, D>, previousScale: ITickScale<T, D>) => void;
-    defaults?: ITickScaleConstraints<D>;
+    readonly minorTickDepth: number;
+    constraints?: ITickScaleConstraints<D>;
 
     maxStepFraction = 1000;
 
     constructor(options?: IScaleOptions<T, D>) {
-        this.defaults = { ...options?.defaults };
+        this.minorTickDepth = options?.minorTickDepth || 0;
+        this.constraints = { ...options?.constraints };
+        this.minorTickScales = [];
     }
 
     /**
@@ -130,15 +140,33 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         };
     }
 
-    updateScale(start: T, end: T, constraints: ITickScaleConstraints<D>): boolean {
+    updateTickScale(start: T, end: T, constraints?: ITickScaleConstraints<D>): boolean {
         let scale = this.getTickScale(start, end, constraints);
         if (this.isTickScaleEqual(scale, this.tickScale)) {
             return false;
         }
-        // let previous = this.tickScale;
         this.tickScale = scale;
-        // this.onChange?.(scale, previous);
+        this._updateMinorTickScales(constraints);
         return true;
+    }
+
+    private _updateMinorTickScales(constraints: ITickScaleConstraints<D> | undefined) {
+        let scale = this.tickScale;
+        this.minorTickScales.splice(0, this.minorTickScales.length);
+        for (let i = 0; i < this.minorTickDepth; i++) {
+            scale = this.getTickScale(
+                scale.origin.value,
+                this.addIntervalToValue(
+                    scale.origin.value,
+                    scale.interval.valueInterval,
+                ),
+                {
+                    ...constraints?.minorTickConstraints?.[i],
+                    expand: false,
+                },
+            );
+            this.minorTickScales[i] = scale;
+        }
     }
 
     /**
@@ -153,7 +181,86 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param constraints See {@link ITickScaleConstraints}
      * @returns A tick scale.
      */
-    abstract getTickScale(start: T, end: T, constraints: ITickScaleConstraints<D>): ITickScale<T, D>;
+    abstract getTickScale(start: T, end: T, constraints?: ITickScaleConstraints<D>): ITickScale<T, D>;
+
+
+    /**
+     * Iterates all values in the specified value
+     * range.
+     * 
+     * You must call `updateScale()` to use this method.
+     * 
+     * @param start Inclusive start of interval.
+     * @param end Exclusive end of interval.
+     */
+    * iterateTickValuesInRange(start: T, end: T): Generator<T> {
+        if (this.compareValues(start, end) >= 0) {
+            return;
+        }
+        if (this.tickScale.interval.locationInterval.lte(0)) {
+            return;
+        }
+
+        let value = this.floorValue(start);
+        let nextValue: T;
+        while (this.compareValues(value, end) < 0) {
+            if (this.compareValues(value, start) >= 0) {
+                yield value;
+            }
+            nextValue = this.nextValue(value);
+            if (this.isValueEqual(nextValue, value)) {
+                // This prevents infinite loops in case
+                // the subclass implementation has a mistake.
+                // Not having this check will make it hard to debug.
+                throw new Error('Could not get next value');
+            }
+            value = nextValue;
+        }
+        return value;
+    }
+
+    /**
+     * Returns all ticks in the specified value
+     * range.
+     * 
+     * You must call `updateScale()` to use this method.
+     * 
+     * @param start Inclusive start of interval.
+     * @param end Exclusive end of interval.
+     * @returns Tick locations.
+     */
+    getTicksInValueRange(start: T, end: T): ITickLocation<T>[] {
+        if (this.compareValues(start, end) >= 0) {
+            return [];
+        }
+        if (this.tickScale.interval.locationInterval.lte(0)) {
+            return [];
+        }
+
+        // Get all ticks in interval
+        let startFloor = this.floorValue(start);
+        let tick: ITickLocation<T> = {
+            value: startFloor,
+            location: this.locationOfValue(startFloor),
+        };
+        let nextTick: ITickLocation<T>;
+        
+        let ticks: ITickLocation<T>[] = [];
+        while (this.compareValues(tick.value, end) < 0) {
+            if (this.compareValues(tick.value, start) >= 0) {
+                ticks.push(tick);
+            }
+            nextTick = this.nextTick(tick);
+            if (this.isValueEqual(nextTick.value, tick.value)) {
+                // This prevents infinite loops in case
+                // the subclass implementation has a mistake.
+                // Not having this check will make it hard to debug.
+                throw new Error('Could not get next tick');
+            }
+            tick = nextTick;
+        }
+        return ticks;
+    }
 
     /**
      * Returns all ticks in the specified location
@@ -163,33 +270,13 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * 
      * @param start Inclusive start of interval.
      * @param end Exclusive end of interval.
-     * @param scale The tick interval.
      * @returns Tick locations.
      */
     getTicksInLocationRange(start: Decimal, end: Decimal): ITickLocation<T>[] {
-        if (start.gte(end)) {
-            return [];
-        }
-        if (this.tickScale.interval.locationInterval.lte(0)) {
-            return [];
-        }
-
-        // Get all ticks in interval
-        let startLocation = this.floorLocation(start);
-        let startValue = this.valueAtLocation(startLocation);
-        let tick: ITickLocation<T> = {
-            value: startValue,
-            location: startLocation,
-        };
-        
-        let ticks: ITickLocation<T>[] = [];
-        while (tick.location.lt(end)) {
-            if (tick.location.gte(start)) {
-                ticks.push(tick);
-            }
-            tick = this.getNextTick(tick);
-        }
-        return ticks;
+        return this.getTicksInValueRange(
+            this.valueAtLocation(start),
+            this.valueAtLocation(end),
+        );
     }
 
     /**
@@ -203,19 +290,15 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param constraints 
      */
     getTicks(start: T, end: T, constraints: ITickScaleConstraints<D>): ITickLocation<T>[] {
-        this.updateScale(start, end, constraints);
-        let startLoc = this.locationOfValue(start);
-        let endLoc = this.locationOfValue(end);
+        this.updateTickScale(start, end, constraints);
         if (constraints?.expand) {
-            startLoc = this.floorLocation(startLoc);
-            endLoc = this.ceilLocation(endLoc);
-            end = this.ceilValue(end);
+            [start, end] = this.spanValueRange(start, end);
         }
-        let ticks = this.getTicksInLocationRange(startLoc, endLoc);
+        let ticks = this.getTicksInValueRange(start, end);
 
         // add tick at end
         if (ticks.length !== 0 && this.tickScale.interval.locationInterval.gt(0)) {
-            let endTick = this.getNextTick(ticks[ticks.length - 1]);
+            let endTick = this.nextTick(ticks[ticks.length - 1]);
             if (this.compareValues(endTick.value, end) <= 0) {
                 // End tick is before or equal to end
                 ticks.push(endTick);
@@ -239,14 +322,45 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         return this.getTicks(start, end, constraints).map(t => t.location);
     }
 
-    getNextTick(tick: ITickLocation<T>): ITickLocation<T> {
+    nextTick(tick: ITickLocation<T>): ITickLocation<T> {
         return {
-            value: this.addIntervalToValue(tick.value, this.tickScale.interval.valueInterval),
-            location: this.stepLocation(tick.location, k1),
+            value: this.nextValue(tick.value),
+            location: this.nextLocation(tick.location),
         };
     }
 
     abstract addIntervalToValue(value: T, interval: D): T;
+
+    /**
+     * Adds one interval to `value`.
+     * 
+     * @param value 
+     */
+    nextValue(value: T): T {
+        return this.addIntervalToValue(
+            value,
+            this.tickScale.interval.valueInterval
+        );
+    }
+
+    /**
+     * Adds one interval to `location`.
+     * 
+     * If the interval is not an integer, rounds
+     * the distance when `steps` multiplied by
+     * the interval fraction is a whole number.
+     * This is useful when the interval is a
+     * fraction, e.g. 1/60. The maximum fraction
+     * is specified by the `maxStepFraction`
+     * property.
+     * 
+     * @param location 
+     */
+    nextLocation(location: Decimal): Decimal {
+        return this.snapLocation(
+            location.add(this.tickScale.interval.locationInterval)
+        );
+    }
 
     /**
      * Adds whole multiples (`steps`) of intervals
@@ -267,6 +381,14 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         return this.snapLocation(
             location.add(steps.mul(this.tickScale.interval.locationInterval))
         );
+    }
+
+    countTicksInValueRange(start: T, end: T): number {
+        let count = 0;
+        for (let value of this.iterateTickValuesInRange(start, end)) {
+            count += 1;
+        }
+        return count;
     }
 
     /**
@@ -314,6 +436,13 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         );
     }
 
+    spanValueRange(start: T, end: T): [T, T] {
+        return [
+            this.floorValue(start),
+            this.ceilValue(end),
+        ];
+    }
+
     floorLocation(location: Decimal): Decimal {
         return location.sub(this.tickScale.origin.location)
             .div(this.tickScale.interval.locationInterval)
@@ -328,6 +457,13 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
             .ceil()
             .mul(this.tickScale.interval.locationInterval)
             .add(this.tickScale.origin.location);
+    }
+
+    spanLocationRange(start: Decimal, end: Decimal): [Decimal, Decimal] {
+        return [
+            this.floorLocation(start),
+            this.ceilLocation(end),
+        ];
     }
 
     abstract locationOfValue(value: T): Decimal;

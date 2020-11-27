@@ -38,19 +38,48 @@ export const kCalendarUnitsAsc: CalendarUnit[] = [
 export const kCalendarUnitsDes = kCalendarUnitsAsc.slice().reverse();
 export const kCalendarUnitsLength = kCalendarUnitsAsc.length;
 
+export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
+    let mapped: Partial<DateUnitMapping<T>> = {};
+    for (let dateUnit of kDateUnitsAsc) {
+        mapped[dateUnit] = iterator(dateUnit);
+    }
+    return mapped as DateUnitMapping<T>;
+};
+
+export const mapDateUnitObject = <U, V>(
+    obj: DateUnitMapping<U>,
+    iterator: (value: U, dateUnit: DateUnit) => V
+): DateUnitMapping<V> => {
+    let mapped: Partial<DateUnitMapping<V>> = {};
+    for (let dateUnit of kDateUnitsAsc) {
+        mapped[dateUnit] = iterator(obj[dateUnit], dateUnit);
+    }
+    return mapped as DateUnitMapping<V>;
+};
+
 /**
  * Number of milliseconds in a date unit when
  * forcing a uniform interval.
  */
-export const kDateUnitUniformMs: DateUnitMapping<Decimal> = {
-    millisecond: new Decimal(1),
-    second: new Decimal(1000),      // 1000 ms
-    minute: new Decimal(60000),     // 60 s
-    hour: new Decimal(3600000),     // 60 m
-    day: new Decimal(86400000),     // 24 h
-    month: new Decimal(2592000000), // 30 d
-    year: new Decimal(31104000000), // 12 M
+export const kDateUnitUniformMs: DateUnitMapping<number> = {
+    millisecond: 1,
+    second: 1000,      // 1000 ms
+    minute: 60000,     // 60 s
+    hour: 3600000,     // 60 m
+    day: 86400000,     // 24 h
+    month: 2592000000, // 30 d
+    year: 31104000000, // 12 M
 };
+
+/**
+ * Number of milliseconds in a date unit when
+ * forcing a uniform interval, expressed as Decimal
+ * objects.
+ */
+export const kDateUnitUniformDecimalMs = mapDateUnitObject(
+    kDateUnitUniformMs,
+    x => new Decimal(x),
+);
 
 /**
  * The maximum fraction between adjacent date units'
@@ -129,12 +158,4 @@ export const compareDateUnits = (unit1: DateUnit, unit2: DateUnit): number => {
         return NaN;
     }
     return i1 - i2;
-};
-
-export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
-    let mapped: Partial<DateUnitMapping<T>> = {};
-    for (let dateUnit of kDateUnitsAsc) {
-        mapped[dateUnit] = iterator(dateUnit);
-    }
-    return mapped as DateUnitMapping<T>;
 };
