@@ -617,12 +617,8 @@ describe('duration', () => {
 
         it('should throw with invalid durations', () => {
             expect(() => {
-                dateUnitsWithDuration(moment.duration(1, 'week'));
-            }).toThrow();
-
-            expect(() => {
                 let duration = moment.duration(
-                    moment('2020-02-01').diff(moment('2020-03-01'))
+                    moment('2020-02-01').diff(moment('2020-03-15'))
                 );
                 dateUnitsWithDuration(duration);
             }).toThrow();

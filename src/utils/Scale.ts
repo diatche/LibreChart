@@ -100,15 +100,28 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
     abstract tickScale: ITickScale<T, D>;
     readonly minorTickScales: ITickScale<T, D>[];
 
-    readonly minorTickDepth: number;
     constraints?: ITickScaleConstraints<D>;
 
     maxStepFraction = 1000;
+
+    private _minorTickDepth = 0;
 
     constructor(options?: IScaleOptions<T, D>) {
         this.minorTickDepth = options?.minorTickDepth || 0;
         this.constraints = { ...options?.constraints };
         this.minorTickScales = [];
+    }
+
+    get minorTickDepth(): number {
+        return this._minorTickDepth;
+    }
+
+    set minorTickDepth(i: number) {
+        if (i === this._minorTickDepth) {
+            return;
+        }
+        this._minorTickDepth = i;
+        this._padMinorTickScales();
     }
 
     /**
@@ -141,6 +154,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
     }
 
     updateTickScale(start: T, end: T, constraints?: ITickScaleConstraints<D>): boolean {
+        console.debug(`updating scale with: ${start}, ${end}, ${JSON.stringify(constraints, null, 2)}`);
         let scale = this.getTickScale(start, end, constraints);
         if (this.isTickScaleEqual(scale, this.tickScale)) {
             return false;
@@ -150,22 +164,33 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         return true;
     }
 
-    private _updateMinorTickScales(constraints: ITickScaleConstraints<D> | undefined) {
+    private _updateMinorTickScales(constraints?: ITickScaleConstraints<D>) {
         let scale = this.tickScale;
         this.minorTickScales.splice(0, this.minorTickScales.length);
         for (let i = 0; i < this.minorTickDepth; i++) {
-            scale = this.getTickScale(
-                scale.origin.value,
-                this.addIntervalToValue(
+            if (scale.interval.locationInterval.isZero()) {
+                scale = this.emptyScale();
+            } else {
+                scale = this.getTickScale(
                     scale.origin.value,
-                    scale.interval.valueInterval,
-                ),
-                {
-                    ...constraints?.minorTickConstraints?.[i],
-                    expand: false,
-                },
-            );
-            this.minorTickScales[i] = scale;
+                    this.addIntervalToValue(
+                        scale.origin.value,
+                        scale.interval.valueInterval,
+                    ),
+                    {
+                        ...constraints?.minorTickConstraints?.[i],
+                        expand: false,
+                    },
+                );
+            }
+            this.minorTickScales.push(scale);
+        }
+    }
+
+    private _padMinorTickScales() {
+        let padLength = this.minorTickDepth - this.minorTickScales.length;
+        for (let i = 0; i < padLength; i++) {
+            this.minorTickScales.push(this.emptyScale());
         }
     }
 
@@ -182,7 +207,6 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @returns A tick scale.
      */
     abstract getTickScale(start: T, end: T, constraints?: ITickScaleConstraints<D>): ITickScale<T, D>;
-
 
     /**
      * Iterates all values in the specified value
@@ -236,6 +260,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         if (this.tickScale.interval.locationInterval.lte(0)) {
             return [];
         }
+        // console.debug(`getTicksInValueRange: ${(start as any)?.format() || start} - ${(end as any)?.format() || end}`)
 
         // Get all ticks in interval
         let startFloor = this.floorValue(start);

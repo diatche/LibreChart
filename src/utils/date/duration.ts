@@ -3,7 +3,6 @@ import {
     compareDateUnits,
     DateUnit,
     isDateUnit,
-    kCalendarUnitsDes,
     kDateUnitsDes,
     kDateUnitUniformMs,
     smallerDateUnit,
@@ -324,7 +323,7 @@ export const getRoundingOriginDate = (
 export const dateUnitsWithDuration = (duration: moment.Duration): [number, DateUnit] => {
     let dateUnit: DateUnit | undefined;
     let unitValue = 0;
-    for (let calUnit of kCalendarUnitsDes) {
+    for (let calUnit of kDateUnitsDes) {
         let value = duration.get(calUnit);
         if (value === 0 || isNaN(value)) {
             continue;

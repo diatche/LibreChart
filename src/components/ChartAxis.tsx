@@ -16,7 +16,7 @@ import {
 import { IAxisStyle } from '../types';
 import { ITickLocation } from '../utils/Scale';
 
-export interface ChartAxisProps<T, D> extends ViewProps, Required<IAxisStyle> {
+export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
     ticks: ITickLocation<T>[];
@@ -30,7 +30,7 @@ export interface ChartAxisProps<T, D> extends ViewProps, Required<IAxisStyle> {
 
 interface ChartAxisState {}
 
-export default class ChartAxis<T, D> extends React.PureComponent<ChartAxisProps<T, D>, ChartAxisState> {
+export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>, ChartAxisState> {
 
     getTickLabel(tick: ITickLocation<T>): string {
         // TODO: cache labels until prop change
@@ -281,8 +281,8 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(200, 210, 130, 0.5)',
     },
     innerContainer: {
-        // borderWidth: 2,
-        // borderColor: 'rgba(100, 210, 230, 0.5)',
+        borderWidth: 2,
+        borderColor: 'rgba(100, 210, 230, 0.5)',
     },
     tickContainer: {
         // flex: 1,

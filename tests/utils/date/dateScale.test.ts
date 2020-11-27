@@ -131,6 +131,27 @@ describe('DateScale', () => {
             let x = scale.valueAtLocation(new Decimal(262970.5));
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
+
+        it('should convert date correctly with half days', () => {
+            let scale = new DateScale({
+                baseUnit: 'day',
+            });
+            scale.updateTickScale(
+                moment(1577590875000),
+                moment(1578075525000),
+                {
+                    minInterval: {
+                        locationInterval: new Decimal(0.390625),
+                    },
+                    expand: true,
+                },
+            );
+            // Default origin is Unix Epoch.
+            let x = scale.valueAtLocation(new Decimal(-6));
+            let expectedDate = moment("2019-12-29").subtract(3, 'day');
+            let format = 'YYYY-MM-DD HH:mm';
+            expect(x.format(format)).toBe(expectedDate.format(format));
+        });
     });
 
     describe('getTicks', () => {

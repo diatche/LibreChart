@@ -22,7 +22,6 @@ import {
     IAxisOptions,
     IAxisStyle,
 } from "../types";
-import { IMatcher, isMatch } from "./comp";
 import Scale, { ITickLocation } from "./Scale";
 import LinearScale from "./LinearScale";
 
@@ -114,6 +113,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         this.hidden = hidden;
         this.getTickLabel = getTickLabel;
         this.scale = scale as any;
+        this.scale.minorTickDepth = 1;
         this.isHorizontal = isAxisHorizontal(this.axisType),
 
         this.layoutInfo = {
@@ -278,8 +278,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         }
 
         let axisLengthInfo = this._getLengthInfo(view);
-        let matchers = this._getScaleMatchers();
-        if (!axisLengthInfo || isMatch(this, axisLengthInfo, matchers)) {
+        if (!axisLengthInfo) {
             // No changes
             return false;
         }
@@ -377,12 +376,16 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     // }
 
     private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo<D> | undefined {
-        let viewScale = this.isHorizontal ? view.scale.x : view.scale.y;
+        if (!this.layout) {
+            return undefined;
+        }
+        let viewScaleVector = this.layout.getScale(view);
+        let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
         let visibleRange = this.getVisibleLocationRange(view);
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
-            return;
+            return undefined;
         }
         
         let {
@@ -398,21 +401,30 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         let startValue = this.scale.valueAtLocation(startLocation);
         let endValue = this.scale.valueAtLocation(endLocation);
 
+        console.debug(`${this.axisType} updating with view scale: ` + viewScale);
+
         // Update tick scale
-        this.scale.updateTickScale(
+        let scaleUpdated = this.scale.updateTickScale(
             startValue,
             endValue,
             {
                 minInterval: {
                     locationInterval: majorDist.div(viewScale).abs(),
                 },
+                expand: true,
                 minorTickConstraints: [{
                     minInterval: {
                         locationInterval: minorDist.div(viewScale).abs(),
                     },
+                    maxCount: new Decimal(this.style.minorIntervalCountMax),
                 }],
             }
         );
+        if (!scaleUpdated) {
+            return undefined;
+        }
+        console.debug(`${this.axisType} tickScale: ` + JSON.stringify(this.scale.tickScale, null, 2));
+        console.debug(`${this.axisType} minor tickScale: ` + JSON.stringify(this.scale.minorTickScales[0], null, 2));
         
         // Count ticks
         let valueRange = this.scale.spanValueRange(
@@ -423,13 +435,14 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
             valueRange[0],
             valueRange[1],
         );
+        console.debug(`${this.axisType} majorCount: ` + majorCount);
         let minorCount = 0;
         let minorInterval = this.scale.minorTickScales[0].interval.locationInterval;
         if (majorCount && !minorInterval.isZero()) {
-            minorCount = minorInterval
-                .div(this.scale.tickScale.interval.locationInterval)
+            minorCount = this.scale.tickScale.interval.locationInterval
+                .div(minorInterval)
                 .round()
-                .toNumber();
+                .toNumber() - 1;
         }
 
         // Get container length
@@ -437,6 +450,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
             startLocation,
             endLocation,
         );
+        console.debug(`${this.axisType} locationRange: ` + JSON.stringify(locationRange));
         let containerLength = locationRange[1].sub(locationRange[0]).toNumber();
 
         return {
@@ -451,13 +465,6 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         this.layoutInfo.minorCount = 0;
         this.layoutInfo.containerLength = 0;
         this.layoutInfo.containerLength$.setValue(0);
-    }
-
-    private _getScaleMatchers(): IMatcher[] {
-        return [
-            this.scale.getValueMatcher(),
-            this.scale.getIntervalMatcher(),
-        ];
     }
     
     /**

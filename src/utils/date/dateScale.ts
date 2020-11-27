@@ -121,7 +121,6 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
             ...constraints,
         };
 
-        let len = new Decimal(moment.duration(endDate.diff(startDate)).as(this.baseUnit));
         let minIntervalTemp = k0;
         let minDuration = kZeroDuration;
     
@@ -150,6 +149,10 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
             if (maxCount.lt(0) || maxCount.isNaN()) {
                 throw new Error('Max count must be greater than or equal to zero');
             }
+            let len = new Decimal(
+                moment.duration(endDate.diff(startDate))
+                    .as(this.baseUnit)
+            );
             let min = len.div(maxCount);
             if (min.gt(minIntervalTemp)) {
                 minIntervalTemp = min;
