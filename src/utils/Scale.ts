@@ -19,7 +19,23 @@ export interface ITickScale<T, D = T> {
     interval: ITickInterval<D>;
 }
 
-export interface ITickConstraints {
+/**
+ * Tick scale calculation constraints and options.
+ * 
+ * Must specify either a `minInterval`, or 
+ * `maxCount`, or both.
+ */
+export interface ITickScaleConstraints<D> {
+    /**
+     * The smallest tick interval.
+     */
+    minInterval?: Partial<ITickInterval<D>>;
+
+    /**
+     * Maximum number of intervals to divide
+     * the interval into.
+     **/
+    maxCount?: Decimal;
 
     /**
      * If `true`, expands the interval enough
@@ -32,25 +48,6 @@ export interface ITickConstraints {
      * but in this case, some ticks at the edges may be discarded.
      */
     expand?: boolean;
-}
-
-/**
- * Tick scale calculation constraints and options.
- * 
- * Must specify either a `minInterval`, or 
- * `maxCount`, or both.
- */
-export interface ITickScaleConstraints<D> extends ITickConstraints {
-    /**
-     * The smallest tick interval.
-     */
-    minInterval?: Partial<ITickInterval<D>>;
-
-    /**
-     * Maximum number of intervals to divide
-     * the interval into.
-     **/
-    maxCount?: Decimal;
 
     /**
      * An integer greater than 1 specifying the base
@@ -169,11 +166,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param scale The tick interval.
      * @returns Tick locations.
      */
-    getTicksInLocationRange(
-        start: Decimal,
-        end: Decimal,
-        constraints?: ITickConstraints,
-    ): ITickLocation<T>[] {
+    getTicksInLocationRange(start: Decimal, end: Decimal): ITickLocation<T>[] {
         if (start.gte(end)) {
             return [];
         }
@@ -188,11 +181,6 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
             value: startValue,
             location: startLocation,
         };
-
-        if (constraints?.expand) {
-            start = startLocation;
-            end = this.ceilLocation(end);
-        }
         
         let ticks: ITickLocation<T>[] = [];
         while (tick.location.lt(end)) {
@@ -219,10 +207,11 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         let startLoc = this.locationOfValue(start);
         let endLoc = this.locationOfValue(end);
         if (constraints?.expand) {
+            startLoc = this.floorLocation(startLoc);
             endLoc = this.ceilLocation(endLoc);
             end = this.ceilValue(end);
         }
-        let ticks = this.getTicksInLocationRange(startLoc, endLoc, constraints);
+        let ticks = this.getTicksInLocationRange(startLoc, endLoc);
 
         // add tick at end
         if (ticks.length !== 0 && this.tickScale.interval.locationInterval.gt(0)) {
