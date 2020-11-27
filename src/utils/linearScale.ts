@@ -16,9 +16,11 @@ const k10 = new Decimal(10);
 
 const kFactors10 = [1, 2, 5, 10];
 
-type LinearTickScaleType = ITickScale<Decimal, Decimal>;
+type LinearTickScaleType = ITickScale<Decimal>;
 
 export default class LinearScale extends Scale<Decimal> {
+
+    tickScale: ITickScale<Decimal>;
 
     constructor(options?: IScaleOptions<Decimal>) {
         super(options);

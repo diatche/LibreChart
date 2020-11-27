@@ -14,7 +14,7 @@ export interface ITickInterval<D> {
     locationInterval: Decimal;
 }
 
-export interface ITickScale<T, D> {
+export interface ITickScale<T, D = T> {
     origin: ITickLocation<T>;
     interval: ITickInterval<D>;
 }
@@ -93,7 +93,7 @@ export interface IScaleOptions<T, D = T> {
  */
 export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
 
-    tickScale: ITickScale<T, D>;
+    abstract tickScale: ITickScale<T, D>;
 
     // onChange?: (scale: ITickScale<T, D>, previousScale: ITickScale<T, D>) => void;
     defaults?: ITickScaleConstraints<D>;
@@ -102,7 +102,6 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
 
     constructor(options?: IScaleOptions<T, D>) {
         this.defaults = { ...options?.defaults };
-        this.tickScale = this.emptyScale();
     }
 
     /**

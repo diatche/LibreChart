@@ -61,6 +61,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
     originDate: Moment;
     minUnitDuration: number;
 
+    tickScale: ITickScale<Moment, Duration>;
     linearScale: LinearScale;
 
     constructor(options?: IDateScaleOptions & IScaleOptions<Moment, Duration>) {
@@ -312,7 +313,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
     }
 
     private _dateScaleWithLinearScale(
-        linearScale: ITickScale<Decimal, Decimal>,
+        linearScale: ITickScale<Decimal>,
         unit: DateUnit,
     ): DateTickScaleType {
         if (linearScale.interval.valueInterval.isZero()) {
