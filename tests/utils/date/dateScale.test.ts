@@ -191,7 +191,34 @@ describe('DateScale', () => {
 
     describe('updateTickScale', () => {
 
-        it('should should update scale correctly with half days', () => {
+        it('should should update scale correctly with half days with whole origin', () => {
+            let scale = new DateScale({
+                baseUnit: 'day',
+                originDate: moment('2020-01-01'),
+                // minorTickDepth: 1,
+            });
+
+            scale.updateTickScale(
+                moment('2019-12-29T06:41'),
+                moment('2020-01-04T07:18'),
+                {
+                    minInterval: {
+                        valueInterval: moment.duration(0.4, 'day'),
+                    },
+                    expand: true,
+                },
+            );
+
+            // Origin should be 2 days before 2020-01-01
+            expect(scale.tickScale.origin.value.format(kDateTimeFormat)).toEqual('2019-12-29 00:00');
+            expect(scale.tickScale.origin.location.toNumber()).toBe(-3);
+
+            // Scale should be half a day
+            expect(scale.tickScale.interval.valueInterval.asDays()).toBe(0.5);
+            expect(scale.tickScale.interval.locationInterval.toNumber()).toBe(0.5);
+        });
+
+        it('should should update scale correctly with half days with fractional origin', () => {
             let scale = new DateScale({
                 baseUnit: 'day',
                 originDate: moment('2020-01-01'),
@@ -209,9 +236,9 @@ describe('DateScale', () => {
                 },
             );
 
-            // Origin should be 2 days before 2020-01-01
-            expect(scale.tickScale.origin.value.format(kDateFormat)).toEqual('2019-12-29');
-            expect(scale.tickScale.origin.location.toNumber()).toBe(-3);
+            // Origin should be 2.5 days before 2020-01-01
+            expect(scale.tickScale.origin.value.format(kDateTimeFormat)).toEqual('2019-12-29 12:00');
+            expect(scale.tickScale.origin.location.toNumber()).toBe(-2.5);
 
             // Scale should be half a day
             expect(scale.tickScale.interval.valueInterval.asDays()).toBe(0.5);

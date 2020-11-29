@@ -10,6 +10,35 @@ import {
 const k1 = new Decimal(1);
 
 describe('LinearScale', () => {
+
+    describe('updateTickScale', () => {
+
+        // radix 24
+
+        it('should should update scale correctly with interval of 12 with radix 24', () => {
+            let scale = new LinearScale();
+
+            scale.updateTickScale(
+                $(-55.317),
+                $(79.3),
+                {
+                    minInterval: {
+                        valueInterval: $(9.6),
+                    },
+                    expand: true,
+                    radix: $(24),
+                    excludeFactors: [2, 4, 8],
+                },
+            );
+
+            expect(scale.tickScale.origin.value.toNumber()).toEqual(-60);
+            expect(scale.tickScale.origin.location.toNumber()).toBe(-60);
+
+            expect(scale.tickScale.interval.valueInterval.toNumber()).toBe(12);
+            expect(scale.tickScale.interval.locationInterval.toNumber()).toBe(12);
+        });
+    });
+
     describe('getTicks', () => {
         // divide 1
 

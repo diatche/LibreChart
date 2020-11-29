@@ -102,7 +102,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
 
     constraints?: ITickScaleConstraints<D>;
 
-    maxStepFraction = 1000;
+    maxStepFractionDenominator = 1000;
 
     private _minorTickDepth = 0;
 
@@ -154,7 +154,6 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
     }
 
     updateTickScale(start: T, end: T, constraints?: ITickScaleConstraints<D>): boolean {
-        console.debug(`updating scale with: ${start}, ${end}, ${JSON.stringify(constraints, null, 2)}`);
         let scale = this.getTickScale(start, end, constraints);
         if (this.isTickScaleEqual(scale, this.tickScale)) {
             return false;
@@ -260,7 +259,6 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         if (this.tickScale.interval.locationInterval.lte(0)) {
             return [];
         }
-        // console.debug(`getTicksInValueRange: ${(start as any)?.format() || start} - ${(end as any)?.format() || end}`)
 
         // Get all ticks in interval
         let startFloor = this.floorValue(start);
@@ -427,9 +425,15 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * 
      * @param location 
      */
-    snapLocation(location: Decimal): Decimal {
-        let { locationInterval } = this.tickScale.interval;
-        let origin = this.tickScale.origin.location;
+    snapLocation(
+        location: Decimal,
+        overrides?: {
+            origin?: Pick<ITickLocation<any>, 'location'>,
+            interval?: Pick<ITickInterval<any>, 'locationInterval'>,
+        }
+    ): Decimal {
+        let locationInterval = overrides?.origin?.location || this.tickScale.interval.locationInterval;
+        let origin = overrides?.interval?.locationInterval || this.tickScale.origin.location;
 
         if (location.isInt() || locationInterval.isInt() || location.eq(origin)) {
             // Integer intervals do not need to be rounded
@@ -440,13 +444,21 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         let steps = dist.div(locationInterval).round();
 
         // Round value if at edge
-        let fraction = locationInterval.toFraction(this.maxStepFraction);
+        let fraction = locationInterval.toFraction(this.maxStepFractionDenominator);
         if (steps.mod(fraction[1]).isZero()) {
             // At edge
             dist = dist.round();
         }
         return origin.add(dist);
     }
+
+    // cleanStepFraction(fraction: Decimal): Decimal {
+    //     let fraction = locationInterval.toFraction(this.maxStepFractionDenominator);
+    //     if (steps.mod(fraction[1]).isZero()) {
+    //         // At edge
+    //         dist = dist.round();
+    //     }
+    // }
 
     abstract floorValue(value: T): T;
 

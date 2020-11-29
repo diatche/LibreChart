@@ -29,6 +29,8 @@ const k1 = new Decimal(1);
 const kZeroDate = moment.unix(0);
 const kZeroDuration = moment.duration(0);
 
+const kMaxStepFractionDenominator = 1000;
+
 export interface IDateScaleOptions {
     /**
      * The scale's base unit. 1 interval
@@ -62,6 +64,8 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     tickScale: ITickScale<Moment, Duration>;
     linearScale: LinearScale;
+
+    maxStepFractionDenominator = kMaxStepFractionDenominator;
 
     constructor(options?: IDateScaleOptions & IScaleOptions<Moment, Duration>) {
         super(options);
@@ -326,28 +330,37 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
             return this.emptyScale();
         }
         
-        // TODO: if the valueInterval is less than 1,
-        // convert to a smaller unit?
         let valueInterval = moment.duration(linearScale.interval.valueInterval.toNumber(), unit);
 
-        let locationIntervalCoef = k1;
+        let locationInterval = linearScale.interval.locationInterval;
+        let locationOrigin = linearScale.origin.value;
         if (unit !== this.baseUnit) {
             // Re-scale interval
-            locationIntervalCoef = kDateUnitUniformDecimalMs[unit]
+            let coef = kDateUnitUniformDecimalMs[unit]
                 .div(kDateUnitUniformDecimalMs[this.baseUnit]);
+
+            let intervalFraction = linearScale.interval.locationInterval
+                .mul(coef)
+                .toFraction(this.maxStepFractionDenominator);
+            locationInterval = intervalFraction[0].div(intervalFraction[1]);
+
+            locationOrigin = this.snapLocation(
+                linearScale.origin.value.mul(coef),
+                {
+                    origin: { location: k0 },
+                    interval: { locationInterval },
+                },
+            );
         }
-        
+
         return {
             origin: {
                 value: this._decodeDate(linearScale.origin.value, unit),
-                location: linearScale.origin.value
-                    .mul(locationIntervalCoef)
-                    .round(),
+                location: locationOrigin,
             },
             interval: {
                 valueInterval,
-                locationInterval: linearScale.interval.locationInterval
-                    .mul(locationIntervalCoef),
+                locationInterval,
             },
         } as DateTickScaleType;
     }

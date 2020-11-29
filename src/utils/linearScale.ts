@@ -115,8 +115,8 @@ export default class LinearScale extends Scale<Decimal> {
                 .div(radixLog10)
                 .floor()
         );
-        let aScaled = start.div(exponent).floor();
-        let bScaled = end.div(exponent).ceil();
+        let startScaled = start.div(exponent).floor();
+        let endScaled = end.div(exponent).ceil();
     
         let factors: number[];
         if (constraints.expand) {
@@ -124,7 +124,7 @@ export default class LinearScale extends Scale<Decimal> {
             factors = findFactors(radix.toNumber());
         } else {
             // Use common factors
-            let scaledLen = bScaled.sub(aScaled);
+            let scaledLen = endScaled.sub(startScaled);
             factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber());
         }
         if (factors.length === 0) {
@@ -141,21 +141,21 @@ export default class LinearScale extends Scale<Decimal> {
         do {
             for (let i = 0; i < factors.length; i++) {
                 const factor = factors[i];
-                let mStart = aScaled.div(factor).floor().mul(factor);
-                let mEnd = bScaled.div(factor).ceil().mul(factor);
-                let mLength = mEnd.sub(mStart);
-                let count = mLength.div(factor);
-                let mInterval = mLength.div(count);
-                let interval = mInterval.mul(exponent);
+                let fStart = startScaled.div(factor).floor().mul(factor);
+                let fEnd = endScaled.div(factor).ceil().mul(factor);
+                let fLength = fEnd.sub(fStart);
+                let count = fLength.div(factor);
+                let fInterval = fLength.div(count);
+                let interval = fInterval.mul(exponent);
                 if (interval.lt(minInterval)) {
                     continue;
                 }
 
-                let start = mStart.mul(exponent);
+                let origin = fStart.mul(exponent);
                 bestScale = {
                     origin: {
-                        value: start,
-                        location: start,
+                        value: origin,
+                        location: origin,
                     },
                     interval: {
                         locationInterval: interval,
@@ -166,8 +166,8 @@ export default class LinearScale extends Scale<Decimal> {
             }
             if (!bestScale) {
                 exponent = exponent.mul(radix);
-                aScaled = aScaled.div(radix);
-                bScaled = bScaled.div(radix);
+                startScaled = startScaled.div(radix);
+                endScaled = endScaled.div(radix);
             }
         } while (!bestScale);
     
