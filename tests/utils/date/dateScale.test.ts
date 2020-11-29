@@ -11,6 +11,9 @@ import Decimal from 'decimal.js';
 const k1 = new Decimal(1);
 const k10 = new Decimal(10);
 
+const kDateFormat = 'YYYY-MM-DD';
+const kDateTimeFormat = 'YYYY-MM-DD HH:mm';
+
 describe('DateScale', () => {
     beforeAll(() => {
         // Fix time zone to test DST
@@ -93,6 +96,32 @@ describe('DateScale', () => {
             let x = scale.locationOfValue(moment('2000-01-01 02:30'));
             expect(x.toString()).toBe('262970.5');
         });
+
+        it('should convert location to correct date with half days', () => {
+            let scale = new DateScale({
+                baseUnit: 'day',
+                originDate: moment('2020-01-01'),
+            });
+            scale.tickScale = {
+                origin: {
+                    value: moment('2019-12-29'),
+                    location: $(-3),
+                },
+                interval: {
+                    valueInterval: moment.duration(0.5, 'day'),
+                    locationInterval: $(0.5),
+                },
+            };
+            expect(scale.locationOfValue(moment('2020-01-01 00:00')).toString()).toBe('0');
+            expect(scale.locationOfValue(moment('2020-01-02 12:00')).toString()).toBe('1.5');
+            expect(scale.locationOfValue(moment('2020-01-04 00:00')).toString()).toBe('3');
+            expect(scale.locationOfValue(moment('2020-01-07 00:00')).toString()).toBe('6');
+            expect(scale.locationOfValue(moment('2020-01-11 12:00')).toString()).toBe('10.5');
+            expect(scale.locationOfValue(moment('2019-12-30 12:00')).toString()).toBe('-1.5');
+            expect(scale.locationOfValue(moment('2019-12-29 00:00')).toString()).toBe('-3');
+            expect(scale.locationOfValue(moment('2019-12-26 00:00')).toString()).toBe('-6');
+            expect(scale.locationOfValue(moment('2019-12-21 12:00')).toString()).toBe('-10.5');
+        });
     });
 
     describe('valueAtLocation', () => {
@@ -132,25 +161,61 @@ describe('DateScale', () => {
             expect(x.format('YYYY-MM-DD HH:mm')).toBe('2000-01-01 02:30');
         });
 
-        it('should convert date correctly with half days', () => {
+        it('should convert date to correct location with half days', () => {
             let scale = new DateScale({
                 baseUnit: 'day',
+                originDate: moment('2020-01-01'),
             });
+            scale.tickScale = {
+                origin: {
+                    value: moment('2019-12-29'),
+                    location: $(-3),
+                },
+                interval: {
+                    valueInterval: moment.duration(0.5, 'day'),
+                    locationInterval: $(0.5),
+                },
+            };
+            
+            expect(scale.valueAtLocation($(0)).format(kDateTimeFormat)).toBe('2020-01-01 00:00');
+            expect(scale.valueAtLocation($(1.5)).format(kDateTimeFormat)).toBe('2020-01-02 12:00');
+            expect(scale.valueAtLocation($(3)).format(kDateTimeFormat)).toBe('2020-01-04 00:00');
+            expect(scale.valueAtLocation($(6)).format(kDateTimeFormat)).toBe('2020-01-07 00:00');
+            expect(scale.valueAtLocation($(10.5)).format(kDateTimeFormat)).toBe('2020-01-11 12:00');
+            expect(scale.valueAtLocation($(-1.5)).format(kDateTimeFormat)).toBe('2019-12-30 12:00');
+            expect(scale.valueAtLocation($(-3)).format(kDateTimeFormat)).toBe('2019-12-29 00:00');
+            expect(scale.valueAtLocation($(-6)).format(kDateTimeFormat)).toBe('2019-12-26 00:00');
+            expect(scale.valueAtLocation($(-10.5)).format(kDateTimeFormat)).toBe('2019-12-21 12:00');
+        });
+    });
+
+    describe('updateTickScale', () => {
+
+        it('should should update scale correctly with half days', () => {
+            let scale = new DateScale({
+                baseUnit: 'day',
+                originDate: moment('2020-01-01'),
+                // minorTickDepth: 1,
+            });
+
             scale.updateTickScale(
-                moment(1577590875000),
-                moment(1578075525000),
+                moment('2019-12-29T16:41'),
+                moment('2020-01-04T07:18'),
                 {
                     minInterval: {
-                        locationInterval: new Decimal(0.390625),
+                        valueInterval: moment.duration(0.4, 'day'),
                     },
                     expand: true,
                 },
             );
-            // Default origin is Unix Epoch.
-            let x = scale.valueAtLocation(new Decimal(-6));
-            let expectedDate = moment("2019-12-29").subtract(3, 'day');
-            let format = 'YYYY-MM-DD HH:mm';
-            expect(x.format(format)).toBe(expectedDate.format(format));
+
+            // Origin should be 2 days before 2020-01-01
+            expect(scale.tickScale.origin.value.format(kDateFormat)).toEqual('2019-12-29');
+            expect(scale.tickScale.origin.location.toNumber()).toBe(-3);
+
+            // Scale should be half a day
+            expect(scale.tickScale.interval.valueInterval.asDays()).toBe(0.5);
+            expect(scale.tickScale.interval.locationInterval.toNumber()).toBe(0.5);
         });
     });
 

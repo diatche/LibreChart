@@ -281,8 +281,8 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(200, 210, 130, 0.5)',
     },
     innerContainer: {
-        borderWidth: 2,
-        borderColor: 'rgba(100, 210, 230, 0.5)',
+        // borderWidth: 2,
+        // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
     tickContainer: {
         // flex: 1,

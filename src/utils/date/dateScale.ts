@@ -291,6 +291,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         );
         let steps = location.sub(this.tickScale.origin.location)
             .div(this.tickScale.interval.locationInterval)
+            .mul(interval);
         return stepDateLinear(
             this.tickScale.origin.value,
             steps.toNumber(),
