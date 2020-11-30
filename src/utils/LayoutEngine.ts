@@ -104,10 +104,24 @@ export default class LayoutEngine {
             // }
         };
 
-        let changes = axisTypeMap(axisType => this.axes[axisType]?.update(
-            view,
-            updateOptions,
-        ));
+        let anyChanges = false;
+        let changes = axisTypeMap(axisType => {
+            let changed = this.axes[axisType]?.update(
+                view,
+                updateOptions,
+            );
+            if (changed) {
+                anyChanges = true;
+            }
+            return changed;
+        });
+        if (!anyChanges) {
+            return;
+        }
+
+        for (let dataSource of this.dataSources) {
+            dataSource.layout.updateItems(view, updateOptions);
+        }
         
         if (
             this.grid.layout && (

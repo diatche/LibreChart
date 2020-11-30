@@ -10,6 +10,11 @@ import Scale, {
     ITickLocation,
 } from "./utils/Scale";
 
+export interface IDataPoint<X, Y> {
+    x: X,
+    y: Y,
+}
+
 export interface IDecimalPoint {
     x: Decimal;
     y: Decimal;

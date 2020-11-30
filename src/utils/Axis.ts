@@ -85,7 +85,7 @@ interface IAxisWidthLayoutInfo {
 
 interface IAxisLayoutInfo extends IAxisLengthLayoutInfo, IAxisWidthLayoutInfo {}
 
-export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
+export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     axisType: AxisType;
     hidden: boolean;
     getTickLabel: IAxisProps<T, D>['getTickLabel'];
