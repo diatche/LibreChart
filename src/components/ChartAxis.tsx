@@ -26,6 +26,8 @@ export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
     onOptimalThicknessChange: (thickness: number) => void;
     /** Return a label for the tick. */
     getTickLabel: (tick: ITickLocation<T>) => string;
+    /** The maximum label length in the direction of the axis */
+    labelLength: number;
 }
 
 interface ChartAxisState {}
@@ -210,8 +212,21 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
         let style: TextStyle = {
             fontSize: this.props.labelFontSize,
             color: this.props.labelColor,
-            margin: this.props.labelMargin,
         };
+        switch (this.props.type) {
+            case 'topAxis':
+            case 'bottomAxis':
+                style.width = this.props.labelLength;
+                style.marginHorizontal = -this.props.labelLength / 2;
+                style.marginVertical = this.props.labelMargin;
+                break;
+            case 'leftAxis':
+            case 'rightAxis':
+                style.height = this.props.labelLength;
+                style.marginHorizontal = this.props.labelMargin;
+                style.marginVertical = -this.props.labelLength / 2;
+                break;
+        }
         return [styles.label, style];
     }
 
@@ -263,7 +278,7 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
                 >
                     <View style={this.getTickContainerStyle()}>
                         {ticks}
-                        <View style={styles.placeholder} />
+                        {/* <View style={styles.placeholder} /> */}
                     </View>
                     <View style={this.getLabelContainerStyle()}>
                         {labelInnerContainers}
@@ -286,19 +301,19 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
     tickContainer: {
-        // flex: 1,
-        justifyContent: 'space-between',
+        justifyContent: 'space-around',
+        // margin: -2,
         // borderWidth: 2,
         // borderColor: 'rgba(150, 70, 230, 0.5)',
     },
     labelContainer: {
         flex: 1,
+        justifyContent: 'space-around',
         // borderWidth: 2,
         // borderColor: 'rgba(100, 110, 230, 0.5)',
     },
     labelInnerContainer: {
         flex: 1,
-        alignSelf: 'center',
         alignItems: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(100, 210, 130, 0.5)',
@@ -318,6 +333,7 @@ const styles = StyleSheet.create({
 const axisStyles: AxisTypeMapping<any> = {
     topAxis: StyleSheet.create({
         container: {
+            width: '100%',
             flexDirection: 'column-reverse',
         },
         innerContainer: {
@@ -335,6 +351,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     bottomAxis: StyleSheet.create({
         container: {
+            width: '100%',
             flexDirection: 'column',
         },
         innerContainer: {
@@ -352,6 +369,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     leftAxis: StyleSheet.create({
         container: {
+            height: '100%',
             flexDirection: 'row-reverse',
         },
         innerContainer: {
@@ -370,6 +388,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     rightAxis: StyleSheet.create({
         container: {
+            height: '100%',
             flexDirection: 'row',
         },
         innerContainer: {

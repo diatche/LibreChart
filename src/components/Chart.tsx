@@ -102,12 +102,15 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         let range = axis.getContainerRangeAtIndex(index);
         let ticks = axis.scale.getTicksInLocationRange(range[0], range[1]);
         let isInverted = axis.isInverted(this);
+        let labelLength = axis.scale.tickScale.interval.locationInterval.toNumber() * axis.layoutInfo.viewScale;
         return (
             <ChartAxis
                 {...axis.style}
                 type={axisType}
+
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
+                labelLength={labelLength}
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness => axis?.onOptimalThicknessChange(
                     thickness,

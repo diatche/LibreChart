@@ -9,6 +9,7 @@ import Evergrid, {
     isAxisHorizontal,
     isAxisType,
     AxisTypeMapping,
+    IPoint,
 } from "evergrid";
 import {
     kAxisReuseIDs,
@@ -44,6 +45,9 @@ interface IAxisLengthLayoutBaseInfo {
 
     /** Grid container length in content coordinates. */
     containerLength: number;
+
+    /** The view scale with which the layout was calculated. */
+    viewScale: number;
 }
 
 interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
@@ -117,6 +121,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         this.isHorizontal = isAxisHorizontal(this.axisType),
 
         this.layoutInfo = {
+            viewScale: 0,
             majorCount: 0,
             minorCount: 0,
             containerLength: 0,
@@ -218,10 +223,10 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                         size: { y: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 0 },
-                    // origin: {
-                    //     x: layoutInfo.labelContainerOffset$,
-                    //     y: 0,
-                    // },
+                    origin: {
+                        x: layoutInfo.negHalfMajorInterval$,
+                        y: 0,
+                    },
                     horizontal: true,
                     stickyEdge: 'bottom',
                 });
@@ -232,10 +237,10 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                         size: { y: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 1 },
-                    // origin: {
-                    //     x: layoutInfo.labelContainerOffset$,
-                    //     y: 0,
-                    // },
+                    origin: {
+                        x: layoutInfo.negHalfMajorInterval$,
+                        y: 0,
+                    },
                     horizontal: true,
                     stickyEdge: 'top',
                 });
@@ -246,10 +251,10 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                         size: { x: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 0 },
-                    // origin: {
-                    //     x: 0,
-                    //     y: layoutInfo.labelContainerOffset$,
-                    // },
+                    origin: {
+                        x: 0,
+                        y: layoutInfo.negHalfMajorInterval$,
+                    },
                     horizontal: false,
                     stickyEdge: 'left',
                 });
@@ -260,10 +265,10 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                         size: { x: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 1, y: 0 },
-                    // origin: {
-                    //     x: 0,
-                    //     y: layoutInfo.labelContainerOffset$,
-                    // },
+                    origin: {
+                        x: 0,
+                        y: layoutInfo.negHalfMajorInterval$,
+                    },
                     horizontal: false,
                     stickyEdge: 'right',
                 });
@@ -290,10 +295,11 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         }
 
         Object.assign(this.layoutInfo, axisLengthInfo);
+        
         this.layoutInfo.containerLength$.setValue(axisLengthInfo.containerLength);
-        this.layoutInfo.negHalfMajorInterval$.setValue(
-            this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber()
-        );
+
+        let negHalfMajorInterval = this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber();
+        this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
 
         this.layout.updateItems(view, updateOptions);
         return true;
@@ -457,6 +463,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             majorCount,
             minorCount,
             containerLength,
+            viewScale,
         };
     }
 
