@@ -1,8 +1,12 @@
 import moment from 'moment-timezone';
+import { kDateUnitUniformMs } from '../../../src/utils/date/dateBase';
 import {
+    addUniformMs,
     ceilDate,
     dateIntervalLength,
+    dateUnitsWithDuration,
     floorDate,
+    getRoundingOriginDate,
     interpolatedDate,
     roundDate,
     stepDateLinear,
@@ -17,6 +21,35 @@ describe('duration', () => {
         let zoneName = 'NZ';
         expect(moment.tz.zone(zoneName)).toBeTruthy();
         moment.tz.setDefault(zoneName);
+    });
+
+    describe('addUniformMs', () => {
+
+        it('should add positive time', () => {
+            let date = moment('2020-01-01');
+            expect(addUniformMs(date, kDateUnitUniformMs['second']).format(kDateFormat)).toBe('2020-01-01 00:00:01');
+            expect(addUniformMs(date, kDateUnitUniformMs['minute']).format(kDateFormat)).toBe('2020-01-01 00:01:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['hour']).format(kDateFormat)).toBe('2020-01-01 01:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['day']).format(kDateFormat)).toBe('2020-01-02 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['month']).format(kDateFormat)).toBe('2020-02-01 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['year']).format(kDateFormat)).toBe('2021-01-01 00:00:00');
+        });
+
+        it('should add positive partial time', () => {
+            let date = moment('2020-01-01');
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] / 2).format(kDateFormat)).toBe('2020-01-01 12:00:00');
+
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 29).format(kDateFormat)).toBe('2020-01-30 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 30).format(kDateFormat)).toBe('2020-02-01 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 31).format(kDateFormat)).toBe('2020-02-02 00:00:00');
+
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 365).format(kDateFormat)).toBe('2021-01-01 00:00:00');
+        });
+
+        it('should add negative time', () => {
+            let date = moment('2020-01-01');
+            expect(addUniformMs(date, -kDateUnitUniformMs['day']).format(kDateFormat)).toBe('2019-12-31 00:00:00');
+        });
     });
 
     describe('dateIntervalLength', () => {
@@ -64,6 +97,24 @@ describe('duration', () => {
                 'hour'
             );
             expect(diff).toBe(672);
+        });
+
+        it('should diff minutes', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01T10:00'),
+                moment('2020-01-01T10:01'),
+                'minute'
+            );
+            expect(diff).toBe(1);
+        });
+
+        it('should diff seconds', () => {
+            let diff = dateIntervalLength(
+                moment('2020-01-01T10:00'),
+                moment('2020-01-01T10:01'),
+                'second'
+            );
+            expect(diff).toBe(60);
         });
     })
 
@@ -256,6 +307,16 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
         });
 
+        it('should use specified origin date', () => {
+            expect(roundDate(
+                moment('2019-11-18'),
+                5,
+                'day',
+                { originDate: moment('2020-01-01') }
+            ).format(kDateFormat)).toBe('2019-11-17 00:00:00');
+            // 45 days before origin
+        });
+
         // months
 
         it('should return same date on edge with 1 month (31 days)', () => {
@@ -268,14 +329,14 @@ describe('duration', () => {
 
         it('should round date down with 1 month (31 days)', () => {
             expect(roundDate(
-                moment('2020-01-16'),
+                moment('2020-01-15'),
                 1,
                 'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
         });
 
         it('should round date down with 1 month (31 days) with postive time zone', () => {
-            let date = moment.utc('2020-01-16T21:59');
+            let date = moment.utc('2020-01-15T21:59');
             date.utcOffset(120);
             let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(120);
@@ -284,7 +345,7 @@ describe('duration', () => {
         });
 
         it('should round date down with 1 month (31 days) with negative time zone', () => {
-            let date = moment.utc('2020-01-17T01:59');
+            let date = moment.utc('2020-01-15T01:59');
             date.utcOffset(-120);
             let roundedDate = roundDate(date, 1, 'month');
             expect(roundedDate.utcOffset()).toBe(-120);
@@ -339,7 +400,7 @@ describe('duration', () => {
         it('should round date up with 1 month (30 days) accross DST', () => {
             expect(moment('2020-04-01T00:00').utcOffset()).not.toEqual(moment('2020-05-01T00:00').utcOffset());
             expect(roundDate(
-                moment('2020-04-16'),
+                moment('2020-04-17'),
                 1,
                 'month'
             ).format(kDateFormat)).toBe('2020-05-01 00:00:00');
@@ -347,7 +408,7 @@ describe('duration', () => {
 
         it('should round date down with 2 month', () => {
             expect(roundDate(
-                moment('2020-01-31T23:59'),
+                moment('2020-01-29T23:59'),
                 2,
                 'month'
             ).format(kDateFormat)).toBe('2020-01-01 00:00:00');
@@ -361,11 +422,45 @@ describe('duration', () => {
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
         });
 
+        // years
+
+        it('should round old date down with 1 years', () => {
+            expect(roundDate(
+                moment('1900-06-01'),
+                1,
+                'year'
+            ).format(kDateFormat)).toBe('1900-01-01 00:00:00');
+        });
+
+        it('should round old date up from middle with 1 years', () => {
+            expect(roundDate(
+                moment('1900-07-01'),
+                1,
+                'year'
+            ).format(kDateFormat)).toBe('1901-01-01 00:00:00');
+        });
+
+        it('should round old date down with 10 years', () => {
+            expect(roundDate(
+                moment('1904-01-01'),
+                10,
+                'year'
+            ).format(kDateFormat)).toBe('1900-01-01 00:00:00');
+        });
+
+        it('should round old date up from middle with 10 years', () => {
+            expect(roundDate(
+                moment('1905-01-01'),
+                10,
+                'year'
+            ).format(kDateFormat)).toBe('1910-01-01 00:00:00');
+        });
+
         // errors
 
-        it('should throw an error when a non-interger value is used', () => {
+        it('should throw an error when a negative value is used', () => {
             expect(() => {
-                roundDate(moment('2020-01-01'), 0.5, 'millisecond');
+                roundDate(moment('2020-01-01'), -1, 'millisecond');
             }).toThrow();
         });
     });
@@ -450,9 +545,9 @@ describe('duration', () => {
 
         // errors
 
-        it('should throw an error when a non-interger value is used', () => {
+        it('should throw an error when a negative value is used', () => {
             expect(() => {
-                floorDate(moment('2020-01-01'), 0.5, 'millisecond');
+                floorDate(moment('2020-01-01'), -1, 'millisecond');
             }).toThrow();
         });
     });
@@ -541,6 +636,33 @@ describe('duration', () => {
                 2,
                 'month'
             ).format(kDateFormat)).toBe('2020-03-01 00:00:00');
+        });
+    });
+
+    describe('dateUnitsWithDuration', () => {
+
+        it('should convert valid durations', () => {
+            expect(dateUnitsWithDuration(moment.duration(0))).toEqual([0, 'millisecond']);
+            expect(dateUnitsWithDuration(moment.duration(2))).toEqual([2, 'millisecond']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'ms'))).toEqual([2, 'millisecond']);
+
+            expect(dateUnitsWithDuration(moment.duration(2, 'second'))).toEqual([2, 'second']);
+            expect(dateUnitsWithDuration(moment.duration(0, 'second'))).toEqual([0, 'millisecond']);
+
+            expect(dateUnitsWithDuration(moment.duration(2, 'minute'))).toEqual([2, 'minute']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'hour'))).toEqual([2, 'hour']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'day'))).toEqual([2, 'day']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'month'))).toEqual([2, 'month']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'year'))).toEqual([2, 'year']);
+        });
+
+        it('should throw with invalid durations', () => {
+            expect(() => {
+                let duration = moment.duration(
+                    moment('2020-02-01').diff(moment('2020-03-15'))
+                );
+                dateUnitsWithDuration(duration);
+            }).toThrow();
         });
     });
 });

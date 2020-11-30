@@ -33,6 +33,9 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     constructor(props: ChartProps) {
         super(props);
         this.layout = new LayoutEngine(props);
+
+        // TODO: validate property changes
+        // TODO: prevent changing axes on the fly
     }
 
     get innerView() {
@@ -93,31 +96,31 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
         let axisType = kReuseIDAxes[reuseID];
         let axis = this.layout.axes[axisType];
-        if (!axis?.show) {
+        if (!axis || axis.hidden) {
             return null;
         }
-        let range = this.layout.getAxisContainerRangeAtIndex(index, axisType);
-        let tickLocations = this.layout.getAxisTickLocations(range[0], range[1], axisType);
-        let isInverted = this.layout.isAxisInverted(axisType, this);
+        let range = axis.getContainerRangeAtIndex(index);
+        let ticks = axis.scale.getTicksInLocationRange(range[0], range[1]);
+        let isInverted = axis.isInverted(this);
+        let labelLength = axis.layoutInfo.containerLength * axis.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
         return (
             <ChartAxis
                 {...axis.style}
                 type={axisType}
-                tickLocations={tickLocations}
-                getLabel={value => axis?.getLabel(value) || ''}
+                ticks={ticks}
+                getTickLabel={tick => axis?.getTickLabel(tick) || ''}
+                labelLength={labelLength}
                 isInverted={isInverted}
-                onOptimalThicknessChange={thickness => this.layout.onOptimalAxisThicknessChange(
+                onOptimalThicknessChange={thickness => axis?.onOptimalThicknessChange(
                     thickness,
                     index,
-                    axisType,
-                    this,
                 )}
             />
         );
     }
 
     renderGrid() {
-        if (!this.layout.grid.show) {
+        if (this.layout.grid.hidden) {
             return null;
         }
         let hAxis = this.layout.getHorizontalGridAxis();
@@ -128,10 +131,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         return (
             <ChartGrid
                 {...this.layout.grid.style}
-                majorCountX={hAxis?.majorCount || 0}
-                minorCountX={hAxis?.minorCount || 0}
-                majorCountY={vAxis?.majorCount || 0}
-                minorCountY={vAxis?.minorCount || 0}
+                majorCountX={hAxis?.layoutInfo.majorCount || 0}
+                minorCountX={hAxis?.layoutInfo.minorCount || 0}
+                majorCountY={vAxis?.layoutInfo.majorCount || 0}
+                minorCountY={vAxis?.layoutInfo.minorCount || 0}
             />
         );
     }

@@ -14,36 +14,39 @@ import {
     ViewStyle,
 } from 'react-native';
 import { IAxisStyle } from '../types';
+import { ITickLocation } from '../utils/Scale';
 
-export interface ChartAxisProps extends ViewProps, Required<IAxisStyle> {
+export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
     type: AxisType;
     /** Tick locations in ascending order in content coordinates. */
-    tickLocations: Decimal[];
+    ticks: ITickLocation<T>[];
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
-    /** Return a label for the value. */
-    getLabel: (value: Decimal) => string;
+    /** Return a label for the tick. */
+    getTickLabel: (tick: ITickLocation<T>) => string;
+    /** The maximum label length in the direction of the axis */
+    labelLength: number;
 }
 
 interface ChartAxisState {}
 
-export default class ChartAxis extends React.PureComponent<ChartAxisProps, ChartAxisState> {
+export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>, ChartAxisState> {
 
-    getLabel(value: Decimal): string {
+    getTickLabel(tick: ITickLocation<T>): string {
         // TODO: cache labels until prop change
         try {
-            return this.props.getLabel(value);
+            return this.props.getTickLabel(tick);
         } catch (error) {
-            console.error('Error in getLabel(): ' + error.message);
+            console.error('Uncaught error while getting tick label: ' + error.message);
             return '';
         }
     }
 
-    getLabels(): string[] {
+    getTickLabels(): string[] {
         // TODO: cache labels until prop change
-        return this.props.tickLocations.map(x => this.getLabel(x));
+        return this.props.ticks.map(x => this.getTickLabel(x));
     }
 
     /**
@@ -209,8 +212,21 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
         let style: TextStyle = {
             fontSize: this.props.labelFontSize,
             color: this.props.labelColor,
-            margin: this.props.labelMargin,
         };
+        switch (this.props.type) {
+            case 'topAxis':
+            case 'bottomAxis':
+                style.width = this.props.labelLength;
+                style.marginHorizontal = -this.props.labelLength / 2;
+                style.marginVertical = this.props.labelMargin;
+                break;
+            case 'leftAxis':
+            case 'rightAxis':
+                style.height = this.props.labelLength;
+                style.marginHorizontal = this.props.labelMargin;
+                style.marginVertical = -this.props.labelLength / 2;
+                break;
+        }
         return [styles.label, style];
     }
 
@@ -234,7 +250,7 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
         let labelInnerContainerStyle = this.getLabelInnerContainerStyle();
         let tickStyle = this.getTickStyle();
         let labelStyle = this.getLabelStyle();
-        let labels = this.getLabels();
+        let labels = this.getTickLabels();
 
         let ticks: React.ReactNode[] = [];
         let labelInnerContainers: React.ReactNode[] = [];
@@ -262,6 +278,7 @@ export default class ChartAxis extends React.PureComponent<ChartAxisProps, Chart
                 >
                     <View style={this.getTickContainerStyle()}>
                         {ticks}
+                        {/* <View style={styles.placeholder} /> */}
                     </View>
                     <View style={this.getLabelContainerStyle()}>
                         {labelInnerContainers}
@@ -284,19 +301,19 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
     tickContainer: {
-        // flex: 1,
         justifyContent: 'space-around',
+        // margin: -2,
         // borderWidth: 2,
         // borderColor: 'rgba(150, 70, 230, 0.5)',
     },
     labelContainer: {
         flex: 1,
+        justifyContent: 'space-around',
         // borderWidth: 2,
         // borderColor: 'rgba(100, 110, 230, 0.5)',
     },
     labelInnerContainer: {
         flex: 1,
-        alignSelf: 'center',
         alignItems: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(100, 210, 130, 0.5)',
@@ -306,12 +323,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(200, 110, 130, 0.5)',
-    }
+    },
+    placeholder: {
+        width: 0,
+        height: 0,
+    },
 });
 
 const axisStyles: AxisTypeMapping<any> = {
     topAxis: StyleSheet.create({
         container: {
+            width: '100%',
             flexDirection: 'column-reverse',
         },
         innerContainer: {
@@ -329,6 +351,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     bottomAxis: StyleSheet.create({
         container: {
+            width: '100%',
             flexDirection: 'column',
         },
         innerContainer: {
@@ -346,6 +369,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     leftAxis: StyleSheet.create({
         container: {
+            height: '100%',
             flexDirection: 'row-reverse',
         },
         innerContainer: {
@@ -364,6 +388,7 @@ const axisStyles: AxisTypeMapping<any> = {
     }),
     rightAxis: StyleSheet.create({
         container: {
+            height: '100%',
             flexDirection: 'row',
         },
         innerContainer: {

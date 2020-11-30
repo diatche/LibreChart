@@ -1,20 +1,16 @@
-import moment from 'moment';
-import {
-    IDateTickConstraints,
-    dateTicks,
-    encodeDate,
-    decodeDate,
-} from '../../../src/utils/date/dateScale';
+import moment, { Moment } from 'moment';
+import DateScale, { IDateScaleOptions } from '../../../src/utils/date/DateScale';
+import { ITickScaleConstraints } from '../../../src/utils/Scale';
 
 export interface DateTickInput {
-    start: moment.Moment;
-    end: moment.Moment;
+    start: Moment;
+    end: Moment;
     stride: moment.Duration;
     format: string;
-    constraints?: IDateTickConstraints;
+    constraints?: IDateScaleOptions & ITickScaleConstraints<moment.Duration>;
     expectedOverrides?: {
-        start?: moment.Moment;
-        end?: moment.Moment;
+        start?: Moment;
+        end?: Moment;
     };
 }
 
@@ -32,16 +28,16 @@ export const getExpectedDateTicks = (input: DateTickInput): string[] => {
     return expectedTicks;
 }
 
-export const getDateTicks = (input: DateTickInput): string[] => {
-    let constraints: IDateTickConstraints = {
-        minDuration: input.stride,
+export const getDateTicks = (input: DateTickInput & IDateScaleOptions): string[] => {
+    let constraints: IDateScaleOptions & ITickScaleConstraints<moment.Duration> = {
+        minInterval: {
+            valueInterval: input.stride,
+        },
         ...input.constraints,
     };
-    return dateTicks(
-        encodeDate(input.start, constraints),
-        encodeDate(input.end, constraints),
+    return new DateScale(constraints).getTicks(
+        input.start,
+        input.end,
         constraints
-    ).map(x => (
-        decodeDate(x, constraints).format(input.format)
-    ));
+    ).map(({ value: date }) => date.format(input.format));
 }

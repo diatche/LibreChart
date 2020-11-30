@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 
 export type DateUnit =
     'millisecond'
@@ -7,6 +8,7 @@ export type DateUnit =
     | 'day'
     | 'month'
     | 'year';
+export type CalendarUnit = DateUnit | 'week';
 
 export type DateUnitMapping<T> = { [unit in DateUnit]: T };
 export type ImmutableDateUnitMapping<T> = { readonly [unit in DateUnit]: T };
@@ -21,14 +23,75 @@ export const kDateUnitsAsc: DateUnit[] = [
     'year',
 ];
 export const kDateUnitsDes = kDateUnitsAsc.slice().reverse();
-export const kUnitsLength = kDateUnitsAsc.length;
-export const kSecondsIndexAsc = kDateUnitsAsc.indexOf('second');
+export const kDateUnitsLength = kDateUnitsAsc.length;
 
-export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
-    second: 60,
-    minute: 60,
-    hour: 24,
-    month: 12,
+export const kCalendarUnitsAsc: CalendarUnit[] = [
+    'millisecond',
+    'second',
+    'minute',
+    'hour',
+    'day',
+    'week',
+    'month',
+    'year',
+];
+export const kCalendarUnitsDes = kCalendarUnitsAsc.slice().reverse();
+export const kCalendarUnitsLength = kCalendarUnitsAsc.length;
+
+export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
+    let mapped: Partial<DateUnitMapping<T>> = {};
+    for (let dateUnit of kDateUnitsAsc) {
+        mapped[dateUnit] = iterator(dateUnit);
+    }
+    return mapped as DateUnitMapping<T>;
+};
+
+export const mapDateUnitObject = <U, V>(
+    obj: DateUnitMapping<U>,
+    iterator: (value: U, dateUnit: DateUnit) => V
+): DateUnitMapping<V> => {
+    let mapped: Partial<DateUnitMapping<V>> = {};
+    for (let dateUnit of kDateUnitsAsc) {
+        mapped[dateUnit] = iterator(obj[dateUnit], dateUnit);
+    }
+    return mapped as DateUnitMapping<V>;
+};
+
+/**
+ * Number of milliseconds in a date unit when
+ * forcing a uniform interval.
+ */
+export const kDateUnitUniformMs: DateUnitMapping<number> = {
+    millisecond: 1,
+    second: 1000,      // 1000 ms
+    minute: 60000,     // 60 s
+    hour: 3600000,     // 60 m
+    day: 86400000,     // 24 h
+    month: 2592000000, // 30 d
+    year: 31536000000, // 365 d
+};
+
+/**
+ * Number of milliseconds in a date unit when
+ * forcing a uniform interval, expressed as Decimal
+ * objects.
+ */
+export const kDateUnitUniformDecimalMs = mapDateUnitObject(
+    kDateUnitUniformMs,
+    x => new Decimal(x),
+);
+
+/**
+ * The maximum fraction between adjacent date units'
+ * uniform millisecond interval.
+ */
+export const kDateUnitUniformMaxFraction = new Decimal(1000);
+
+export const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
+    second: new Decimal(60),
+    minute: new Decimal(60),
+    hour: new Decimal(24),
+    month: new Decimal(12),
 };
 
 // Factors of 12: 1, 2, 3, 4, 6, 12
@@ -95,12 +158,4 @@ export const compareDateUnits = (unit1: DateUnit, unit2: DateUnit): number => {
         return NaN;
     }
     return i1 - i2;
-};
-
-export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
-    let mapped: Partial<DateUnitMapping<T>> = {};
-    for (let dateUnit of kDateUnitsAsc) {
-        mapped[dateUnit] = iterator(dateUnit);
-    }
-    return mapped as DateUnitMapping<T>;
 };

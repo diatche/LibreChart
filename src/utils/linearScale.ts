@@ -1,9 +1,13 @@
 import Decimal from "decimal.js";
+import Scale, {
+    ITickScaleConstraints,
+    ITickScale,
+    IScaleOptions,
+} from "./Scale";
 import {
-    ITickConstraints,
-    TickGenerator,
-} from "./baseScale";
-import { findCommonFactors, findFactors } from "./factors";
+    findCommonFactors,
+    findFactors,
+} from "./factors";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);
@@ -11,157 +15,201 @@ const k10 = new Decimal(10);
 
 const kFactors10 = [1, 2, 5, 10];
 
-/**
- * Calculates optimal tick locations in linear space given an
- * interval and constraints (see {@link ITickConstraints}).
- *  
- * @param start The inclusive start of the interval. 
- * @param end The inclusive end of the interval.
- * @param constraints See {@link ITickConstraints}
- * @returns An array of tick locations.
- */
-export const linearTicks: TickGenerator = (
-    start: Decimal.Value,
-    end: Decimal.Value,
-    constraints: ITickConstraints,
-): Decimal[] => {
-    let a = new Decimal(start);
-    let b = new Decimal(end);
-    if (b.lt(a)) {
-        return [];
-    }
-    if (a.isNaN() || !b.isFinite() || b.isNaN() || !b.isFinite()) {
-        throw new Error('Invalid interval');
-    }
-    let len = b.sub(a);
+type LinearTickScaleType = ITickScale<Decimal>;
 
-    // Find min interval
-    let minInterval = k0;
+export default class LinearScale extends Scale<Decimal> {
 
-    if (constraints.minInterval) {
-        let minMs = new Decimal(constraints.minInterval);
-        if (minMs.lt(0) || minMs.isNaN() || !minMs.isFinite()) {
-            throw new Error('Minimum interval must be finite and with a positive length');
-        }
-        minInterval = minMs;
-    }
+    tickScale: ITickScale<Decimal>;
 
-    if (constraints.maxCount) {
-        let maxCount = new Decimal(constraints.maxCount);
-        if (maxCount.eq(0)) {
-            return [];
-        }
-        if (maxCount.lt(0) || maxCount.isNaN()) {
-            throw new Error('Max count must be greater than or equal to zero');
-        }
-        let maxCountInterval = len.div(maxCount);
-        if (maxCountInterval.gt(minInterval)) {
-            minInterval = maxCountInterval;
+    constructor(options?: IScaleOptions<Decimal>) {
+        super(options);
+
+        this.tickScale = {
+            origin: {
+                value: k0,
+                location: k0,
+            },
+            interval: {
+                valueInterval: k1,
+                locationInterval: k1,
+            },
         }
     }
 
-    if (minInterval.lte(0)) {
-        throw new Error('Must specify either a minimum interval or a maximum interval count');
-    }
+    zeroValue() { return k0 };
+    zeroValueInterval() { return k0 };
 
-    let radix = k10;
-    let radixLog10 = k1;
-    if (constraints.radix) {
-        radix = new Decimal(constraints.radix);
-        if (!radix.eq(k10)) {
-            radixLog10 = Decimal.log10(radix);
+    getTickScale(
+        start: Decimal,
+        end: Decimal,
+        constraints?: ITickScaleConstraints<Decimal>
+    ): LinearTickScaleType {
+        if (end.lte(start)) {
+            return this.emptyScale();
         }
-        if (!radix.isInt() || radix.lt(2) || radix.isNaN() || !radix.isFinite()) {
-            throw new Error('Radix must be an integer greater than 1');
+        if (start.isNaN() || !end.isFinite() || end.isNaN() || !end.isFinite()) {
+            throw new Error('Invalid interval');
         }
-    }
-
-    let exponent = radix.pow(
-        Decimal.log10(minInterval)
-            .div(radixLog10)
-            .floor()
-    );
-    let aScaled = a.div(exponent).floor();
-    let bScaled = b.div(exponent).ceil();
-
-    let factors: number[];
-    if (constraints.expand) {
-        // Use radix factors
-        factors = findFactors(radix.toNumber());
-    } else {
-        // Use common factors
-        let scaledLen = bScaled.sub(aScaled);
-        factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber());
-    }
-    if (factors.length === 0) {
-        // Fallback to default
-        factors = kFactors10;
-    }
-    if (constraints.excludeFactors?.length !== 0) {
-        let excludeFactors = new Set(constraints.excludeFactors);
-        factors = factors.filter(x => !excludeFactors.has(x));
-    }
-
-    type Base = {
-        start: Decimal;
-        end: Decimal;
-        interval: Decimal;
-        count: number;
-    };
-
-    let bestBase: Base | undefined;
-
-    do {
-        for (let i = 0; i < factors.length; i++) {
-            const factor = factors[i];
-            let mStart = aScaled.div(factor).floor().mul(factor);
-            let mEnd = bScaled.div(factor).ceil().mul(factor);
-            let mLength = mEnd.sub(mStart);
-            let count = mLength.div(factor);
-            let mInterval = mLength.div(count);
-            let interval = mInterval.mul(exponent);
-            if (interval.lt(minInterval)) {
-                continue;
-            }
+        let len = end.sub(start);
     
-            bestBase = {
-                start: mStart.mul(exponent),
-                end: mEnd.mul(exponent),
-                interval,
-                count: count.toNumber(),
-            };
-            break;
-        }
-        if (!bestBase) {
-            exponent = exponent.mul(radix);
-            aScaled = aScaled.div(radix);
-            bScaled = bScaled.div(radix);
-        }
-    } while (!bestBase);
+        // Find min interval
+        let minInterval = k0;
+    
+        constraints = {
+            ...this.constraints,
+            ...constraints,
+        };
 
-    let { expand = false } = constraints || {};
-    if (expand) {
-        a = bestBase.start;
-        b = bestBase.end;
+        if (constraints.minInterval?.valueInterval) {
+            let min = constraints.minInterval.valueInterval;
+            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
+                throw new Error('Minimum interval must be finite and with a positive length');
+            }
+            if (min.gt(minInterval)) {
+                minInterval = min;
+            }
+        }
+
+        if (constraints.minInterval?.locationInterval) {
+            let min = constraints.minInterval.locationInterval;
+            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
+                throw new Error('Minimum interval must be finite and with a positive length');
+            }
+            if (min.gt(minInterval)) {
+                minInterval = min;
+            }
+        }
+    
+        if (constraints.maxCount) {
+            let maxCount = constraints.maxCount;
+            if (maxCount.eq(0)) {
+                return this.emptyScale();
+            }
+            if (maxCount.lt(0) || maxCount.isNaN()) {
+                throw new Error('Max count must be greater than or equal to zero');
+            }
+            let min = len.div(maxCount);
+            if (min.gt(minInterval)) {
+                minInterval = min;
+            }
+        }
+    
+        if (minInterval.lte(0)) {
+            throw new Error('Must specify either a minimum interval or a maximum interval count');
+        }
+    
+        let radix = k10;
+        let radixLog10 = k1;
+        if (constraints.radix) {
+            radix = constraints.radix;
+            if (!radix.eq(k10)) {
+                radixLog10 = Decimal.log10(radix);
+            }
+            if (!radix.isInt() || radix.lt(2) || radix.isNaN() || !radix.isFinite()) {
+                throw new Error('Radix must be an integer greater than 1');
+            }
+        }
+    
+        let exponent = radix.pow(
+            Decimal.log10(minInterval)
+                .div(radixLog10)
+                .floor()
+        );
+        let startScaled = start.div(exponent).floor();
+        let endScaled = end.div(exponent).ceil();
+    
+        let factors: number[];
+        if (constraints.expand) {
+            // Use radix factors
+            factors = findFactors(radix.toNumber());
+        } else {
+            // Use common factors
+            let scaledLen = endScaled.sub(startScaled);
+            factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber());
+        }
+        if (factors.length === 0) {
+            // Fallback to default
+            factors = kFactors10;
+        }
+        if (constraints.excludeFactors?.length !== 0) {
+            let excludeFactors = new Set(constraints.excludeFactors);
+            factors = factors.filter(x => !excludeFactors.has(x));
+        }
+    
+        let bestScale: LinearTickScaleType | undefined;
+    
+        do {
+            for (let i = 0; i < factors.length; i++) {
+                const factor = factors[i];
+                let fStart = startScaled.div(factor).floor().mul(factor);
+                let fEnd = endScaled.div(factor).ceil().mul(factor);
+                let fLength = fEnd.sub(fStart);
+                let count = fLength.div(factor);
+                let fInterval = fLength.div(count);
+                let interval = fInterval.mul(exponent);
+                if (interval.lt(minInterval)) {
+                    continue;
+                }
+
+                let origin = fStart.mul(exponent);
+                bestScale = {
+                    origin: {
+                        value: origin,
+                        location: origin,
+                    },
+                    interval: {
+                        locationInterval: interval,
+                        valueInterval: interval,
+                    },
+                };
+                break;
+            }
+            if (!bestScale) {
+                exponent = exponent.mul(radix);
+                startScaled = startScaled.div(radix);
+                endScaled = endScaled.div(radix);
+            }
+        } while (!bestScale);
+    
+        return bestScale;
     }
 
-    let ticks: Decimal[] = [];
-    for (let i = 0; i <= bestBase.count; i++) {
-        let tick = bestBase.start.add(bestBase.interval.mul(i));
-        if (tick.gte(a) && tick.lte(b)) {
-            ticks.push(tick);
-        }
+    addIntervalToValue(value: Decimal, interval: Decimal): Decimal {
+        return value.add(interval);
     }
-    // if (!expand && ticks.length === 1 && len.gte(minInterval)) {
-    //     // Fixed interval is greater than the min interval,
-    //     // but is smaller than the optimal interval.
-    //     if (a.eq(bestBase.start)) {
-    //         // Use the end of the interval as the tick.
-    //         ticks.push(b);
-    //     } else {
-    //         // Use the original interval.
-    //         ticks = [a, b];
-    //     }
-    // }
-    return ticks;
-};
+
+    floorValue(value: Decimal): Decimal {
+        return value
+            .div(this.tickScale.interval.valueInterval)
+            .floor()
+            .mul(this.tickScale.interval.valueInterval);
+    }
+
+    locationOfValue(value: Decimal): Decimal {
+        return value;
+    }
+
+    valueAtLocation(location: Decimal): Decimal {
+        return location;
+    }
+
+    isValue(value: any): value is Decimal {
+        return Decimal.isDecimal(value);
+    }
+
+    isInterval(interval: any): interval is Decimal {
+        return Decimal.isDecimal(interval);
+    }
+
+    isValueEqual(v1: Decimal, v2: Decimal): boolean {
+        return v1.eq(v2);
+    }
+
+    compareValues(a: Decimal, b: Decimal): number {
+        return a.sub(b).toNumber();
+    }
+
+    isIntervalEqual(i1: Decimal, i2: Decimal): boolean {
+        return i1.eq(i2);
+    }
+}
