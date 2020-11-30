@@ -1,12 +1,23 @@
-import moment, { Duration, Moment } from "moment";
-import { DateUnit, isDateUnit, kDateUnitsDes, kDateUnitsLength } from "./dateBase";
+import moment, {
+    Duration,
+    Moment,
+} from "moment";
+import {
+    DateUnit,
+    isDateUnit,
+    kDateUnitsDes,
+    kDateUnitsLength,
+} from "./dateBase";
 import {
     getCalendarFormat,
     is24Hour,
     isCurrentYear,
     longYearFormat,
 } from "./dateLocale";
-import { dateUnitsWithDuration, floorDate, snapDate } from "./duration";
+import {
+    dateUnitsWithDuration,
+    snapDate,
+} from "./duration";
 
 /**
  * Returns a localised date string up
@@ -22,10 +33,12 @@ export const formatDate = (
         unit?: moment.unitOfTime.All;
         now?: Moment;
         relativeDay?: boolean;
+        showYear?: boolean;
     },
 ): string => {
     const {
         relativeDay = false,
+        showYear = false,
         now = moment(),
     } = options;
     let unit = moment.normalizeUnits(options.unit as any) || 'hour';
@@ -43,7 +56,9 @@ export const formatDate = (
     if (!cleanDate || !cleanDate.isValid()) {
         throw new Error('Invalid date');
     }
-    const canRemoveYear = isCurrentYear(cleanDate, now);
+    const canRemoveYear = typeof showYear !== 'undefined'
+        ? !showYear
+        : isCurrentYear(cleanDate, now);
     const dateFormat = canRemoveYear ? 'll' : 'L';
 
     const withoutCurrentYear = (dateFormat: string, timeFormat?: string) => {
@@ -96,18 +111,29 @@ export const formatDate = (
  * return only the parts of the date
  * that changed from the previous date.
  */
-export const formatDateDelta = (date: Moment, duration: Duration): string => {
+export const formatDateDelta = (
+    date: Moment,
+    duration: Duration,
+    options: {
+        now?: Moment,
+    } = {},
+): string => {
     if (!moment.isMoment(date) || !date.isValid()) {
         throw new Error('Invalid date');
     }
     if (!moment.isDuration(duration) || !duration.isValid()) {
         throw new Error('Invalid duration');
     }
+    const {
+        now = moment(),
+    } = options;
     const [interval, unit] = dateUnitsWithDuration(duration);
-    date = floorDate(date, interval, unit);
+    // date = floorDate(date, interval, unit);
     let previousDate = date.clone().subtract(duration);
 
     let changedUnit: DateUnit = 'millisecond';
+    let showYear = false;
+
     for (let i = 0; i < kDateUnitsLength; i++) {
         let dateUnit = kDateUnitsDes[i];
         if (date.get(dateUnit) !== previousDate.get(dateUnit)) {
@@ -115,6 +141,12 @@ export const formatDateDelta = (date: Moment, duration: Duration): string => {
             changedUnit = dateUnit;
             break;
         }
+    }
+    if (unit === 'day' && interval !== 1) {
+        showYear = changedUnit === 'year' && !isCurrentYear(date, now);
+
+        // Month edges are non-uniform
+        changedUnit = 'day';
     }
 
     switch (changedUnit) {
@@ -136,7 +168,11 @@ export const formatDateDelta = (date: Moment, duration: Duration): string => {
         }
         case 'day':
             // Day of month
-            return formatDate(date, { unit: 'day' });
+            return formatDate(date, {
+                unit: 'day',
+                showYear: showYear,
+                now,
+            });
         // case 'week':
         case 'month':
             return date.format('MMM');

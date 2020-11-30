@@ -68,7 +68,7 @@ export const kDateUnitUniformMs: DateUnitMapping<number> = {
     hour: 3600000,     // 60 m
     day: 86400000,     // 24 h
     month: 2592000000, // 30 d
-    year: 31536000000, // 365 d
+    year: 31104000000, // 12 M
 };
 
 /**

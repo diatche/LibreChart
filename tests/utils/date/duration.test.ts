@@ -43,7 +43,7 @@ describe('duration', () => {
             expect(addUniformMs(date, kDateUnitUniformMs['day'] * 30).format(kDateFormat)).toBe('2020-02-01 00:00:00');
             expect(addUniformMs(date, kDateUnitUniformMs['day'] * 31).format(kDateFormat)).toBe('2020-02-02 00:00:00');
 
-            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 365).format(kDateFormat)).toBe('2021-01-01 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['month'] * 13).format(kDateFormat)).toBe('2021-02-01 00:00:00');
         });
 
         it('should add negative time', () => {
