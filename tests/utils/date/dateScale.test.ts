@@ -8,6 +8,7 @@ import {
 import { $, getExpectedLinearTicks, LinearTickInput } from '../linearScaleUtil';
 import Decimal from 'decimal.js';
 
+const k0 = new Decimal(0);
 const k1 = new Decimal(1);
 const k10 = new Decimal(10);
 
@@ -243,6 +244,46 @@ describe('DateScale', () => {
             // Scale should be half a day
             expect(scale.tickScale.interval.valueInterval.asDays()).toBe(0.5);
             expect(scale.tickScale.interval.locationInterval.toNumber()).toBe(0.5);
+        });
+    });
+
+    describe('getTicksInLocationRange', () => {
+
+        it('should return correct ticks 5 days apart', () => {
+            let scale = new DateScale({
+                baseUnit: 'day',
+                originDate: moment('2020-01-01'),
+            });
+
+            scale.tickScale = {
+                origin: {
+                    value: moment('2019-12-12'),
+                    location: $(-20),
+                },
+                interval: {
+                    valueInterval: moment.duration(5, 'day'),
+                    locationInterval: $(5),
+                },
+            };
+
+            let ticks = scale.getTicksInLocationRange($(-45), k0)
+                .map(t => ({
+                    value: t.value.format(kDateTimeFormat),
+                    location: t.location.toNumber(),
+                }));
+
+            expect(ticks).toEqual([
+                { value: '2019-11-17 00:00', location: -45},
+                { value: '2019-11-22 00:00', location: -40},
+                { value: '2019-11-27 00:00', location: -35},
+                { value: '2019-12-02 00:00', location: -30},
+                { value: '2019-12-07 00:00', location: -25},
+                { value: '2019-12-12 00:00', location: -20},
+                { value: '2019-12-17 00:00', location: -15},
+                { value: '2019-12-22 00:00', location: -10},
+                { value: '2019-12-27 00:00', location: -5},
+            ]);
+
         });
     });
 

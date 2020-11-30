@@ -270,7 +270,9 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         let [value, unit] = dateUnitsWithDuration(
             this.tickScale.interval.valueInterval
         );
-        return floorDate(date, value, unit);
+        return floorDate(date, value, unit, {
+            originDate: this.tickScale.origin.value,
+        });
     }
 
     locationOfValue(date: Moment): Decimal {

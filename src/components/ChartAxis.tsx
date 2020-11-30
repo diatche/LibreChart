@@ -263,6 +263,7 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
                 >
                     <View style={this.getTickContainerStyle()}>
                         {ticks}
+                        <View style={styles.placeholder} />
                     </View>
                     <View style={this.getLabelContainerStyle()}>
                         {labelInnerContainers}
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
     },
     tickContainer: {
         // flex: 1,
-        justifyContent: 'space-around',
+        justifyContent: 'space-between',
         // borderWidth: 2,
         // borderColor: 'rgba(150, 70, 230, 0.5)',
     },
@@ -307,7 +308,11 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(200, 110, 130, 0.5)',
-    }
+    },
+    placeholder: {
+        width: 0,
+        height: 0,
+    },
 });
 
 const axisStyles: AxisTypeMapping<any> = {

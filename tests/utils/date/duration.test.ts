@@ -1,5 +1,7 @@
 import moment from 'moment-timezone';
+import { kDateUnitUniformMs } from '../../../src/utils/date/dateBase';
 import {
+    addUniformMs,
     ceilDate,
     dateIntervalLength,
     dateUnitsWithDuration,
@@ -19,6 +21,35 @@ describe('duration', () => {
         let zoneName = 'NZ';
         expect(moment.tz.zone(zoneName)).toBeTruthy();
         moment.tz.setDefault(zoneName);
+    });
+
+    describe('addUniformMs', () => {
+
+        it('should add positive time', () => {
+            let date = moment('2020-01-01');
+            expect(addUniformMs(date, kDateUnitUniformMs['second']).format(kDateFormat)).toBe('2020-01-01 00:00:01');
+            expect(addUniformMs(date, kDateUnitUniformMs['minute']).format(kDateFormat)).toBe('2020-01-01 00:01:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['hour']).format(kDateFormat)).toBe('2020-01-01 01:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['day']).format(kDateFormat)).toBe('2020-01-02 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['month']).format(kDateFormat)).toBe('2020-02-01 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['year']).format(kDateFormat)).toBe('2021-01-01 00:00:00');
+        });
+
+        it('should add positive partial time', () => {
+            let date = moment('2020-01-01');
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] / 2).format(kDateFormat)).toBe('2020-01-01 12:00:00');
+
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 29).format(kDateFormat)).toBe('2020-01-30 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 30).format(kDateFormat)).toBe('2020-02-01 00:00:00');
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 31).format(kDateFormat)).toBe('2020-02-02 00:00:00');
+
+            expect(addUniformMs(date, kDateUnitUniformMs['day'] * 365).format(kDateFormat)).toBe('2021-01-01 00:00:00');
+        });
+
+        it('should add negative time', () => {
+            let date = moment('2020-01-01');
+            expect(addUniformMs(date, -kDateUnitUniformMs['day']).format(kDateFormat)).toBe('2019-12-31 00:00:00');
+        });
     });
 
     describe('dateIntervalLength', () => {
@@ -274,6 +305,16 @@ describe('duration', () => {
                 2,
                 'day'
             ).format(kDateFormat)).toBe('2020-01-03 00:00:00');
+        });
+
+        it('should use specified origin date', () => {
+            expect(roundDate(
+                moment('2019-11-18'),
+                5,
+                'day',
+                { originDate: moment('2020-01-01') }
+            ).format(kDateFormat)).toBe('2019-11-17 00:00:00');
+            // 45 days before origin
         });
 
         // months

@@ -4,6 +4,7 @@ import {
     DateUnit,
     isDateUnit,
     kDateUnitsDes,
+    kDateUnitsLength,
     kDateUnitUniformMs,
     smallerDateUnit,
 } from './dateBase';
@@ -163,10 +164,10 @@ export const roundDate = (
 
     let origin = getRoundingOriginDate(date, unit, options);
 
-    if (unit === 'millisecond') {
-        let diffMs = date.diff(origin, 'ms', true);
-        let roundedMs = method(diffMs / value) * value;
-        let roundedDate = origin.clone().add(roundedMs, 'ms');
+    if (compareDateUnits(unit, 'day') < 0) {
+        let diffMs = date.diff(origin, unit, true);
+        let roundedUnit = method(diffMs / value) * value;
+        let roundedDate = origin.clone().add(roundedUnit, unit);
         return roundedDate;
     }
 
@@ -175,7 +176,7 @@ export const roundDate = (
     let diffUnit = diffMs / kDateUnitUniformMs[unit];
     diffUnit = method(diffUnit / value) * value;
     let roundedMs = diffUnit * kDateUnitUniformMs[unit];
-    return addUniformMs(origin, roundedMs);
+    return addUniformMs(origin, roundedMs, { maxDateUnit: unit });
 
     // let smallerUnit = smallerDateUnit(unit) || 'millisecond';
     // if (kDateNonUniform[unit]) {
@@ -353,16 +354,38 @@ export const getUniformMs = (duration: moment.Duration | Moment): number => {
     return ms;
 };
 
-export const addUniformMs = (date: Moment, ms: number): Moment => {
-    let msLeft = ms;
+export const addUniformMs = (
+    date: Moment,
+    ms: number,
+    options?: {
+        maxDateUnit?: DateUnit,
+    }): Moment => {
     let d = date.clone();
-    for (let dateUnit of kDateUnitsDes) {
+    if (ms === 0) {
+        return d;
+    }
+    let negative = ms < 0;
+    if (negative) {
+        ms = -ms;
+    }
+    let msLeft = ms;
+    let { maxDateUnit = 'year' } = options || {};
+    let maxDateUnitIndex = kDateUnitsDes.indexOf(maxDateUnit);
+    if (maxDateUnitIndex < 0) {
+        throw new Error('Invalid date unit');
+    }
+    for (let i = maxDateUnitIndex; i < kDateUnitsLength; i++) {
+        let dateUnit = kDateUnitsDes[i];
         let unitMs = kDateUnitUniformMs[dateUnit];
         if (unitMs <= msLeft) {
             let value = Math.floor(msLeft / unitMs);
             let valueMs = value * unitMs;
             msLeft -= valueMs;
-            d.add(value, dateUnit);
+            if (negative) {
+                d.subtract(value, dateUnit);
+            } else {
+                d.add(value, dateUnit);
+            }
         }
         if (msLeft <= 0) {
             break;

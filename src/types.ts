@@ -2,8 +2,8 @@ import Decimal from "decimal.js";
 import {
     AxisType,
     FlatLayoutSourceProps,
-    GridLayoutSource,
     GridLayoutSourceProps,
+    LayoutSource,
 } from "evergrid";
 import { ColorValue } from "react-native";
 import Scale, {
@@ -94,6 +94,6 @@ export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'sho
 
 export interface IChartGrid extends IChartGridInput {
     hidden: boolean;
-    layout?: GridLayoutSource;
+    layout?: LayoutSource;
     style: Required<IChartGridStyle>;
 }

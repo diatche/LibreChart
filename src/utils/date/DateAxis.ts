@@ -6,7 +6,7 @@ import { DateUnit } from "./dateBase";
 import DateScale from "./DateScale";
 
 const kBaseDateUnit: DateUnit = 'day';
-const kOriginDate = moment().startOf('year');
+const kOriginDate = moment('2020-01-01');
 
 export default class DateAxis extends Axis<Moment, Duration> {
 

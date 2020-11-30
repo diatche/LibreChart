@@ -35,7 +35,7 @@ export interface IAxisProps<T, D> extends Required<IAxisOptions<T, D>> {}
 
 export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
-interface IAxisLengthLayoutBaseInfo<D> {
+interface IAxisLengthLayoutBaseInfo {
     /** Number of major axis intervals per axis container. */
     majorCount: number;
 
@@ -46,14 +46,14 @@ interface IAxisLengthLayoutBaseInfo<D> {
     containerLength: number;
 }
 
-interface IAxisLengthLayoutInfo<D> extends IAxisLengthLayoutBaseInfo<D> {
+interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
     /** Animated axis container length in content coordinates. */
     readonly containerLength$: Animated.Value;
     /**
-     * Animated major axis interval negative half-distance
-     * in content coordinates.
+     * This value equals negative half of major
+     * tick interval (in content coordinates).
      * 
-     * This is used to syncronize axes with the this.
+     * This is used to syncronize the grid with labels.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
     /** The currently visible container index ranges. */
@@ -83,7 +83,7 @@ interface IAxisWidthLayoutInfo {
     onOptimalThicknessChange: (thickness: number, index: number) => void;
 }
 
-interface IAxisLayoutInfo<D> extends IAxisLengthLayoutInfo<D>, IAxisWidthLayoutInfo {}
+interface IAxisLayoutInfo extends IAxisLengthLayoutInfo, IAxisWidthLayoutInfo {}
 
 export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     axisType: AxisType;
@@ -93,7 +93,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     layoutSourceDefaults: IAxisLayoutSourceProps;
     style: IAxisStyle;
     isHorizontal: boolean;
-    layoutInfo: IAxisLayoutInfo<D>;
+    layoutInfo: IAxisLayoutInfo;
     layout?: FlatLayoutSource;
 
     constructor(axisType: AxisType, options?: IAxisOptions<T, D>) {
@@ -139,7 +139,10 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
 
 
         if (!this.hidden) {
-            this.layout = this._createLayoutSource(layoutSourceDefaults);
+            this.layout = this._createLayoutSource(
+                this.layoutInfo,
+                layoutSourceDefaults,
+            );
         }
     }
 
@@ -187,11 +190,14 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         return axes;
     }
 
-    private _createLayoutSource(defaults: IAxisLayoutSourceProps): FlatLayoutSource | undefined {
+    private _createLayoutSource(
+        layoutInfo: IAxisLayoutInfo,
+        defaults: IAxisLayoutSourceProps,
+    ): FlatLayoutSource | undefined {
         let layoutPropsBase: FlatLayoutSourceProps = {
             itemSize: {
-                x: this.layoutInfo.containerLength$,
-                y: this.layoutInfo.containerLength$,
+                x: layoutInfo.containerLength$,
+                y: layoutInfo.containerLength$,
             },
             ...defaults,
             shouldRenderItem: (item, previous) => {
@@ -200,7 +206,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
             },
             reuseID: kAxisReuseIDs[this.axisType],
             onVisibleRangeChange: r => {
-                this.layoutInfo.visibleContainerIndexRange = r;
+                layoutInfo.visibleContainerIndexRange = r;
             },
         };
 
@@ -209,13 +215,13 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { y: this.layoutInfo.thickness$ }
+                        size: { y: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 0 },
-                    origin: {
-                        x: this.layoutInfo.negHalfMajorInterval$,
-                        y: 0,
-                    },
+                    // origin: {
+                    //     x: layoutInfo.labelContainerOffset$,
+                    //     y: 0,
+                    // },
                     horizontal: true,
                     stickyEdge: 'bottom',
                 });
@@ -223,13 +229,13 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { y: this.layoutInfo.thickness$ }
+                        size: { y: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 1 },
-                    origin: {
-                        x: this.layoutInfo.negHalfMajorInterval$,
-                        y: 0,
-                    },
+                    // origin: {
+                    //     x: layoutInfo.labelContainerOffset$,
+                    //     y: 0,
+                    // },
                     horizontal: true,
                     stickyEdge: 'top',
                 });
@@ -237,13 +243,13 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { x: this.layoutInfo.thickness$ }
+                        size: { x: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 0, y: 0 },
-                    origin: {
-                        x: 0,
-                        y: this.layoutInfo.negHalfMajorInterval$,
-                    },
+                    // origin: {
+                    //     x: 0,
+                    //     y: layoutInfo.labelContainerOffset$,
+                    // },
                     horizontal: false,
                     stickyEdge: 'left',
                 });
@@ -251,13 +257,13 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { x: this.layoutInfo.thickness$ }
+                        size: { x: layoutInfo.thickness$ }
                     }),
                     itemOrigin: { x: 1, y: 0 },
-                    origin: {
-                        x: 0,
-                        y: this.layoutInfo.negHalfMajorInterval$,
-                    },
+                    // origin: {
+                    //     x: 0,
+                    //     y: layoutInfo.labelContainerOffset$,
+                    // },
                     horizontal: false,
                     stickyEdge: 'right',
                 });
@@ -375,7 +381,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
     //         .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
     // }
 
-    private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo<D> | undefined {
+    private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo | undefined {
         if (!this.layout) {
             return undefined;
         }
@@ -421,7 +427,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
         if (!scaleUpdated) {
             return undefined;
         }
-
+        
         // Count ticks
         let valueRange = this.scale.spanValueRange(
             startValue,
@@ -475,7 +481,7 @@ export default class Axis<T = any, D = T> implements IAxisProps<T, D> {
             return [k0, k0];
         }
         let len = interval.mul(count);
-        let start = new Decimal(index).mul(len);
+        let start = len.mul(index);
         return [start, start.add(len)];
     }
 

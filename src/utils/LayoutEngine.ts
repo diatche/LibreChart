@@ -8,6 +8,8 @@ import Evergrid, {
     kAllAxisTypes,
     isAxisType,
     isAxisHorizontal,
+    FlatLayoutSource,
+    LayoutSourceProps,
 } from "evergrid";
 import DataSource from "./DataSource";
 import {
@@ -19,7 +21,6 @@ import debounce from 'lodash.debounce';
 import {
     IChartGrid,
     IChartGridInput,
-    IGridLayoutSourceProps,
 } from "../types";
 import Axis, { AxisManyInput } from "./Axis";
 
@@ -27,7 +28,7 @@ const kGridUpdateDebounceInterval = 100;
 
 export interface LayoutEngineProps {
     dataSources?: DataSource[];
-    grid?: IChartGridInput & IGridLayoutSourceProps;
+    grid?: IChartGridInput;
     axes?: AxisManyInput;
 }
 
@@ -158,23 +159,65 @@ export default class LayoutEngine {
     private _createGridLayout(
         axes: Partial<AxisTypeMapping<Axis>>,
         props: LayoutEngineProps | undefined,
-    ): GridLayoutSource | undefined {
+    ): LayoutSource | undefined {
         let {
-            horizontalAxis,
-            verticalAxis,
+            horizontalAxis: xAxisType,
+            verticalAxis: yAxisType,
             ...otherProps
         } = props?.grid || {};
-        return new GridLayoutSource({
-            itemSize: view => ({
-                x: horizontalAxis && axes[horizontalAxis]?.layoutInfo.containerLength$
-                    || view.containerSize$.x,
-                y: verticalAxis && axes[verticalAxis]?.layoutInfo.containerLength$
-                    || view.containerSize$.y,
-            }),
+        let xAxis = xAxisType && axes[xAxisType];
+        let yAxis = yAxisType && axes[yAxisType];
+
+        if (!xAxis && !yAxis) {
+            return undefined;
+        }
+
+        let commonProps: LayoutSourceProps<any> = {
             ...otherProps,
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
-        });
+        }
+
+        if (xAxis && yAxis) {
+            return new GridLayoutSource({
+                ...commonProps,
+                itemSize: {
+                    x: xAxis.layoutInfo.containerLength$,
+                    y: yAxis.layoutInfo.containerLength$,
+                },
+            });
+        } else if (xAxis) {
+            return new FlatLayoutSource({
+                ...commonProps,
+                itemSize: {
+                    x: xAxis.layoutInfo.containerLength$,
+                    y: xAxis.layoutInfo.containerLength$,
+                },
+                getItemViewLayout: (i, view) => ({
+                    offset: { y: 0 },
+                    size: { y: view.containerSize$.y }
+                }),
+                horizontal: true,
+                stickyEdge: 'bottom',
+                itemOrigin: { x: 0, y: 1 },
+            });
+        } else if (yAxis) {
+            return new FlatLayoutSource({
+                ...commonProps,
+                itemSize: {
+                    x: yAxis.layoutInfo.containerLength$,
+                    y: yAxis.layoutInfo.containerLength$,
+                },
+                getItemViewLayout: (i, view) => ({
+                    offset: { x: 0 },
+                    size: { x: view.containerSize$.x }
+                }),
+                stickyEdge: 'left',
+                itemOrigin: { x: 0, y: 0 },
+            });
+        }
+
+        return undefined;
     }
 
     private static _validateGridAxes(
