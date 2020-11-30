@@ -35,7 +35,7 @@ export interface IDateScaleOptions {
     /**
      * The scale's base unit. 1 interval
      * with this unit encodes to a length
-     * of 1 when encoded.
+     * of 1 when encoded. Defaults to `day`.
      */
     baseUnit?: DateUnit;
 
@@ -71,7 +71,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         super(options);
 
         let {
-            baseUnit = 'millisecond',
+            baseUnit = 'day',
             minUnitDuration = 0.5,
             originDate,
         } = options || {};
