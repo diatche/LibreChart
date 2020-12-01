@@ -1,13 +1,23 @@
 import { AxisType } from "evergrid";
 import moment from "moment";
 import { Duration, Moment } from "moment";
-import { ColorValue, TextStyle } from "react-native";
+import { TextStyle } from "react-native";
 import { IAxisOptions, ITickLabel } from "../../types";
 import Axis from "../Axis";
-import { DateUnit, DateUnitMapping, mapDateUnits } from "./dateBase";
+import {
+    DateUnit,
+    DateUnitMapping,
+    kDateUnitsAsc,
+    kDateUnitsLength,
+    kDateUnitUniformMs,
+    mapDateUnits,
+} from "./dateBase";
 import { formatDateDelta } from "./dateFormat";
 import DateScale from "./DateScale";
-import { dateUnitsWithDuration } from "./duration";
+import {
+    dateUnitsWithDuration,
+    getUniformMs,
+} from "./duration";
 
 export default class DateAxis extends Axis<Moment, Duration> {
     private _unitLabelStyle?: DateUnitMapping<TextStyle>;
@@ -40,14 +50,28 @@ export default class DateAxis extends Axis<Moment, Duration> {
     }
 
     createUnitLabelColors(duration: moment.Duration): DateUnitMapping<TextStyle> {
-        return mapDateUnits((dateUnit: DateUnit): TextStyle => {
-            let unitDuration = duration.as(dateUnit);
-            if (unitDuration < 0.1) {
+        // Find unit which has a normal loabel style
+        let uniformMs = getUniformMs(duration);
+        let normalIndex = 0;
+        for (let i = 0; i < kDateUnitsLength; i++) {
+            let dateUnit = kDateUnitsAsc[i];
+            let unitDensity = uniformMs / kDateUnitUniformMs[dateUnit];
+            if (dateUnit === 'month' && unitDensity < 1) {
+                break;
+            }
+            if (unitDensity < 0.25) {
+                break;
+            }
+            normalIndex = i;
+        }
+
+        return mapDateUnits((dateUnit: DateUnit, index: number): TextStyle => {
+            if (index > normalIndex) {
                 return {
                     color: this.style.majorLabelColor,
                     fontWeight: this.style.majorLabelFontWeight,
                 };
-            } else if (unitDuration > 2) {
+            } else if (index < normalIndex) {
                 return {
                     color: this.style.minorLabelColor,
                     fontWeight: this.style.minorLabelFontWeight,

@@ -38,10 +38,16 @@ export const kCalendarUnitsAsc: CalendarUnit[] = [
 export const kCalendarUnitsDes = kCalendarUnitsAsc.slice().reverse();
 export const kCalendarUnitsLength = kCalendarUnitsAsc.length;
 
-export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
+/**
+ * Iterates through all date units in ascending order
+ * and collects the values returned by the `iterator`
+ * in a table with the date units as keys.
+ * @param iterator 
+ */
+export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit, index: number) => T): DateUnitMapping<T> => {
     let mapped: Partial<DateUnitMapping<T>> = {};
-    for (let dateUnit of kDateUnitsAsc) {
-        mapped[dateUnit] = iterator(dateUnit);
+    for (let i = 0; i < kDateUnitsLength; i++) {
+        mapped[kDateUnitsAsc[i]] = iterator(kDateUnitsAsc[i], i);
     }
     return mapped as DateUnitMapping<T>;
 };
