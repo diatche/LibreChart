@@ -46,6 +46,13 @@ interface IAxisLengthLayoutBaseInfo {
 
     /** The view scale with which the layout was calculated. */
     viewScale: number;
+
+    /**
+     * The distance (in content coordinates) to offset the
+     * viewport to preserve the current visible content
+     * after update. This is applied automatically.
+     **/
+    recenteringOffset: number;
 }
 
 interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
@@ -123,6 +130,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             majorCount: 0,
             minorCount: 0,
             containerLength: 0,
+            recenteringOffset: 0,
             containerLength$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
             visibleContainerIndexRange: [0, 0],
@@ -299,6 +307,16 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         let negHalfMajorInterval = this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber();
         this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
 
+        if (this.layoutInfo.recenteringOffset) {
+            // FIXME: We are assuming that the axis controls
+            // the chart, but this may be an independent axis.
+            this.layout.root.scrollBy({
+                offset: this.isHorizontal
+                    ? { x: this.layoutInfo.recenteringOffset }
+                    : { y: this.layoutInfo.recenteringOffset },
+            });
+        }
+
         this.layout.updateItems(updateOptions);
         return true;
     }
@@ -403,7 +421,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
 
         let startLocation = new Decimal(visibleRange[0]);
         let endLocation = new Decimal(visibleRange[1]);
+        let midLocation = startLocation.add(endLocation).div(2);
         let startValue = this.scale.valueAtLocation(startLocation);
+        let midValue = this.scale.valueAtLocation(midLocation);
         let endValue = this.scale.valueAtLocation(endLocation);
 
         // Update tick scale
@@ -452,11 +472,21 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         );
         let containerLength = locationRange[1].sub(locationRange[0]).toNumber();
 
+        // Check if recentering is needed
+        let newMidLocation = this.scale.locationOfValue(midValue);
+        let recenteringOffset = midLocation
+            .sub(newMidLocation)
+            .div(viewScale)
+            .round()
+            .mul(viewScale)
+            .toNumber();
+
         return {
             majorCount,
             minorCount,
             containerLength,
             viewScale,
+            recenteringOffset,
         };
     }
 
