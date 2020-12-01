@@ -12,7 +12,7 @@ import {
     kDateUnitUniformMs,
     mapDateUnits,
 } from "./dateBase";
-import { formatDateDelta } from "./dateFormat";
+import { formatDateDelta } from "./formatDate";
 import DateScale from "./DateScale";
 import {
     dateUnitsWithDuration,

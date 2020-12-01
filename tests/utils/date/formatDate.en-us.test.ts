@@ -1,7 +1,7 @@
 import moment from 'moment';
 import {
     formatDateDelta,
-} from '../../../src/utils/date/dateFormat';
+} from '../../../src/utils/date/formatDate';
 
 describe('dateFormat', () => {
 
