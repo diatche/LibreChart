@@ -120,6 +120,32 @@ describe('duration', () => {
 
     describe('interpolatedDate', () => {
 
+        it('should return corrent date', () => {
+            expect(interpolatedDate(
+                moment('2020-01-05'),
+                moment('2020-01-06'),
+                0
+            ).toISOString()).toBe(moment('2020-01-05').toISOString());
+
+            expect(interpolatedDate(
+                moment('2020-01-05'),
+                moment('2020-01-06'),
+                1
+            ).toISOString()).toBe(moment('2020-01-06').toISOString());
+
+            expect(interpolatedDate(
+                moment('2020-01-05'),
+                moment('2020-01-06'),
+                0.5
+            ).toISOString()).toBe(moment('2020-01-05 12:00').toISOString());
+
+            expect(interpolatedDate(
+                moment('2020-01-05'),
+                moment('2020-01-06'),
+                -1
+            ).toISOString()).toBe(moment('2020-01-04').toISOString());
+        });
+
         it('should work with floats', () => {
             let start = moment('2020-01-01');
             let end = moment('2020-01-02');
@@ -148,6 +174,12 @@ describe('duration', () => {
             let start = moment('2020-01-01');
             let date = stepDateLinear(start, 1, 'day');
             expect(date.format('YYYY-MM-DD HH:mm')).toBe('2020-01-02 00:00');
+        });
+
+        it('should return next date with step -1 days', () => {
+            let start = moment('2020-01-01');
+            let date = stepDateLinear(start, -1, 'day');
+            expect(date.format('YYYY-MM-DD HH:mm')).toBe('2019-12-31 00:00');
         });
 
         it('should return middle date with step 0.5 days', () => {

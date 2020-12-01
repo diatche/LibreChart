@@ -13,6 +13,9 @@ export type CalendarUnit = DateUnit | 'week';
 export type DateUnitMapping<T> = { [unit in DateUnit]: T };
 export type ImmutableDateUnitMapping<T> = { readonly [unit in DateUnit]: T };
 
+export type CalendarUnitMapping<T> = { [unit in CalendarUnit]: T };
+export type ImmutableCalendarUnitMapping<T> = { readonly [unit in CalendarUnit]: T };
+
 export const kDateUnitsAsc: DateUnit[] = [
     'millisecond',
     'second',
@@ -38,10 +41,31 @@ export const kCalendarUnitsAsc: CalendarUnit[] = [
 export const kCalendarUnitsDes = kCalendarUnitsAsc.slice().reverse();
 export const kCalendarUnitsLength = kCalendarUnitsAsc.length;
 
-export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit) => T): DateUnitMapping<T> => {
+/**
+ * Conversion table for using with moment().get() and moment().set().
+ * Do not use these for moment.duration().get() and moment.duration().set().
+ */
+export const kCalendaryUnitMomentMap: ImmutableCalendarUnitMapping<moment.unitOfTime.All> = {
+    millisecond: 'millisecond',
+    second: 'second',
+    minute: 'minute',
+    hour: 'hour',
+    day: 'date',
+    week: 'week',
+    month: 'month',
+    year: 'year',
+};
+
+/**
+ * Iterates through all date units in ascending order
+ * and collects the values returned by the `iterator`
+ * in a table with the date units as keys.
+ * @param iterator 
+ */
+export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit, index: number) => T): DateUnitMapping<T> => {
     let mapped: Partial<DateUnitMapping<T>> = {};
-    for (let dateUnit of kDateUnitsAsc) {
-        mapped[dateUnit] = iterator(dateUnit);
+    for (let i = 0; i < kDateUnitsLength; i++) {
+        mapped[kDateUnitsAsc[i]] = iterator(kDateUnitsAsc[i], i);
     }
     return mapped as DateUnitMapping<T>;
 };
@@ -121,6 +145,10 @@ export const kDateNonUniform: Partial<DateUnitMapping<boolean>> = {
 
 export const isDateUnit = (unit: any): unit is DateUnit => {
     return kDateUnitsAsc.indexOf(unit as any) >= 0;
+}
+
+export const isCalendarUnit = (unit: any): unit is CalendarUnit => {
+    return kCalendarUnitsAsc.indexOf(unit as any) >= 0;
 }
 
 export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
