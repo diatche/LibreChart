@@ -23,7 +23,7 @@ import {
 } from "../types";
 import Scale, { ITickLocation } from "./Scale";
 import LinearScale from "./LinearScale";
-import { LayoutEngine } from "../internal";
+import { ChartLayout } from "../internal";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -203,7 +203,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     }
 
     get chartLayout() {
-        return this.layout?.root as LayoutEngine | undefined;
+        return this.layout?.root as ChartLayout | undefined;
     }
 
     private _createLayoutSource(

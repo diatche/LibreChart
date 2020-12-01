@@ -28,13 +28,13 @@ import Axis, { AxisManyInput } from "./Axis";
 
 const kGridUpdateDebounceInterval = 100;
 
-export interface LayoutEngineProps extends EvergridLayoutCallbacks, EvergridLayoutProps {
+export interface ChartLayoutProps extends EvergridLayoutCallbacks, EvergridLayoutProps {
     dataSources?: DataSource[];
     grid?: IChartGridInput;
     axes?: AxisManyInput;
 }
 
-export default class LayoutEngine extends EvergridLayout { 
+export default class ChartLayout extends EvergridLayout { 
     dataSources: DataSource[];
 
     /** Axis layout info. */
@@ -43,7 +43,7 @@ export default class LayoutEngine extends EvergridLayout {
     /** Grid layout info. */
     readonly grid: IChartGrid;
 
-    constructor(props?: LayoutEngineProps) {
+    constructor(props?: ChartLayoutProps) {
         super(props);
         if (!props?.anchor) {
             this.anchor$.setValue({ x: 0.5, y: 0.5 });
@@ -161,13 +161,13 @@ export default class LayoutEngine extends EvergridLayout {
         ].filter(s => !!s) as LayoutSource[];
     }
 
-    private _validatedAxes(props: LayoutEngineProps | undefined): Partial<AxisTypeMapping<Axis>> {
+    private _validatedAxes(props: ChartLayoutProps | undefined): Partial<AxisTypeMapping<Axis>> {
         return Axis.createMany(props?.axes);
     }
 
     private _validatedGrid(
         axes: Partial<AxisTypeMapping<Axis>>,
-        props: LayoutEngineProps | undefined,
+        props: ChartLayoutProps | undefined,
     ): IChartGrid {
         let grid: IChartGrid = {
             hidden: false,
@@ -178,13 +178,13 @@ export default class LayoutEngine extends EvergridLayout {
                 ...props?.grid?.style,
             },
         };
-        LayoutEngine._validateGridAxes(grid, axes);
+        ChartLayout._validateGridAxes(grid, axes);
         return grid;
     }
 
     private _createGridLayout(
         axes: Partial<AxisTypeMapping<Axis>>,
-        props: LayoutEngineProps | undefined,
+        props: ChartLayoutProps | undefined,
     ): LayoutSource | undefined {
         let {
             horizontalAxis: xAxisType,

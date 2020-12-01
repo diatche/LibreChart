@@ -10,7 +10,7 @@ import {
     kReuseIDAxes,
 } from '../const';
 import {
-    LayoutEngine,
+    ChartLayout,
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
@@ -19,14 +19,14 @@ import ChartAxis from './ChartAxis';
 type ForwardEvergridProps = Partial<EvergridProps>;
 
 export interface ChartProps extends ForwardEvergridProps {
-    layout: LayoutEngine;
+    layout: ChartLayout;
 }
 
 interface ChartState {}
 
 export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     innerRef = React.createRef<Evergrid>();
-    layout: LayoutEngine;
+    layout: ChartLayout;
 
     constructor(props: ChartProps) {
         super(props);
