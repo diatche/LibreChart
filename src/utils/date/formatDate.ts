@@ -5,6 +5,7 @@ import moment, {
 import {
     DateUnit,
     isDateUnit,
+    kCalendaryUnitMomentMap,
     kDateUnitsDes,
     kDateUnitsLength,
 } from "./dateBase";
@@ -17,7 +18,6 @@ import {
 import {
     dateUnitsWithDuration,
     snapDate,
-    stepDateLinear,
 } from "./duration";
 
 /**
@@ -39,19 +39,15 @@ export const formatDate = (
 ): string => {
     const {
         relativeDay = false,
-        showYear = false,
+        showYear,
         now = moment(),
     } = options;
     let unit = moment.normalizeUnits(options.unit as any) || 'hour';
     if (!isDateUnit(unit)) {
         throw new Error('Invalid date unit');
     }
-    // if (unit === 'week') {
-    //     unit = 'day';
-    // }
-    const unitIndexDesc = kDateUnitsDes.indexOf(unit);
-    if (!unit || unitIndexDesc < 0 || unit === 'millisecond') {
-        throw new Error('Invalid date unit');
+    if (unit === 'millisecond') {
+        throw new Error('Date unit not supported');
     }
     const cleanDate = snapDate(date, unit).startOf(unit);
     if (!cleanDate || !cleanDate.isValid()) {
@@ -116,7 +112,8 @@ export const formatDateDelta = (
     date: Moment,
     duration: Duration,
     options: {
-        now?: Moment,
+        now?: Moment;
+        weekdays?: boolean;
     } = {},
 ): {
     title: string;
@@ -130,6 +127,7 @@ export const formatDateDelta = (
     }
     const {
         now = moment(),
+        weekdays = false,
     } = options;
     const [interval, unit] = dateUnitsWithDuration(duration);
     // date = floorDate(date, interval, unit);
@@ -139,28 +137,30 @@ export const formatDateDelta = (
     }
 
     let changedUnit: DateUnit = 'millisecond';
+    let displayUnit: DateUnit = 'millisecond';
     let showYear = false;
 
     for (let i = 0; i < kDateUnitsLength; i++) {
         let dateUnit = kDateUnitsDes[i];
-        if (date.get(dateUnit) !== previousDate.get(dateUnit)) {
+        let momentUnit = kCalendaryUnitMomentMap[dateUnit];
+        if (date.get(momentUnit) !== previousDate.get(momentUnit)) {
             // Largest unit to change
             changedUnit = dateUnit;
             break;
         }
     }
+    displayUnit = changedUnit;
     if (unit === 'day' && interval !== 1) {
         showYear = changedUnit === 'year' && !isCurrentYear(date, now);
 
         // Month edges are non-uniform
-        changedUnit = 'day';
+        displayUnit = 'day';
     }
 
-    switch (changedUnit) {
+    switch (displayUnit) {
         case 'millisecond': {
-            let timeFormat = moment.localeData().longDateFormat('LTS');
             return {
-                title: date.format(timeFormat + '.SSS'),
+                title: `${Math.floor(date.milliseconds())}⁻³`,
                 unit: changedUnit,
             };
         }
@@ -187,15 +187,22 @@ export const formatDateDelta = (
         }
         case 'day':
             // Day of month
-            return {
-                title: formatDate(date, {
-                    unit: 'day',
-                    showYear: showYear,
-                    now,
-                }),
-                unit: changedUnit,
-            };
-        // case 'week':
+            if (weekdays) {
+                // Day of week
+                return {
+                    title: date.format('dd'),
+                    unit: changedUnit,
+                };
+            } else {
+                return {
+                    title: formatDate(date, {
+                        unit: 'day',
+                        showYear,
+                        now,
+                    }),
+                    unit: changedUnit,
+                };
+            }
         case 'month':
             return {
                 title: date.format('MMM'),
@@ -207,82 +214,6 @@ export const formatDateDelta = (
                 unit: changedUnit,
             };
     }
-
-    // switch (changedUnit) {
-    //     case 'day': {
-    //         switch (unit) {
-    //             case 'millisecond': {
-    //                 let timeFormat = moment.localeData().longDateFormat('LTS');
-    //                 return date.format(timeFormat + '.SSS');
-    //             }
-    //             case 'second':
-    //                 return date.format('LTS');
-    //             case 'minute':
-    //                 return date.format('LT');
-    //             case 'hour': {
-    //                 let str = date.format('LT');
-    //                 if (!is24Hour()) {
-    //                     // Clean up zeros
-    //                     str = str.replace(/:00/g, '');
-    //                 }
-    //                 return str;
-    //             }
-    //             default:
-    //                 break;
-    //         }
-    //         break;
-    //     }
-    //     case 'week': {
-    //         switch (unit) {
-    //             case 'day':
-    //                 // Day of week
-    //                 return date.format('dd');
-    //             default:
-    //                 break;
-    //         }
-    //         break;
-    //     }
-    //     case 'month': {
-    //         switch (unit) {
-    //             case 'day':
-    //                 // Day of month
-    //                 let dateFormat = 'D';
-    //                 if (options.relativeDay) {
-    //                     const { now = moment() } = options;
-    //                     const calFormat = getCalendarFormat({
-    //                         dateFormat,
-    //                     });
-    //                     return date.calendar(now, calFormat);
-    //                 } else {
-    //                     return date.format(dateFormat);
-    //                 }
-    //             default:
-    //                 break;
-    //         }
-    //         break;
-    //     }
-    //     case 'year': {
-    //         switch (unit) {
-    //             // case 'week':
-    //             //     return date.format('w');
-    //             case 'month':
-    //                 return date.format('MMM');
-    //             default:
-    //                 break;
-    //         }
-    //         break;
-    //     }
-    //     case undefined: {
-    //         switch (unit) {
-    //             case 'year':
-    //                 return date.format(longYearFormat());
-    //             default:
-    //                 break;
-    //         }
-    //         break;
-    //     }
-    // }
-    // throw new Error('Invalid resolution and period combination');
 };
 
 // /**
