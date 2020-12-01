@@ -17,6 +17,7 @@ import {
 import {
     dateUnitsWithDuration,
     snapDate,
+    stepDateLinear,
 } from "./duration";
 
 /**
@@ -117,7 +118,10 @@ export const formatDateDelta = (
     options: {
         now?: Moment,
     } = {},
-): string => {
+): {
+    title: string;
+    unit?: DateUnit;
+} => {
     if (!moment.isMoment(date) || !date.isValid()) {
         throw new Error('Invalid date');
     }
@@ -130,6 +134,9 @@ export const formatDateDelta = (
     const [interval, unit] = dateUnitsWithDuration(duration);
     // date = floorDate(date, interval, unit);
     let previousDate = date.clone().subtract(duration);
+    if (date.isSame(previousDate)) {
+        return { title: '' };
+    }
 
     let changedUnit: DateUnit = 'millisecond';
     let showYear = false;
@@ -152,32 +159,53 @@ export const formatDateDelta = (
     switch (changedUnit) {
         case 'millisecond': {
             let timeFormat = moment.localeData().longDateFormat('LTS');
-            return date.format(timeFormat + '.SSS');
+            return {
+                title: date.format(timeFormat + '.SSS'),
+                unit: changedUnit,
+            };
         }
         case 'second':
-            return date.format('LTS');
+            return {
+                title: date.format('LTS'),
+                unit: changedUnit,
+            };
         case 'minute':
-            return date.format('LT');
+            return {
+                title: date.format('LT'),
+                unit: changedUnit,
+            };
         case 'hour': {
             let str = date.format('LT');
             if (!is24Hour()) {
                 // Clean up zeros
                 str = str.replace(/:00/g, '');
             }
-            return str;
+            return {
+                title: str,
+                unit: changedUnit,
+            };
         }
         case 'day':
             // Day of month
-            return formatDate(date, {
-                unit: 'day',
-                showYear: showYear,
-                now,
-            });
+            return {
+                title: formatDate(date, {
+                    unit: 'day',
+                    showYear: showYear,
+                    now,
+                }),
+                unit: changedUnit,
+            };
         // case 'week':
         case 'month':
-            return date.format('MMM');
+            return {
+                title: date.format('MMM'),
+                unit: changedUnit,
+            };
         case 'year':
-            return date.format(longYearFormat());
+            return {
+                title: date.format(longYearFormat()),
+                unit: changedUnit,
+            };
     }
 
     // switch (changedUnit) {
@@ -256,7 +284,6 @@ export const formatDateDelta = (
     // }
     // throw new Error('Invalid resolution and period combination');
 };
-
 
 // /**
 //  * Creates a localized date string and

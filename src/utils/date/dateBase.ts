@@ -104,7 +104,7 @@ const kExcludeFactors24 = [2, 4, 8];
 const kExcludeFactors30 = [3, 6, 15];
 
 // Factors of 60: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60
-const kExcludeFactors60 = [3, 5, 6, 12, 20];
+const kExcludeFactors60 = [3, 4, 5, 6, 12, 20];
 
 export const kDateUnitExcludedFactors: Partial<DateUnitMapping<number[]>> = {
     second: kExcludeFactors60,

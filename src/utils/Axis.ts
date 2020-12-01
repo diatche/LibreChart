@@ -23,6 +23,7 @@ import {
 } from "../types";
 import Scale, { ITickLocation } from "./Scale";
 import LinearScale from "./LinearScale";
+import { LayoutEngine } from "../internal";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -201,6 +202,10 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         return axes;
     }
 
+    get chartLayout() {
+        return this.layout?.root as LayoutEngine | undefined;
+    }
+
     private _createLayoutSource(
         layoutInfo: IAxisLayoutInfo,
         defaults: IAxisLayoutSourceProps,
@@ -317,9 +322,12 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             });
         }
 
+        this.didChangeLayout();
         this.layout.updateItems(updateOptions);
         return true;
     }
+
+    didChangeLayout() {}
 
     onOptimalThicknessChange(thickness: number, index: number) {
         // Save optimal thicknesses until an
