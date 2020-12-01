@@ -6,10 +6,10 @@ import {
 
 let thisYear = '';
 
-describe('formatDate (en-us)', () => {
+describe('formatDate (ru)', () => {
 
     beforeEach(() => {
-        moment.locale('en-us');
+        moment.locale('ru');
         thisYear = moment().format('YYYY');
     });
 
@@ -23,47 +23,47 @@ describe('formatDate (en-us)', () => {
         it('should format years', () => {
             expect(formatDate(moment('2020-06-04 06:00'), {
                 unit: 'year',
-            })).toBe('2020');
+            })).toBe('2020 г.');
         });
 
         // Months
         it('should format months', () => {
             expect(formatDate(moment('2010-06-04 06:00'), {
                 unit: 'month',
-            })).toBe('Jun 2010');
+            })).toBe('июнь 2010 г.');
         });
 
         it('should format months correctly with this year', () => {
             expect(formatDate(moment(thisYear + '-06-04 06:00'), {
                 unit: 'month',
-            })).toBe('Jun');
+            })).toBe('июнь');
         });
 
         // // Weeks
         // it('should format weeks as days', () => {
         //     expect(formatDate(moment('2019-01-16 06:00'), {
         //         unit: 'week',
-        //     })).toBe('01/16/2019');
+        //     })).toBe('16.01.2019');
         // });
 
         // it('should format weeks correctly with this year', () => {
         //     expect(formatDate(moment('2019-01-16 06:00'), {
         //         unit: 'week',
         //         now: moment('2019-02-06'),
-        //     })).toBe('Jan 16');
+        //     })).toBe('16 Jan');
         // });
 
         // Days
         it('should format days', () => {
             expect(formatDate(moment('2010-06-04 06:00'), {
                 unit: 'day',
-            })).toBe('06/04/2010');
+            })).toBe('04.06.2010');
         });
 
         it('should format days correctly with this year', () => {
             expect(formatDate(moment(thisYear + '-06-04 06:00'), {
                 unit: 'day',
-            })).toBe('Jun 4');
+            })).toBe('4 июня');
         });
 
         it('should format non relative today', () => {
@@ -71,7 +71,7 @@ describe('formatDate (en-us)', () => {
                 unit: 'day',
                 relativeDay: false,
                 now: moment('2011-06-04 07:00'),
-            })).toBe('06/04/2010');
+            })).toBe('04.06.2010');
         });
 
         it('should format relative today', () => {
@@ -79,7 +79,7 @@ describe('formatDate (en-us)', () => {
                 unit: 'day',
                 relativeDay: true,
                 now: moment('2010-06-04 07:00'),
-            })).toBe('Today');
+            })).toBe('Сегодня');
         });
 
         it('should format relative yesterday', () => {
@@ -87,7 +87,7 @@ describe('formatDate (en-us)', () => {
                 unit: 'day',
                 relativeDay: true,
                 now: moment('2010-06-04 07:00'),
-            })).toBe('Yesterday');
+            })).toBe('Вчера');
         });
 
         it('should format relative tomorrow', () => {
@@ -95,32 +95,32 @@ describe('formatDate (en-us)', () => {
                 unit: 'day',
                 relativeDay: true,
                 now: moment('2010-06-04 07:00'),
-            })).toBe('Tomorrow');
+            })).toBe('Завтра');
         });
 
         // Hours
         it('should format morning hours', () => {
             expect(formatDate(moment('2010-06-04 06:00'), {
                 unit: 'hour',
-            })).toBe('06/04/2010, 6 AM');
+            })).toBe('04.06.2010, 6:00');
         });
 
         it('should format morning hours correctly with this year', () => {
             expect(formatDate(moment(thisYear + '-06-04 06:00'), {
                 unit: 'hour',
-            })).toBe('Jun 4, 6 AM');
+            })).toBe('4 июня, 6:00');
         });
 
         it('should format noon', () => {
             expect(formatDate(moment('2010-06-04 12:00'), {
                 unit: 'hour',
-            })).toBe('06/04/2010, 12 PM');
+            })).toBe('04.06.2010, 12:00');
         });
 
         it('should format evening hours', () => {
             expect(formatDate(moment('2010-06-04 17:00'), {
                 unit: 'hour',
-            })).toBe('06/04/2010, 5 PM');
+            })).toBe('04.06.2010, 17:00');
         });
 
         it('should format hours with relative today', () => {
@@ -128,21 +128,21 @@ describe('formatDate (en-us)', () => {
                 unit: 'hour',
                 relativeDay: true,
                 now: moment('2010-06-04 07:00'),
-            })).toBe('Today, 6 AM');
+            })).toBe('Сегодня, 6:00');
         });
 
         // Minutes
         it('should format morning minutes', () => {
             expect(formatDate(moment('2010-06-04 06:15'), {
                 unit: 'minute',
-            })).toBe('06/04/2010, 6:15 AM');
+            })).toBe('04.06.2010, 6:15');
         });
 
         // Seconds
         it('should format seconds', () => {
             expect(formatDate(moment('2010-06-04 06:15:34'), {
                 unit: 'second',
-            })).toBe('06/04/2010, 6:15:34 AM');
+            })).toBe('04.06.2010, 6:15:34');
         });
 
         // Milliseconds
@@ -162,7 +162,7 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'year'),
-            )).toEqual({ title: '2020', unit: 'year' });
+            )).toEqual({ title: '2020 г.', unit: 'year' });
         });
 
         // Months
@@ -171,21 +171,21 @@ describe('formatDate (en-us)', () => {
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'month'),
                 { now: moment('2020-10-01') },
-            )).toEqual({ title: 'Jun', unit: 'month' });
+            )).toEqual({ title: 'июнь', unit: 'month' });
         });
 
         it('should format date delta with 1 month over this years boundary', () => {
             expect(formatDateDelta(
                 moment('2020-01-01 06:00'),
                 moment.duration(1, 'month'),
-            )).toEqual({ title: '2020', unit: 'year' });
+            )).toEqual({ title: '2020 г.', unit: 'year' });
         });
 
         it('should format date delta with 1 month over last years boundary', () => {
             expect(formatDateDelta(
                 moment('2019-01-01 06:00'),
                 moment.duration(1, 'month'),
-            )).toEqual({ title: '2019', unit: 'year' });
+            )).toEqual({ title: '2019 г.', unit: 'year' });
         });
 
         // Days of the month
@@ -193,21 +193,21 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'day'),
-            )).toEqual({ title: 'Jun 4', unit: 'day' });
+            )).toEqual({ title: '4 июня', unit: 'day' });
         });
 
         it('should format date delta with 1 day over month boundary', () => {
             expect(formatDateDelta(
                 moment('2020-06-01 06:00'),
                 moment.duration(1, 'day'),
-            )).toEqual({ title: 'Jun', unit: 'month' });
+            )).toEqual({ title: 'июнь', unit: 'month' });
         });
 
         it('should format date delta with 2 day over month boundary', () => {
             expect(formatDateDelta(
                 moment('2020-06-01 06:00'),
                 moment.duration(2, 'day'),
-            )).toEqual({ title: 'Jun 1', unit: 'month' });
+            )).toEqual({ title: '1 июня', unit: 'month' });
         });
 
         // Week
@@ -216,7 +216,7 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2019-01-13 06:00'), // Sunday
                 moment.duration(1, 'week'),
-            )).toEqual({ title: 'Jan 13', unit: 'day' });
+            )).toEqual({ title: '13 янв.', unit: 'day' });
         });
 
         // Days of the week
@@ -225,7 +225,7 @@ describe('formatDate (en-us)', () => {
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'day'),
                 { weekdays: true },
-            )).toEqual({ title: 'Th', unit: 'day' });
+            )).toEqual({ title: 'чт', unit: 'day' });
         });
 
         // Hours
@@ -233,21 +233,21 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'hour'),
-            )).toEqual({ title: '6 AM', unit: 'hour' });
+            )).toEqual({ title: '6:00', unit: 'hour' });
         });
 
         it('should format date delta with noon', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 12:00'),
                 moment.duration(1, 'hour'),
-            )).toEqual({ title: '12 PM', unit: 'hour' });
+            )).toEqual({ title: '12:00', unit: 'hour' });
         });
 
         it('should format date delta with evening hours', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 17:00'),
                 moment.duration(1, 'hour'),
-            )).toEqual({ title: '5 PM', unit: 'hour' });
+            )).toEqual({ title: '17:00', unit: 'hour' });
         });
 
         // Minutes
@@ -255,21 +255,21 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:15'),
                 moment.duration(1, 'minute'),
-            )).toEqual({ title: '6:15 AM', unit: 'minute' });
+            )).toEqual({ title: '6:15', unit: 'minute' });
         });
 
         it('should format date delta with noon', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 12:00'),
                 moment.duration(1, 'minute'),
-            )).toEqual({ title: '12 PM', unit: 'hour' });
+            )).toEqual({ title: '12:00', unit: 'hour' });
         });
 
         it('should format date delta with evening minutes', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 17:45'),
                 moment.duration(1, 'minute'),
-            )).toEqual({ title: '5:45 PM', unit: 'minute' });
+            )).toEqual({ title: '17:45', unit: 'minute' });
         });
 
         // Seconds
@@ -277,7 +277,7 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:15:34'),
                 moment.duration(1, 'second'),
-            )).toEqual({ title: '6:15:34 AM', unit: 'second' });
+            )).toEqual({ title: '6:15:34', unit: 'second' });
         });
 
         // Milliseconds
