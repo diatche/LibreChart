@@ -1,5 +1,5 @@
 import { Animated } from "react-native";
-import Evergrid, {
+import {
     AxisType,
     FlatLayoutSource,
     FlatLayoutSourceProps,
@@ -9,13 +9,11 @@ import Evergrid, {
     isAxisHorizontal,
     isAxisType,
     AxisTypeMapping,
-    IPoint,
 } from "evergrid";
 import {
     kAxisReuseIDs,
     kAxisStyleLightDefaults,
 } from '../const';
-import { Chart } from "../internal";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import {
@@ -283,12 +281,12 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     //     return value as any;
     // }
 
-    update(view: Evergrid, updateOptions: IItemUpdateManyOptions): boolean {
+    update(updateOptions: IItemUpdateManyOptions): boolean {
         if (!this.layout) {
             return false;
         }
 
-        let axisLengthInfo = this._getLengthInfo(view);
+        let axisLengthInfo = this._getLengthInfo();
         if (!axisLengthInfo) {
             // No changes
             return false;
@@ -301,7 +299,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         let negHalfMajorInterval = this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber();
         this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
 
-        this.layout.updateItems(view, updateOptions);
+        this.layout.updateItems(updateOptions);
         return true;
     }
 
@@ -375,25 +373,20 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         }
     }
 
-    getVisibleLocationRange(view: Evergrid): [number, number] {
-        let r = this.layout!.getVisibleLocationRange(view);
+    getVisibleLocationRange(): [number, number] {
+        let r = this.layout!.getVisibleLocationRange();
         return this.isHorizontal
             ? [r[0].x, r[1].x]
             : [r[0].y, r[1].y];
     }
 
-    // getVisibleValueRange(view: Evergrid): [T, T] {
-    //     return this.getVisibleLocationRange(view)
-    //         .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
-    // }
-
-    private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo | undefined {
+    private _getLengthInfo(): IAxisLengthLayoutBaseInfo | undefined {
         if (!this.layout) {
             return undefined;
         }
-        let viewScaleVector = this.layout.getScale(view);
+        let viewScaleVector = this.layout.getScale();
         let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
-        let visibleRange = this.getVisibleLocationRange(view);
+        let visibleRange = this.getVisibleLocationRange();
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
@@ -494,14 +487,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
 
     /**
      * Returns `true` if the axis has a negative scale.
-     * @param chart 
      */
-    isInverted(chart: Chart) {
-        let view = chart.innerView;
-        if (!view) {
-            return false;
-        }
-        let scale = this.layout?.getScale(view) || zeroPoint();
+    isInverted() {
+        let scale = this.layout?.getScale() || zeroPoint();
         return (this.isHorizontal ? scale.x : scale.y) < 0;
     }
 
