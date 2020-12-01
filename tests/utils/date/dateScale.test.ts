@@ -25,7 +25,9 @@ describe('DateScale', () => {
 
     describe('compareValues', () => {
         it('should return the correct order', () => {
-            let scale = new DateScale();
+            let scale = new DateScale({
+                baseUnit: 'millisecond',
+            });
             expect(scale.compareValues(moment.unix(1), moment.unix(2))).toBe(-1000);
             expect(scale.compareValues(moment.unix(1), moment.unix(1))).toBe(0);
             expect(scale.compareValues(moment.unix(2), moment.unix(1))).toBe(1000);

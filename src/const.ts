@@ -34,6 +34,9 @@ export const kAxisStyleBaseDefaults: IAxisStyleInput = {
 
     labelFontSize: 12,
     labelMargin: 3,
+    labelFontWeight: 'normal',
+    majorLabelFontWeight: 'bold',
+    minorLabelFontWeight: 'normal',
 }
 
 export const kAxisStyleLightDefaults = {
@@ -48,7 +51,9 @@ export const kAxisStyleLightDefaults = {
 
     minorGridLineColor: Colors.grey100,
 
-    labelColor: Colors.grey500,
+    labelColor: Colors.grey600,
+    majorLabelColor: Colors.grey800,
+    minorLabelColor: Colors.grey400,
 } as IAxisStyle;
 
 export const kAxisStyleDarkDefaults = {
@@ -63,7 +68,9 @@ export const kAxisStyleDarkDefaults = {
 
     minorGridLineColor: Colors.grey900,
 
-    labelColor: Colors.grey500,
+    labelColor: Colors.grey400,
+    majorLabelColor: Colors.grey200,
+    minorLabelColor: Colors.grey600,
 } as IAxisStyle;
 
 export const kChartGridStyleBaseDefaults: IChartGridStyleInput = {

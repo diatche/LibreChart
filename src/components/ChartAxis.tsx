@@ -1,4 +1,3 @@
-import Decimal from 'decimal.js';
 import {
     AxisType,
     AxisTypeMapping,
@@ -13,7 +12,7 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { IAxisStyle } from '../types';
+import { IAxisOptions, IAxisStyle, ITickLabel } from '../types';
 import { ITickLocation } from '../utils/Scale';
 
 export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
@@ -25,7 +24,7 @@ export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
     /** Return a label for the tick. */
-    getTickLabel: (tick: ITickLocation<T>) => string;
+    getTickLabel: Required<IAxisOptions<T>>['getTickLabel'];
     /** The maximum label length in the direction of the axis */
     labelLength: number;
 }
@@ -34,17 +33,21 @@ interface ChartAxisState {}
 
 export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>, ChartAxisState> {
 
-    getTickLabel(tick: ITickLocation<T>): string {
+    getTickLabel(tick: ITickLocation<T>): ITickLabel {
         // TODO: cache labels until prop change
         try {
-            return this.props.getTickLabel(tick);
+            let label = this.props.getTickLabel(tick);
+            if (typeof label === 'string') {
+                label = { title: label };
+            }
+            return label;
         } catch (error) {
             console.error('Uncaught error while getting tick label: ' + error.message);
-            return '';
+            return { title: '' };
         }
     }
 
-    getTickLabels(): string[] {
+    getTickLabels(): ITickLabel[] {
         // TODO: cache labels until prop change
         return this.props.ticks.map(x => this.getTickLabel(x));
     }
@@ -263,8 +266,8 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
                     key={i}
                     style={labelInnerContainerStyle}
                 >
-                    <Text style={labelStyle}>
-                        {labels[i]}
+                    <Text style={[labelStyle, labels[i].style]}>
+                        {labels[i].title}
                     </Text>
                 </View>
             ));

@@ -3,7 +3,6 @@ import {
     IItemCustomLayout,
     IPoint,
     isPointInRange,
-    LayoutSource,
     LayoutSourceProps,
 } from 'evergrid';
 import { kPointReuseID } from '../const';

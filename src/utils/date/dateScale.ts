@@ -72,7 +72,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
         let {
             baseUnit = 'day',
-            minUnitDuration = 0.5,
+            minUnitDuration = 0.6,
             originDate,
         } = options || {};
         if (!isDateUnit(baseUnit)) {
@@ -220,11 +220,9 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         let unitLinearConstraints: ITickScaleConstraints<Decimal> = {
             expand: constraints.expand,
         };
-        for (let i = kDateUnitsLength - 1; i >= minUnitAscIndex; i--) {
+        for (let i = minUnitAscIndex; i < kDateUnitsLength; i++) {
             // Try to get tick intervals with this unit
             let unit = kDateUnitsAsc[i];
-            // We first snap the number to an integer, then
-            // floor, because some intervals are non uniform.
             let minUnitDuration = minUnitDurations[unit];
             if (minUnitDuration < this.minUnitDuration) {
                 continue;

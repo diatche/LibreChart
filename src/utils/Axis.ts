@@ -1,5 +1,5 @@
 import { Animated } from "react-native";
-import Evergrid, {
+import {
     AxisType,
     FlatLayoutSource,
     FlatLayoutSourceProps,
@@ -9,13 +9,11 @@ import Evergrid, {
     isAxisHorizontal,
     isAxisType,
     AxisTypeMapping,
-    IPoint,
 } from "evergrid";
 import {
     kAxisReuseIDs,
     kAxisStyleLightDefaults,
 } from '../const';
-import { Chart } from "../internal";
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import {
@@ -25,6 +23,7 @@ import {
 } from "../types";
 import Scale, { ITickLocation } from "./Scale";
 import LinearScale from "./LinearScale";
+import { LayoutEngine } from "../internal";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -48,6 +47,13 @@ interface IAxisLengthLayoutBaseInfo {
 
     /** The view scale with which the layout was calculated. */
     viewScale: number;
+
+    /**
+     * The distance (in content coordinates) to offset the
+     * viewport to preserve the current visible content
+     * after update. This is applied automatically.
+     **/
+    recenteringOffset: number;
 }
 
 interface IAxisLengthLayoutInfo extends IAxisLengthLayoutBaseInfo {
@@ -125,6 +131,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             majorCount: 0,
             minorCount: 0,
             containerLength: 0,
+            recenteringOffset: 0,
             containerLength$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
             visibleContainerIndexRange: [0, 0],
@@ -193,6 +200,10 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             axes[axis.axisType] = axis;
         }
         return axes;
+    }
+
+    get chartLayout() {
+        return this.layout?.root as LayoutEngine | undefined;
     }
 
     private _createLayoutSource(
@@ -283,12 +294,12 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     //     return value as any;
     // }
 
-    update(view: Evergrid, updateOptions: IItemUpdateManyOptions): boolean {
+    update(updateOptions: IItemUpdateManyOptions): boolean {
         if (!this.layout) {
             return false;
         }
 
-        let axisLengthInfo = this._getLengthInfo(view);
+        let axisLengthInfo = this._getLengthInfo();
         if (!axisLengthInfo) {
             // No changes
             return false;
@@ -301,9 +312,22 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         let negHalfMajorInterval = this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber();
         this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
 
-        this.layout.updateItems(view, updateOptions);
+        if (this.layoutInfo.recenteringOffset) {
+            // FIXME: We are assuming that the axis controls
+            // the chart, but this may be an independent axis.
+            this.layout.root.scrollBy({
+                offset: this.isHorizontal
+                    ? { x: this.layoutInfo.recenteringOffset }
+                    : { y: this.layoutInfo.recenteringOffset },
+            });
+        }
+
+        this.didChangeLayout();
+        this.layout.updateItems(updateOptions);
         return true;
     }
+
+    didChangeLayout() {}
 
     onOptimalThicknessChange(thickness: number, index: number) {
         // Save optimal thicknesses until an
@@ -375,25 +399,20 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         }
     }
 
-    getVisibleLocationRange(view: Evergrid): [number, number] {
-        let r = this.layout!.getVisibleLocationRange(view);
+    getVisibleLocationRange(): [number, number] {
+        let r = this.layout!.getVisibleLocationRange();
         return this.isHorizontal
             ? [r[0].x, r[1].x]
             : [r[0].y, r[1].y];
     }
 
-    // getVisibleValueRange(view: Evergrid): [T, T] {
-    //     return this.getVisibleLocationRange(view)
-    //         .map(x => this.scale.valueAtLocation(new Decimal(x))) as [T, T];
-    // }
-
-    private _getLengthInfo(view: Evergrid): IAxisLengthLayoutBaseInfo | undefined {
+    private _getLengthInfo(): IAxisLengthLayoutBaseInfo | undefined {
         if (!this.layout) {
             return undefined;
         }
-        let viewScaleVector = this.layout.getScale(view);
+        let viewScaleVector = this.layout.getScale();
         let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
-        let visibleRange = this.getVisibleLocationRange(view);
+        let visibleRange = this.getVisibleLocationRange();
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
@@ -410,7 +429,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
 
         let startLocation = new Decimal(visibleRange[0]);
         let endLocation = new Decimal(visibleRange[1]);
+        let midLocation = startLocation.add(endLocation).div(2);
         let startValue = this.scale.valueAtLocation(startLocation);
+        let midValue = this.scale.valueAtLocation(midLocation);
         let endValue = this.scale.valueAtLocation(endLocation);
 
         // Update tick scale
@@ -459,11 +480,21 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         );
         let containerLength = locationRange[1].sub(locationRange[0]).toNumber();
 
+        // Check if recentering is needed
+        let newMidLocation = this.scale.locationOfValue(midValue);
+        let recenteringOffset = midLocation
+            .sub(newMidLocation)
+            .div(viewScale)
+            .round()
+            .mul(viewScale)
+            .toNumber();
+
         return {
             majorCount,
             minorCount,
             containerLength,
             viewScale,
+            recenteringOffset,
         };
     }
 
@@ -494,14 +525,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
 
     /**
      * Returns `true` if the axis has a negative scale.
-     * @param chart 
      */
-    isInverted(chart: Chart) {
-        let view = chart.innerView;
-        if (!view) {
-            return false;
-        }
-        let scale = this.layout?.getScale(view) || zeroPoint();
+    isInverted() {
+        let scale = this.layout?.getScale() || zeroPoint();
         return (this.isHorizontal ? scale.x : scale.y) < 0;
     }
 

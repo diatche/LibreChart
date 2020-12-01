@@ -5,7 +5,7 @@ import {
     GridLayoutSourceProps,
     LayoutSource,
 } from "evergrid";
-import { ColorValue } from "react-native";
+import { ColorValue, TextStyle } from "react-native";
 import Scale, {
     ITickLocation,
 } from "./utils/Scale";
@@ -13,6 +13,11 @@ import Scale, {
 export interface IDataPoint<X, Y> {
     x: X,
     y: Y,
+}
+
+export interface ITickLabel {
+    title: string;
+    style?: TextStyle;
 }
 
 export interface IDecimalPoint {
@@ -35,6 +40,9 @@ export interface IAxisLayoutStyle {
 
     labelFontSize?: number;
     labelMargin?: number;
+    labelFontWeight?: TextStyle['fontWeight'];
+    majorLabelFontWeight?: TextStyle['fontWeight'];
+    minorLabelFontWeight?: TextStyle['fontWeight'];
 }
 
 export interface IAxisStyleInput extends IAxisLayoutStyle {
@@ -46,6 +54,8 @@ export interface IAxisStyleInput extends IAxisLayoutStyle {
     majorTickColor?: ColorValue;
 
     labelColor?: ColorValue;
+    majorLabelColor?: ColorValue;
+    minorLabelColor?: ColorValue;
 }
 
 export interface IAxisStyle extends Required<IAxisStyleInput> {}
@@ -69,7 +79,7 @@ export interface IAxisOptions<T = any, D = T> {
      **/
     hidden?: boolean;
 
-    getTickLabel?: (tick: ITickLocation<T>) => string;
+    getTickLabel?: (tick: ITickLocation<T>) => string | ITickLabel;
 
     /**
      * Customises the tick location.

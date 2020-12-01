@@ -1,4 +1,4 @@
-import Evergrid, {
+import {
     AxisType,
     AxisTypeMapping,
     axisTypeMap,
@@ -10,13 +10,15 @@ import Evergrid, {
     isAxisHorizontal,
     FlatLayoutSource,
     LayoutSourceProps,
+    EvergridLayout,
+    EvergridLayoutCallbacks,
+    EvergridLayoutProps,
 } from "evergrid";
 import DataSource from "./DataSource";
 import {
     kChartGridStyleLightDefaults,
     kGridReuseID,
 } from '../const';
-import { Chart } from "../internal";
 import debounce from 'lodash.debounce';
 import {
     IChartGrid,
@@ -26,14 +28,14 @@ import Axis, { AxisManyInput } from "./Axis";
 
 const kGridUpdateDebounceInterval = 100;
 
-export interface LayoutEngineProps {
+export interface LayoutEngineProps extends EvergridLayoutCallbacks, EvergridLayoutProps {
     dataSources?: DataSource[];
     grid?: IChartGridInput;
     axes?: AxisManyInput;
 }
 
-export default class LayoutEngine { 
-    dataSources: DataSource[] = [];
+export default class LayoutEngine extends EvergridLayout { 
+    dataSources: DataSource[];
 
     /** Axis layout info. */
     readonly axes: Partial<AxisTypeMapping<Axis>>;
@@ -42,9 +44,21 @@ export default class LayoutEngine {
     readonly grid: IChartGrid;
 
     constructor(props?: LayoutEngineProps) {
+        super(props);
+        if (!props?.anchor) {
+            this.anchor$.setValue({ x: 0.5, y: 0.5 });
+        }
         this.dataSources = props?.dataSources || [];
         this.axes = this._validatedAxes(props);
         this.grid = this._validatedGrid(this.axes, props);
+        this.setLayoutSources(props?.layoutSources || []);
+    }
+
+    setLayoutSources(layoutSources: LayoutSource[]) {
+        super.setLayoutSources([
+            ...this._getChartLayoutSources(),
+            ...layoutSources,
+        ]);
     }
 
     getHorizontalGridAxis(): Axis | undefined {
@@ -60,17 +74,25 @@ export default class LayoutEngine {
         }
         return this.axes[this.grid.verticalAxis];
     }
-    
-    configure(chart: Chart) {
-        this.update(chart);
+
+    configure() {
+        this.updateChart();
     }
 
-    unconfigure(chart: Chart) {
+    unconfigure() {}
 
+    didChangeViewportSize() {
+        super.didChangeViewportSize();
+        this.scheduleChartUpdate();
     }
 
-    scheduleUpdate(chart: Chart) {
-        this._debouncedUpdate(chart);
+    didChangeScale() {
+        super.didChangeScale();
+        this.scheduleChartUpdate();
+    }
+
+    scheduleChartUpdate() {
+        this._debouncedChartUpdate();
 
         // Also schedule thickness updates
         // to reduce jank.
@@ -79,21 +101,12 @@ export default class LayoutEngine {
         }
     }
     
-    private _debouncedUpdate = debounce(
-        (chart: Chart) => this.update(chart),
+    private _debouncedChartUpdate = debounce(
+        () => this.updateChart(),
         kGridUpdateDebounceInterval,
     );
 
-    update(chart: Chart) {
-        let view = chart.innerView;
-        if (!view) {
-            return;
-        }
-
-        this._update(view);
-    }
-
-    private _update(view: Evergrid) {
+    updateChart() {
         const updateOptions: IItemUpdateManyOptions = {
             visible: true,
             queued: true,
@@ -107,7 +120,6 @@ export default class LayoutEngine {
         let anyChanges = false;
         let changes = axisTypeMap(axisType => {
             let changed = this.axes[axisType]?.update(
-                view,
                 updateOptions,
             );
             if (changed) {
@@ -120,7 +132,7 @@ export default class LayoutEngine {
         }
 
         for (let dataSource of this.dataSources) {
-            dataSource.layout.updateItems(view, updateOptions);
+            dataSource.layout.updateItems(updateOptions);
         }
         
         if (
@@ -129,23 +141,23 @@ export default class LayoutEngine {
                 || this.grid.verticalAxis && changes[this.grid.verticalAxis]
             )
         ) {
-            this.grid.layout.updateItems(view, updateOptions);
+            this.grid.layout.updateItems(updateOptions);
         }
     }
 
-    getLayoutSources(): LayoutSource[] {
+    private _getChartLayoutSources(): LayoutSource[] {
         // The order of layout sources determines
         // their z-order.
         return [
             // Grid in back by default
-            this.grid.layout,
+            this.grid?.layout,
             // Data above grid and below axes
-            ...this.dataSources.map(d => d.layout),
+            ...(this.dataSources || []).map(d => d.layout),
             // Horizontal axes below vertical axes
-            this.axes.bottomAxis?.layout,
-            this.axes.topAxis?.layout,
-            this.axes.rightAxis?.layout,
-            this.axes.leftAxis?.layout,
+            this.axes?.bottomAxis?.layout,
+            this.axes?.topAxis?.layout,
+            this.axes?.rightAxis?.layout,
+            this.axes?.leftAxis?.layout,
         ].filter(s => !!s) as LayoutSource[];
     }
 
@@ -207,9 +219,9 @@ export default class LayoutEngine {
                     x: xAxis.layoutInfo.containerLength$,
                     y: xAxis.layoutInfo.containerLength$,
                 },
-                getItemViewLayout: (i, view) => ({
+                getItemViewLayout: () => ({
                     offset: { y: 0 },
-                    size: { y: view.containerSize$.y }
+                    size: { y: this.containerSize$.y }
                 }),
                 horizontal: true,
                 stickyEdge: 'bottom',
@@ -222,9 +234,9 @@ export default class LayoutEngine {
                     x: yAxis.layoutInfo.containerLength$,
                     y: yAxis.layoutInfo.containerLength$,
                 },
-                getItemViewLayout: (i, view) => ({
+                getItemViewLayout: () => ({
                     offset: { x: 0 },
-                    size: { x: view.containerSize$.x }
+                    size: { x: this.containerSize$.x }
                 }),
                 stickyEdge: 'left',
                 itemOrigin: { x: 0, y: 0 },

@@ -1,7 +1,6 @@
 import React from 'react';
 import Evergrid, {
     EvergridProps,
-    LayoutSource,
     IItem,
     isAxisType,
 } from 'evergrid'
@@ -12,7 +11,6 @@ import {
 } from '../const';
 import {
     LayoutEngine,
-    LayoutEngineProps
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
@@ -20,8 +18,8 @@ import ChartAxis from './ChartAxis';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
-export interface ChartProps extends ForwardEvergridProps, LayoutEngineProps {
-
+export interface ChartProps extends ForwardEvergridProps {
+    layout: LayoutEngine;
 }
 
 interface ChartState {}
@@ -32,7 +30,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
     constructor(props: ChartProps) {
         super(props);
-        this.layout = new LayoutEngine(props);
+        this.layout = props.layout;
 
         // TODO: validate property changes
         // TODO: prevent changing axes on the fly
@@ -43,34 +41,20 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     componentDidMount() {
-        this.layout.configure(this);
+        this.layout.configure();
     }
 
     componentWillUnmount() {
-        this.layout.unconfigure(this);
-    }
-
-    getLayoutSources(): LayoutSource[] {
-        return [
-            ...this.layout.getLayoutSources(),
-            ...this.props.layoutSources || [],
-        ];
-    }
-
-    updateLayout() {
-        this.layout.scheduleUpdate(this);
+        this.layout.unconfigure();
     }
 
     render() {
         return (
             <Evergrid
-                anchor={{ x: 0.5, y: 0.5 }}
                 {...this.props}
                 ref={this.innerRef}
-                layoutSources={this.getLayoutSources()}
                 renderItem={(item: IItem<any>) => this.renderItem(item)}
-                onViewportSizeChanged={() => this.updateLayout()}
-                onScaleChanged={() => this.updateLayout()}
+                layout={this.layout}
             />
         );
     }
@@ -101,7 +85,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
         let range = axis.getContainerRangeAtIndex(index);
         let ticks = axis.scale.getTicksInLocationRange(range[0], range[1]);
-        let isInverted = axis.isInverted(this);
+        let isInverted = axis.isInverted();
         let labelLength = axis.layoutInfo.containerLength * axis.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
         return (
             <ChartAxis
