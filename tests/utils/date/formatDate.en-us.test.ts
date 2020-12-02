@@ -5,6 +5,7 @@ import {
 } from '../../../src/utils/date/formatDate';
 
 let thisYear = '';
+let year2020Date = moment('2020-01-10');
 
 describe('formatDate (en-us)', () => {
 
@@ -162,6 +163,7 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'year'),
+                { now: year2020Date },
             )).toEqual({ title: '2020', unit: 'year' });
         });
 
@@ -170,7 +172,7 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'month'),
-                { now: moment('2020-10-01') },
+                { now: year2020Date },
             )).toEqual({ title: 'Jun', unit: 'month' });
         });
 
@@ -178,6 +180,7 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2020-01-01 06:00'),
                 moment.duration(1, 'month'),
+                { now: year2020Date },
             )).toEqual({ title: '2020', unit: 'year' });
         });
 
@@ -185,29 +188,65 @@ describe('formatDate (en-us)', () => {
             expect(formatDateDelta(
                 moment('2019-01-01 06:00'),
                 moment.duration(1, 'month'),
+                { now: year2020Date },
             )).toEqual({ title: '2019', unit: 'year' });
         });
 
         // Days of the month
-        it('should format date delta with days of the month', () => {
+        it('should format date delta with days of the month this year', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:00'),
                 moment.duration(1, 'day'),
+                { now: year2020Date },
             )).toEqual({ title: 'Jun 4', unit: 'day' });
         });
 
-        it('should format date delta with 1 day over month boundary', () => {
+        it('should format date delta with 1 day over month boundary this year', () => {
             expect(formatDateDelta(
                 moment('2020-06-01 06:00'),
                 moment.duration(1, 'day'),
+                { now: year2020Date },
             )).toEqual({ title: 'Jun', unit: 'month' });
         });
 
-        it('should format date delta with 2 day over month boundary', () => {
+        it('should format date delta with days of the month last year', () => {
             expect(formatDateDelta(
-                moment('2020-06-01 06:00'),
+                moment('2019-06-04 06:00'),
+                moment.duration(1, 'day'),
+                { now: year2020Date },
+            )).toEqual({ title: 'Jun 4', unit: 'day' });
+        });
+
+        it('should format date delta with 1 day over month boundary last year', () => {
+            expect(formatDateDelta(
+                moment('2019-06-01 06:00'),
+                moment.duration(1, 'day'),
+                { now: year2020Date },
+            )).toEqual({ title: 'Jun', unit: 'month' });
+        });
+
+        it('should format date delta with 2 day over month boundary this year', () => {
+            expect(formatDateDelta(
+                moment('2020-06-02 06:00'),
                 moment.duration(2, 'day'),
-            )).toEqual({ title: 'Jun 1', unit: 'month' });
+                { now: year2020Date },
+            )).toEqual({ title: 'Jun 2', unit: 'month' });
+        });
+
+        it('should format date delta with 2 day over this years boundary', () => {
+            expect(formatDateDelta(
+                moment('2020-01-02 06:00'),
+                moment.duration(2, 'day'),
+                { now: year2020Date },
+            )).toEqual({ title: 'Jan 2, 2020', unit: 'year' });
+        });
+
+        it('should format date delta with 2 day over last years boundary', () => {
+            expect(formatDateDelta(
+                moment('2019-01-02 06:00'),
+                moment.duration(2, 'day'),
+                { now: year2020Date },
+            )).toEqual({ title: 'Jan 2, 2019', unit: 'year' });
         });
 
         // Week
@@ -236,7 +275,7 @@ describe('formatDate (en-us)', () => {
             )).toEqual({ title: '6 AM', unit: 'hour' });
         });
 
-        it('should format date delta with noon', () => {
+        it('should format date delta with noon hours', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 12:00'),
                 moment.duration(1, 'hour'),
@@ -258,7 +297,7 @@ describe('formatDate (en-us)', () => {
             )).toEqual({ title: '6:15 AM', unit: 'minute' });
         });
 
-        it('should format date delta with noon', () => {
+        it('should format date delta with noon minutes', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 12:00'),
                 moment.duration(1, 'minute'),
@@ -281,7 +320,7 @@ describe('formatDate (en-us)', () => {
         });
 
         // Milliseconds
-        it('should format date delta with seconds', () => {
+        it('should format date delta with milliseconds', () => {
             expect(formatDateDelta(
                 moment('2020-06-04 06:15:34.567'),
                 moment.duration(1, 'millisecond'),

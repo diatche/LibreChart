@@ -35,10 +35,12 @@ export const formatDate = (
         now?: Moment;
         relativeDay?: boolean;
         showYear?: boolean;
+        style?: 'compact' | 'long';
     },
 ): string => {
     const {
         relativeDay = false,
+        style = 'compact',
         showYear,
         now = moment(),
     } = options;
@@ -56,7 +58,7 @@ export const formatDate = (
     const canRemoveYear = typeof showYear !== 'undefined'
         ? !showYear
         : isCurrentYear(cleanDate, now);
-    const dateFormat = canRemoveYear ? 'll' : 'L';
+    const dateFormat = style === 'long' || canRemoveYear ? 'll' : 'L';
 
     const withoutCurrentYear = (dateFormat: string, timeFormat?: string) => {
         let cleanTimeFormat = timeFormat ? ', ' + timeFormat : '';
@@ -72,6 +74,7 @@ export const formatDate = (
             str = cleanDate.format(format);
         }
         if (canRemoveYear) {
+            // TODO: Remove year from format instead
             let yearStr = cleanDate.format(longYearFormat());
             str = str.replace(', ' + yearStr, '');
             str = str.replace(' ' + yearStr, '');
@@ -138,7 +141,6 @@ export const formatDateDelta = (
 
     let changedUnit: DateUnit = 'millisecond';
     let displayUnit: DateUnit = 'millisecond';
-    let showYear = false;
 
     for (let i = 0; i < kDateUnitsLength; i++) {
         let dateUnit = kDateUnitsDes[i];
@@ -149,10 +151,10 @@ export const formatDateDelta = (
             break;
         }
     }
+    let showYear = changedUnit === 'year';
+
     displayUnit = changedUnit;
     if (unit === 'day' && interval !== 1) {
-        showYear = changedUnit === 'year' && !isCurrentYear(date, now);
-
         // Month edges are non-uniform
         displayUnit = 'day';
     }
@@ -199,6 +201,7 @@ export const formatDateDelta = (
                         unit: 'day',
                         showYear,
                         now,
+                        style: 'long',
                     }),
                     unit: changedUnit,
                 };
