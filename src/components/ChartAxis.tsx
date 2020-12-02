@@ -1,7 +1,3 @@
-import {
-    AxisType,
-    AxisTypeMapping,
-} from 'evergrid';
 import React from 'react';
 import {
     LayoutChangeEvent,
@@ -12,7 +8,13 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { IAxisOptions, IAxisStyle, ITickLabel } from '../types';
+import { ITickLabel } from '../types';
+import {
+    AxisType,
+    AxisTypeMapping,
+    IAxisOptions,
+    IAxisStyle,
+} from '../utils/axisTypes';
 import { ITickLocation } from '../utils/Scale';
 
 export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {

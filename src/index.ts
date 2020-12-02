@@ -8,6 +8,10 @@ export * from './utils/Scale';
 export { default as LinearScale } from './utils/LinearScale';
 export * from './utils/LinearScale';
 
+export * from './utils/axisTypes';
+export * from './utils/axisConst';
+export * from './utils/axisUtil';
+
 export { default as Axis } from './utils/Axis';
 export * from './utils/Axis';
 

@@ -1,13 +1,7 @@
 import {
-    AxisType,
-    AxisTypeMapping,
-    axisTypeMap,
     GridLayoutSource,
     IItemUpdateManyOptions,
     LayoutSource,
-    kAllAxisTypes,
-    isAxisType,
-    isAxisHorizontal,
     FlatLayoutSource,
     LayoutSourceProps,
     EvergridLayout,
@@ -26,6 +20,16 @@ import {
 } from "../types";
 import Axis, { AxisManyInput } from "./Axis";
 import { InteractionManager } from "react-native";
+import {
+    axisTypeMap,
+    isAxisHorizontal,
+    isAxisType,
+} from "./axisUtil";
+import {
+    AxisType,
+    AxisTypeMapping,
+} from "./axisTypes";
+import { kAllAxisTypes } from "./axisConst";
 
 const kGridUpdateDebounceInterval = 100;
 

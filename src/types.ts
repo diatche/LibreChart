@@ -1,14 +1,10 @@
 import Decimal from "decimal.js";
 import {
-    AxisType,
-    FlatLayoutSourceProps,
     GridLayoutSourceProps,
     LayoutSource,
 } from "evergrid";
 import { ColorValue, TextStyle } from "react-native";
-import Scale, {
-    ITickLocation,
-} from "./utils/Scale";
+import { AxisType } from "./utils/axisTypes";
 
 export interface IDataPoint<X, Y> {
     x: X,
@@ -25,73 +21,6 @@ export interface IDecimalPoint {
     y: Decimal;
 }
 
-export interface IAxisLayoutStyle {
-    majorTickLength?: number;
-
-    majorGridLineDistanceMin?: number;
-
-    minorGridLineDistanceMin?: number;
-
-    /**
-     * Maximum number of minor tick intervals
-     * to place between major tick intervals.
-     **/
-    minorIntervalCountMax?: number;
-
-    labelFontSize?: number;
-    labelMargin?: number;
-    labelFontWeight?: TextStyle['fontWeight'];
-    majorLabelFontWeight?: TextStyle['fontWeight'];
-    minorLabelFontWeight?: TextStyle['fontWeight'];
-}
-
-export interface IAxisStyleInput extends IAxisLayoutStyle {
-    axisBackgroundColor?: ColorValue;
-    axisLineColor?: ColorValue;
-    axisLineThickness?: number;
-
-    majorTickThickness?: number;
-    majorTickColor?: ColorValue;
-
-    labelColor?: ColorValue;
-    majorLabelColor?: ColorValue;
-    minorLabelColor?: ColorValue;
-}
-
-export interface IAxisStyle extends Required<IAxisStyleInput> {}
-
-export interface IChartGridStyleInput {
-    majorGridLineThickness?: number;
-    majorGridLineColor?: ColorValue;
-
-    minorGridLineThickness?: number;
-    minorGridLineColor?: ColorValue;
-}
-
-export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
-
-export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
-
-export interface IAxisOptions<T = any, D = T> {
-    /**
-     * Toggles axis visiblity.
-     * Axis is visible by default.
-     **/
-    hidden?: boolean;
-
-    getTickLabel?: (tick: ITickLocation<T>) => string | ITickLabel;
-
-    /**
-     * Customises the tick location.
-     * Be default, linear ticks are used.
-     */
-    scale?: Scale<T, D>;
-
-    layoutSourceDefaults?: IAxisLayoutSourceProps;
-
-    style?: IAxisStyleInput;
-}
-
 export interface IChartGridInput {
     /**
      * Toggles grid visiblity.
@@ -104,6 +33,16 @@ export interface IChartGridInput {
 
     style?: IChartGridStyle;
 }
+
+export interface IChartGridStyleInput {
+    majorGridLineThickness?: number;
+    majorGridLineColor?: ColorValue;
+
+    minorGridLineThickness?: number;
+    minorGridLineColor?: ColorValue;
+}
+
+export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
 

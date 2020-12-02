@@ -1,8 +1,7 @@
-import { AxisType } from "evergrid";
 import moment from "moment";
 import { Duration, Moment } from "moment";
 import { TextStyle } from "react-native";
-import { IAxisOptions, ITickLabel } from "../../types";
+import { ITickLabel } from "../../types";
 import Axis from "../Axis";
 import {
     DateUnitMapping,
@@ -13,6 +12,10 @@ import {
     dateUnitsWithDuration,
 } from "./duration";
 import { getTickStyles } from "./dateStyle";
+import {
+    AxisType,
+    IAxisOptions,
+} from "../axisTypes";
 
 export default class DateAxis extends Axis<Moment, Duration> {
     private _tickStyles?: DateUnitMapping<TextStyle>;

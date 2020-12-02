@@ -1,5 +1,5 @@
 import { TextStyle } from "react-native";
-import { IAxisStyle } from "../../types";
+import { IAxisStyle } from "../axisTypes";
 import {
     DateUnit,
     DateUnitMapping,

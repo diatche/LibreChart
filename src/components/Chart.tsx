@@ -2,12 +2,10 @@ import React from 'react';
 import Evergrid, {
     EvergridProps,
     IItem,
-    isAxisType,
 } from 'evergrid'
 import {
     kPointReuseID,
     kGridReuseID,
-    kReuseIDAxes,
 } from '../const';
 import {
     ChartLayout,
@@ -15,6 +13,8 @@ import {
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxis from './ChartAxis';
+import { isAxisType } from '../utils/axisUtil';
+import { kReuseIDAxes } from '../utils/axisConst';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 

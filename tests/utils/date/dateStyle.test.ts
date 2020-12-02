@@ -1,6 +1,10 @@
 import moment from 'moment';
-import { kAxisStyleLightDefaults } from '../../../src/const';
-import { IAxisStyle } from '../../../src/types';
+import {
+    IAxisStyle,
+} from '../../../src/utils/axisTypes';
+import {
+    kAxisStyleLightDefaults,
+} from '../../../src/utils/axisConst';
 import {
     getTickStyles,
 } from '../../../src/utils/date/dateStyle';

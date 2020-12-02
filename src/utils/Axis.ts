@@ -3,30 +3,32 @@ import {
     InteractionManager,
 } from "react-native";
 import {
-    AxisType,
     FlatLayoutSource,
     FlatLayoutSourceProps,
     IItemUpdateManyOptions,
     zeroPoint,
     isRangeEmpty,
-    isAxisHorizontal,
-    isAxisType,
-    AxisTypeMapping,
 } from "evergrid";
 import {
     kAxisReuseIDs,
     kAxisStyleLightDefaults,
-} from '../const';
+} from './axisConst';
 import debounce from 'lodash.debounce';
 import Decimal from "decimal.js";
 import {
+    AxisType,
+    AxisTypeMapping,
     IAxisLayoutSourceProps,
     IAxisOptions,
     IAxisStyle,
-} from "../types";
+} from "./axisTypes";
 import Scale, { ITickLocation } from "./Scale";
 import LinearScale from "./LinearScale";
 import { ChartLayout } from "../internal";
+import {
+    isAxisHorizontal,
+    isAxisType,
+} from "./axisUtil";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
