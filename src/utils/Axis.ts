@@ -1,4 +1,7 @@
-import { Animated } from "react-native";
+import {
+    Animated,
+    InteractionManager,
+} from "react-native";
 import {
     AxisType,
     FlatLayoutSource,
@@ -346,7 +349,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         if (!this.layout) {
             return;
         }
-        this._debouncedThicknessUpdate();
+        InteractionManager.runAfterInteractions(() => (
+            this._debouncedThicknessUpdate()
+        ));
     }
     
     private _debouncedThicknessUpdate = debounce(

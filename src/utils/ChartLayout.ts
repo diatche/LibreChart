@@ -25,6 +25,7 @@ import {
     IChartGridInput,
 } from "../types";
 import Axis, { AxisManyInput } from "./Axis";
+import { InteractionManager } from "react-native";
 
 const kGridUpdateDebounceInterval = 100;
 
@@ -92,13 +93,15 @@ export default class ChartLayout extends EvergridLayout {
     }
 
     scheduleChartUpdate() {
-        this._debouncedChartUpdate();
+        InteractionManager.runAfterInteractions(() => {
+            this._debouncedChartUpdate();
 
-        // Also schedule thickness updates
-        // to reduce jank.
-        for (let axisType of kAllAxisTypes) {
-            this.axes[axisType]?.scheduleThicknessUpdate();
-        }
+            // Also schedule thickness updates
+            // to reduce redundant updates.
+            for (let axisType of kAllAxisTypes) {
+                this.axes[axisType]?.scheduleThicknessUpdate();
+            }
+        });
     }
     
     private _debouncedChartUpdate = debounce(
