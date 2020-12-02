@@ -307,6 +307,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             // No changes
             return false;
         }
+        // console.debug('tickScale: ' + JSON.stringify(this.scale.tickScale, null, 2));
 
         Object.assign(this.layoutInfo, axisLengthInfo);
         
