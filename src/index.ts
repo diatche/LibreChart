@@ -21,8 +21,8 @@ export * from './layout/axis/DateAxis';
 export { default as Axis } from './layout/axis/Axis';
 export * from './layout/axis/Axis';
 
-export { default as DataSource } from './layout/DataSource';
-export * from './layout/DataSource';
+export { default as DataSource } from './data/DataSource';
+export * from './data/DataSource';
 
 import Chart from './components/Chart';
 export default Chart;

@@ -1,11 +1,11 @@
 import moment from 'moment-timezone';
-import DateScale from '../../../src/utils/date/DateScale';
+import DateScale from '../../src/scale/DateScale';
 import {
     DateTickInput,
     getDateTicks,
     getExpectedDateTicks,
 } from './dateScaleUtil';
-import { $, getExpectedLinearTicks, LinearTickInput } from '../linearScaleUtil';
+import { $, getExpectedLinearTicks, LinearTickInput } from './linearScaleUtil';
 import Decimal from 'decimal.js';
 
 const k0 = new Decimal(0);

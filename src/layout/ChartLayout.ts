@@ -8,7 +8,7 @@ import {
     EvergridLayoutCallbacks,
     EvergridLayoutProps,
 } from "evergrid";
-import DataSource from "./DataSource";
+import DataSource from "../data/DataSource";
 import {
     kChartGridStyleLightDefaults,
     kGridReuseID,
