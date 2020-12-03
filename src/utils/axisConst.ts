@@ -6,11 +6,34 @@ import {
 } from "./axisTypes";
 import * as Colors from './colors';
 
-export const kAxisReuseIDs: AxisTypeMapping<string> = {
-    topAxis: 'topAxis',
-    bottomAxis: 'bottomAxis',
-    rightAxis: 'rightAxis',
-    leftAxis: 'leftAxis',
+export const kAxisContentReuseIDs: AxisTypeMapping<string> = {
+    topAxis: 'topAxisContent',
+    bottomAxis: 'bottomAxisContent',
+    rightAxis: 'rightAxisContent',
+    leftAxis: 'leftAxisContent',
+};
+export const kAxisContentReuseIDSet = new Set(Object.values(kAxisContentReuseIDs));
+
+export const kAxisContentReuseIDTypes: { [reuseID: string]: AxisType } = {
+    topAxisContent: 'topAxis',
+    rightAxisContent: 'rightAxis',
+    bottomAxisContent: 'bottomAxis',
+    leftAxisContent: 'leftAxis',
+};
+
+export const kAxisBackgroundReuseIDs: AxisTypeMapping<string> = {
+    topAxis: 'topAxisBackground',
+    bottomAxis: 'bottomAxisBackground',
+    rightAxis: 'rightAxisBackground',
+    leftAxis: 'leftAxisBackground',
+};
+export const kAxisBackgroundReuseIDSet = new Set(Object.values(kAxisBackgroundReuseIDs));
+
+export const kAxisBackgroundReuseIDTypes: { [reuseID: string]: AxisType } = {
+    topAxisBackground: 'topAxis',
+    rightAxisBackground: 'rightAxis',
+    bottomAxisBackground: 'bottomAxis',
+    leftAxisBackground: 'leftAxis',
 };
 
 export const kHorizontalAxisTypes: AxisType[] = [
@@ -25,13 +48,6 @@ export const kVerticalAxisTypes: AxisType[] = [
 
 export const kAllAxisTypes = kHorizontalAxisTypes.concat(kVerticalAxisTypes);
 export const kAllAxisTypeSet = new Set(kAllAxisTypes);
-
-export const kReuseIDAxes: { [reuseID: string]: AxisType } = {
-    topAxis: 'topAxis',
-    rightAxis: 'rightAxis',
-    bottomAxis: 'bottomAxis',
-    leftAxis: 'leftAxis',
-};
 
 export const kAxisStyleBaseDefaults: IAxisStyleInput = {
     axisLineThickness: 1,

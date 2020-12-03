@@ -161,10 +161,14 @@ export default class ChartLayout extends EvergridLayout {
             // Data above grid and below axes
             ...(this.dataSources || []).map(d => d.layout),
             // Horizontal axes below vertical axes
-            this.axes?.bottomAxis?.layout,
-            this.axes?.topAxis?.layout,
-            this.axes?.rightAxis?.layout,
-            this.axes?.leftAxis?.layout,
+            this.axes?.bottomAxis?.backgroundLayout,
+            this.axes?.bottomAxis?.contentLayout,
+            this.axes?.topAxis?.backgroundLayout,
+            this.axes?.topAxis?.contentLayout,
+            this.axes?.rightAxis?.backgroundLayout,
+            this.axes?.rightAxis?.contentLayout,
+            this.axes?.leftAxis?.backgroundLayout,
+            this.axes?.leftAxis?.contentLayout,
         ].filter(s => !!s) as LayoutSource[];
     }
 

@@ -1,7 +1,8 @@
 import {
+    AnimatedValueInput,
     FlatLayoutSourceProps,
 } from "evergrid";
-import { ColorValue, TextStyle } from "react-native";
+import { Animated, ColorValue, TextStyle } from "react-native";
 import { ITickLabel } from "../types";
 import Scale, { ITickLocation } from "./Scale";
 
@@ -10,7 +11,23 @@ export type Direction = 'horizontal' | 'vertical';
 
 export type AxisTypeMapping<T> = { [K in AxisType]: T };
 
-export interface IAxisLayoutStyle {
+export interface IAxisContentLayoutStyle {
+    labelFontSize?: number;
+    labelMargin?: number;
+    labelFontWeight?: TextStyle['fontWeight'];
+    majorLabelFontWeight?: TextStyle['fontWeight'];
+    minorLabelFontWeight?: TextStyle['fontWeight'];
+}
+
+export interface IAxisContentStyleInput extends IAxisContentLayoutStyle {
+    labelColor?: ColorValue;
+    majorLabelColor?: ColorValue;
+    minorLabelColor?: ColorValue;
+}
+
+export interface IAxisContentStyle extends Required<IAxisContentStyleInput> {}
+
+export interface IAxisBackgroundLayoutStyle {
     majorTickLength?: number;
 
     majorGridLineDistanceMin?: number;
@@ -22,28 +39,26 @@ export interface IAxisLayoutStyle {
      * to place between major tick intervals.
      **/
     minorIntervalCountMax?: number;
-
-    labelFontSize?: number;
-    labelMargin?: number;
-    labelFontWeight?: TextStyle['fontWeight'];
-    majorLabelFontWeight?: TextStyle['fontWeight'];
-    minorLabelFontWeight?: TextStyle['fontWeight'];
 }
 
-export interface IAxisStyleInput extends IAxisLayoutStyle {
+export interface IAxisBackgroundStyleInput extends IAxisBackgroundLayoutStyle {
     axisBackgroundColor?: ColorValue;
     axisLineColor?: ColorValue;
     axisLineThickness?: number;
 
     majorTickThickness?: number;
     majorTickColor?: ColorValue;
-
-    labelColor?: ColorValue;
-    majorLabelColor?: ColorValue;
-    minorLabelColor?: ColorValue;
 }
 
-export interface IAxisStyle extends Required<IAxisStyleInput> {}
+export interface IAxisBackgroundStyle extends Required<IAxisBackgroundStyleInput> {}
+
+export interface IAxisStyleInput extends IAxisContentStyleInput, IAxisBackgroundStyleInput {
+    padding?: AnimatedValueInput;
+}
+
+export interface IAxisStyle extends Required<IAxisStyleInput> {
+    padding: Animated.Value;
+}
 
 export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 

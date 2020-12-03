@@ -21,25 +21,25 @@ const ChartGrid = React.memo((props: ChartGridProps) => {
     const xMajorGridStyle: ViewStyle = {
         width: props.majorGridLineThickness,
         height: '100%',
-        marginLeft: -props.majorGridLineThickness / 2,
+        marginHorizontal: -props.majorGridLineThickness / 2,
         backgroundColor: props.majorGridLineColor,
     };
     const xMinorGridStyle: ViewStyle = {
         width: props.minorGridLineThickness,
         height: '100%',
-        marginLeft: -props.minorGridLineThickness / 2,
+        marginHorizontal: -props.minorGridLineThickness / 2,
         backgroundColor: props.minorGridLineColor,
     };
     const yMajorGridStyle: ViewStyle = {
         width: '100%',
         height: props.majorGridLineThickness,
-        marginTop: -props.majorGridLineThickness / 2,
+        marginVertical: -props.majorGridLineThickness / 2,
         backgroundColor: props.majorGridLineColor,
     };
     const yMinorGridStyle: ViewStyle = {
         width: '100%',
         height: props.minorGridLineThickness,
-        marginTop: -props.minorGridLineThickness / 2,
+        marginVertical: -props.minorGridLineThickness / 2,
         backgroundColor: props.minorGridLineColor,
     };
 

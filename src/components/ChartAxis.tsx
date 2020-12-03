@@ -12,15 +12,16 @@ import { ITickLabel } from '../types';
 import {
     AxisType,
     AxisTypeMapping,
+    IAxisContentStyle,
     IAxisOptions,
-    IAxisStyle,
 } from '../utils/axisTypes';
 import { ITickLocation } from '../utils/Scale';
 
-export interface ChartAxisProps<T> extends ViewProps, Required<IAxisStyle> {
-    type: AxisType;
+export interface ChartAxisProps<T> extends ViewProps, Required<IAxisContentStyle> {
+    axisType: AxisType;
     /** Tick locations in ascending order in content coordinates. */
     ticks: ITickLocation<T>[];
+    majorTickLength: number;
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
     /** Called on thickness layout change. */
@@ -61,49 +62,9 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
      */
     getContainerStyle() {
         // TODO: cache style until prop change
-        const {
-            axisLineThickness,
-        } = this.props;
-
-        let style: ViewStyle = {
-            borderColor: this.props.axisLineColor,
-            backgroundColor: this.props.axisBackgroundColor,
-        };
-
-        switch (this.props.type) {
-            case 'topAxis':
-                style = {
-                    ...style,
-                    borderBottomWidth: axisLineThickness,
-                    marginBottom: -axisLineThickness,
-                };
-            case 'bottomAxis':
-                style = {
-                    ...style,
-                    borderTopWidth: axisLineThickness,
-                    marginTop: -axisLineThickness,
-                };
-                break;
-            case 'leftAxis':
-                style = {
-                    ...style,
-                    borderRightWidth: axisLineThickness,
-                    marginRight: -axisLineThickness,
-                };
-                break;
-            case 'rightAxis':
-                style = {
-                    ...style,
-                    borderLeftWidth: axisLineThickness,
-                    marginLeft: -axisLineThickness,
-                };
-                break;
-        }
-
         return [
             styles.container,
-            axisStyles[this.props.type].container,
-            style,
+            axisStyles[this.props.axisType].container,
         ];
     }
 
@@ -120,20 +81,7 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
         // TODO: cache style until prop change
         return [
             styles.innerContainer,
-            axisStyles[this.props.type].innerContainer,
-        ];
-    }
-
-    /**
-     * The tick container style.
-     * 
-     * Holds ticks.
-     */
-    getTickContainerStyle() {
-        // TODO: cache style until prop change
-        return [
-            styles.tickContainer,
-            axisStyles[this.props.type].tickContainer,
+            axisStyles[this.props.axisType].innerContainer,
         ];
     }
 
@@ -147,7 +95,7 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
         let style: ViewStyle = {};
         if (this.props.isInverted) {
             // Reverse label order
-            switch (this.props.type) {
+            switch (this.props.axisType) {
                 case 'topAxis':
                 case 'bottomAxis':
                     style = {
@@ -164,9 +112,23 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
                     break;
             }
         }
+        switch (this.props.axisType) {
+            case 'topAxis':
+                style.paddingBottom = this.props.majorTickLength;
+                break;
+            case 'bottomAxis':
+                style.paddingTop = this.props.majorTickLength;
+                break;
+            case 'leftAxis':
+                style.paddingRight = this.props.majorTickLength;
+                break;
+            case 'rightAxis':
+                style.paddingLeft = this.props.majorTickLength;
+                break;
+        }
         return [
             styles.labelContainer,
-            axisStyles[this.props.type].labelContainer,
+            axisStyles[this.props.axisType].labelContainer,
             style,
         ];
     }
@@ -180,36 +142,8 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
         // TODO: cache style until prop change
         return [
             styles.labelInnerContainer,
-            axisStyles[this.props.type].labelInnerContainer,
+            axisStyles[this.props.axisType].labelInnerContainer,
         ];
-    }
-
-    getTickStyle() {
-        // TODO: cache style until prop change
-        let style: ViewStyle = {
-            backgroundColor: this.props.majorTickColor,
-        };
-
-        switch (this.props.type) {
-            case 'topAxis':
-            case 'bottomAxis':
-                style = {
-                    ...style,
-                    width: this.props.majorTickThickness,
-                    height: this.props.majorTickLength,
-                };
-                break;
-            case 'leftAxis':
-            case 'rightAxis':
-                style = {
-                    ...style,
-                    width: this.props.majorTickLength,
-                    height: this.props.majorTickThickness,
-                };
-                break;
-        }
-
-        return style;
     }
 
     getLabelStyle() {
@@ -218,7 +152,7 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
             fontSize: this.props.labelFontSize,
             color: this.props.labelColor,
         };
-        switch (this.props.type) {
+        switch (this.props.axisType) {
             case 'topAxis':
             case 'bottomAxis':
                 style.width = this.props.labelLength;
@@ -238,7 +172,7 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
     onInnerContainerLayout(event: LayoutChangeEvent) {
         // This is the optimal axis size, ask to adjust layout
         let thickness = 0;
-        switch (this.props.type) {
+        switch (this.props.axisType) {
             case 'topAxis':
             case 'bottomAxis':
                 thickness = event.nativeEvent.layout.height;
@@ -253,16 +187,11 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
 
     render() {
         let labelInnerContainerStyle = this.getLabelInnerContainerStyle();
-        let tickStyle = this.getTickStyle();
         let labelStyle = this.getLabelStyle();
         let labels = this.getTickLabels();
-
-        let ticks: React.ReactNode[] = [];
         let labelInnerContainers: React.ReactNode[] = [];
 
         for (let i = 0; i < labels.length; i++) {
-            ticks.push(<View key={i} style={tickStyle} />);
-
             labelInnerContainers.push((
                 <View
                     key={i}
@@ -281,10 +210,6 @@ export default class ChartAxis<T> extends React.PureComponent<ChartAxisProps<T>,
                     style={this.getInnerContainerStyle()}
                     onLayout={event => this.onInnerContainerLayout(event)}
                 >
-                    <View style={this.getTickContainerStyle()}>
-                        {ticks}
-                        {/* <View style={styles.placeholder} /> */}
-                    </View>
                     <View style={this.getLabelContainerStyle()}>
                         {labelInnerContainers}
                     </View>
@@ -305,12 +230,6 @@ const styles = StyleSheet.create({
         // borderWidth: 2,
         // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
-    tickContainer: {
-        justifyContent: 'space-around',
-        // margin: -2,
-        // borderWidth: 2,
-        // borderColor: 'rgba(150, 70, 230, 0.5)',
-    },
     labelContainer: {
         flex: 1,
         justifyContent: 'space-around',
@@ -328,10 +247,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(200, 110, 130, 0.5)',
-    },
-    placeholder: {
-        width: 0,
-        height: 0,
     },
 });
 
