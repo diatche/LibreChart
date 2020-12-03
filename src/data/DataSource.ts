@@ -1,24 +1,17 @@
 import {
-    CustomLayoutSource,
     IItemCustomLayout,
     IPoint,
     isPointInRange,
+    LayoutSource,
     LayoutSourceProps,
 } from 'evergrid';
-import { kPointReuseID } from '../const';
 import { IDataPoint } from '../types';
 import Scale from '../scale/Scale';
 
-const kDefaultPointViewDiameter = 8;
-const kDefaultPointViewSize = {
-    x: kDefaultPointViewDiameter,
-    y: kDefaultPointViewDiameter,
-};
-const kDefaultPointViewLayout = {
-    size: kDefaultPointViewSize,
-};
-
-export interface DataSourceProps<X = any, Y = any> {
+export interface DataSourceProps<
+    X = any,
+    Y = any,
+> {
     data?: IDataPoint<X, Y>[];
     scale: {
         x: Scale<X, any>;
@@ -26,20 +19,31 @@ export interface DataSourceProps<X = any, Y = any> {
     };
 }
 
-export interface DataSourceInput<X = any, Y = any> extends DataSourceProps<X, Y> {
+export interface DataSourceInput<
+    X = any,
+    Y = any,
+    Index = any,
+    LayoutProps extends LayoutSourceProps<Index> = LayoutSourceProps<Index>
+> extends DataSourceProps<X, Y> {
     noCopy?: boolean;
-    layout?: LayoutSourceProps<number>;
+    layout?: LayoutProps;
 }
 
-export default class DataSource<X = any, Y = any> implements DataSourceProps<X, Y> {
+export default abstract class DataSource<
+    X = any,
+    Y = any,
+    Index = any,
+    LayoutProps extends LayoutSourceProps<Index> = LayoutSourceProps<Index>,
+    Layout extends LayoutSource<Index, LayoutProps> = LayoutSource<Index, LayoutProps>,
+> implements DataSourceProps<X, Y> {
     data: IDataPoint<X, Y>[] = [];
     scale: {
         x: Scale<X, any>;
         y: Scale<Y, any>;
     };
-    layout: CustomLayoutSource;
+    layout: Layout;
 
-    constructor(props: DataSourceInput<X, Y>) {
+    constructor(props: DataSourceInput<X, Y, Index, LayoutProps>) {
         if (props.noCopy && !props.data) {
             throw new Error('Cannot use "noCopy" with null data.');
         }
@@ -51,7 +55,7 @@ export default class DataSource<X = any, Y = any> implements DataSourceProps<X, 
         if (!(this.scale.y instanceof Scale)) {
             throw new Error('Invalid data source y-axis scale.');
         }
-        this.layout = this._createLayoutSource(props.layout);
+        this.layout = this.createLayoutSource(props.layout);
     }
 
     getVisibleIndexSet(pointRange: [IPoint, IPoint]): Set<number> {
@@ -79,16 +83,5 @@ export default class DataSource<X = any, Y = any> implements DataSourceProps<X, 
         };
     }
 
-    private _createLayoutSource(props?: LayoutSourceProps<number>) {
-        return new CustomLayoutSource({
-            reuseID: kPointReuseID,
-            // itemSize: { x: kDefaultPointRadius * 2, y: kDefaultPointRadius * 2 },
-            itemOrigin: { x: 0.5, y: 0.5 },
-            ...props,
-            getItemLayout: i => this.getItemLayout(i),
-            getItemViewLayout: () => kDefaultPointViewLayout,
-            getVisibleIndexSet: pointRange => this.getVisibleIndexSet(pointRange),
-            shouldRenderItem: () => false,
-        });
-    }
+    abstract createLayoutSource(props?: LayoutProps): Layout;
 }
