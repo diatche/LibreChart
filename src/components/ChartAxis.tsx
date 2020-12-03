@@ -14,8 +14,8 @@ import {
     AxisTypeMapping,
     IAxisContentStyle,
     IAxisOptions,
-} from '../utils/axisTypes';
-import { ITickLocation } from '../utils/Scale';
+} from '../layout/axis/axisTypes';
+import { ITickLocation } from '../scale/Scale';
 
 export interface ChartAxisProps<T> extends ViewProps, Required<IAxisContentStyle> {
     axisType: AxisType;

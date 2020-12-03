@@ -4,7 +4,7 @@ import {
     LayoutSource,
 } from "evergrid";
 import { ColorValue, TextStyle } from "react-native";
-import { AxisType } from "./utils/axisTypes";
+import { AxisType } from "./layout/axis/axisTypes";
 
 export interface IDataPoint<X, Y> {
     x: X,

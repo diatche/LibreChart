@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import LinearScale from '../../src/utils/LinearScale';
+import LinearScale from '../../src/scale/LinearScale';
 import {
     $,
     LinearTickInput,

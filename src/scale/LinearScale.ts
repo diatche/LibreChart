@@ -7,7 +7,7 @@ import Scale, {
 import {
     findCommonFactors,
     findFactors,
-} from "./factors";
+} from "../utils/factors";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);

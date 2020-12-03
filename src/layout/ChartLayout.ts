@@ -18,18 +18,18 @@ import {
     IChartGrid,
     IChartGridInput,
 } from "../types";
-import Axis, { AxisManyInput } from "./Axis";
+import Axis, { AxisManyInput } from "./axis/Axis";
 import { InteractionManager } from "react-native";
 import {
     axisTypeMap,
     isAxisHorizontal,
     isAxisType,
-} from "./axisUtil";
+} from "./axis/axisUtil";
 import {
     AxisType,
     AxisTypeMapping,
-} from "./axisTypes";
-import { kAllAxisTypes } from "./axisConst";
+} from "./axis/axisTypes";
+import { kAllAxisTypes } from "./axis/axisConst";
 
 const kGridUpdateDebounceInterval = 100;
 

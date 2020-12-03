@@ -4,7 +4,7 @@ import Scale, {
     ITickScaleConstraints,
     IScaleOptions,
     ITickScale,
-} from "../Scale";
+} from "./Scale";
 import {
     kDateUnitsAsc,
     kDateUnitsLength,
@@ -14,15 +14,13 @@ import {
     isDateUnit,
     kDateUnitExcludedFactors,
     kDateUnitUniformDecimalMs,
-} from "./dateBase";
-import {
     dateIntervalLength,
     dateUnitsWithDuration,
     floorDate,
     snapDate,
     stepDateLinear,
-} from "./duration";
-import LinearScale from "../LinearScale";
+} from "../utils/date";
+import LinearScale from "./LinearScale";
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);

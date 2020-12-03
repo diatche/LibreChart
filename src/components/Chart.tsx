@@ -18,7 +18,7 @@ import {
     kAxisBackgroundReuseIDTypes,
     kAxisContentReuseIDSet,
     kAxisContentReuseIDTypes,
-} from '../utils/axisConst';
+} from '../layout/axis/axisConst';
 import ChartAxisBackground from './ChartAxisBackground';
 
 type ForwardEvergridProps = Partial<EvergridProps>;

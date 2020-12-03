@@ -7,7 +7,7 @@ import {
 } from 'evergrid';
 import { kPointReuseID } from '../const';
 import { IDataPoint } from '../types';
-import Scale from './Scale';
+import Scale from '../scale/Scale';
 
 const kDefaultPointViewDiameter = 8;
 const kDefaultPointViewSize = {

@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { IMatcher, isMatch } from './comp';
+import { IMatcher, isMatch } from '../utils/comp';
 
 const k0 = new Decimal(0);
 

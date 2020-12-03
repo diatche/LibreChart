@@ -2,20 +2,18 @@ import moment from "moment";
 import { Duration, Moment } from "moment";
 import { TextStyle } from "react-native";
 import { ITickLabel } from "../../types";
-import Axis from "../Axis";
+import Axis from "./Axis";
 import {
     DateUnitMapping,
-} from "./dateBase";
-import { formatDateDelta } from "./formatDate";
-import DateScale from "./DateScale";
-import {
     dateUnitsWithDuration,
-} from "./duration";
-import { getTickStyles } from "./dateStyle";
+    formatDateDelta,
+    getTickStyles,
+} from "../../utils/date";
+import DateScale from "../../scale/DateScale";
 import {
     AxisType,
     IAxisOptions,
-} from "../axisTypes";
+} from "./axisTypes";
 
 export default class DateAxis extends Axis<Moment, Duration> {
     private _tickStyles?: DateUnitMapping<TextStyle>;

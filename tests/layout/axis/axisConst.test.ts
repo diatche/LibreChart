@@ -3,7 +3,7 @@ import {
     kAxisBackgroundReuseIDTypes,
     kAxisContentReuseIDs,
     kAxisContentReuseIDTypes,
-} from '../../src/utils/axisConst';
+} from '../../../src/layout/axis/axisConst';
 
 describe('axisConst', () => {
 

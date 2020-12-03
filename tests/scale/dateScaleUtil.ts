@@ -1,6 +1,6 @@
 import moment, { Moment } from 'moment';
-import DateScale, { IDateScaleOptions } from '../../../src/utils/date/DateScale';
-import { ITickScaleConstraints } from '../../../src/utils/Scale';
+import DateScale, { IDateScaleOptions } from '../../src/scale/DateScale';
+import { ITickScaleConstraints } from '../../src/scale/Scale';
 
 export interface DateTickInput {
     start: Moment;

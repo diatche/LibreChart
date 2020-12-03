@@ -1,13 +1,13 @@
 import moment from 'moment';
 import {
     IAxisStyle,
-} from '../../../src/utils/axisTypes';
+} from '../../src/layout/axis/axisTypes';
 import {
     kAxisStyleLightDefaults,
-} from '../../../src/utils/axisConst';
+} from '../../src/layout/axis/axisConst';
 import {
     getTickStyles,
-} from '../../../src/utils/date/dateStyle';
+} from '../../src/utils/date/dateStyle'
 import { TextStyle } from 'react-native';
 
 const strongStyle: TextStyle = {

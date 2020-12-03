@@ -24,9 +24,9 @@ import {
     IAxisOptions,
     IAxisStyle,
 } from "./axisTypes";
-import Scale, { ITickLocation } from "./Scale";
-import LinearScale from "./LinearScale";
-import { ChartLayout } from "../internal";
+import Scale, { ITickLocation } from "../../scale/Scale";
+import LinearScale from "../../scale/LinearScale";
+import { ChartLayout } from "../../internal";
 import {
     isAxisHorizontal,
     isAxisType,

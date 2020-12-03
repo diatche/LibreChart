@@ -3,8 +3,8 @@ import {
     FlatLayoutSourceProps,
 } from "evergrid";
 import { Animated, ColorValue, TextStyle } from "react-native";
-import { ITickLabel } from "../types";
-import Scale, { ITickLocation } from "./Scale";
+import { ITickLabel } from "../../types";
+import Scale, { ITickLocation } from "../../scale/Scale";
 
 export type AxisType = 'topAxis' | 'rightAxis' | 'bottomAxis' | 'leftAxis';
 export type Direction = 'horizontal' | 'vertical';

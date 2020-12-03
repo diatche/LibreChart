@@ -7,7 +7,7 @@ import {
 import {
     AxisType,
     IAxisBackgroundStyle,
-} from '../utils/axisTypes';
+} from '../layout/axis/axisTypes';
 
 export interface ChartAxisBackgroundProps extends IAxisBackgroundStyle {
     majorCount: number;
