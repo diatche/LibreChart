@@ -13,8 +13,13 @@ import {
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxis from './ChartAxis';
-import { isAxisType } from '../utils/axisUtil';
-import { kReuseIDAxes } from '../utils/axisConst';
+import {
+    kAxisBackgroundReuseIDSet,
+    kAxisBackgroundReuseIDTypes,
+    kAxisContentReuseIDSet,
+    kAxisContentReuseIDTypes,
+} from '../utils/axisConst';
+import ChartAxisBackground from './ChartAxisBackground';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -60,8 +65,22 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     renderItem(item: IItem<any>) {
-        if (item.reuseID && isAxisType(kReuseIDAxes[item.reuseID])) {
-            return this.renderAxis(item);
+        if (!item.reuseID) {
+            return null;
+        }
+        
+        // let itemDebug = {
+        //     reuseID: item.reuseID,
+        //     index: item.index,
+        //     contentLayout: item.contentLayout,
+        // };
+        // console.debug('rendering item: ' + JSON.stringify(itemDebug, null, 2));
+
+        if (kAxisContentReuseIDSet.has(item.reuseID)) {
+            return this.renderAxisContent(item);
+        }
+        if (kAxisBackgroundReuseIDSet.has(item.reuseID)) {
+            return this.renderAxisBackground(item);
         }
 
         switch (item.reuseID) {
@@ -74,11 +93,11 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
     }
 
-    renderAxis({ index, reuseID }: IItem<any>) {
+    renderAxisContent({ index, reuseID }: IItem<any>) {
         if (!reuseID) {
             return null;
         }
-        let axisType = kReuseIDAxes[reuseID];
+        let axisType = kAxisContentReuseIDTypes[reuseID];
         let axis = this.layout.axes[axisType];
         if (!axis || axis.hidden) {
             return null;
@@ -90,7 +109,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         return (
             <ChartAxis
                 {...axis.style}
-                type={axisType}
+                axisType={axisType}
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
@@ -99,6 +118,24 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                     thickness,
                     index,
                 )}
+            />
+        );
+    }
+
+    renderAxisBackground({ reuseID }: IItem<any>) {
+        if (!reuseID) {
+            return null;
+        }
+        let axisType = kAxisBackgroundReuseIDTypes[reuseID];
+        let axis = this.layout.axes[axisType];
+        if (!axis || axis.hidden) {
+            return null;
+        }
+        return (
+            <ChartAxisBackground
+                {...axis.style}
+                axisType={axis.axisType}
+                majorCount={axis.layoutInfo.majorCount}
             />
         );
     }

@@ -8,9 +8,11 @@ import {
     IItemUpdateManyOptions,
     zeroPoint,
     isRangeEmpty,
+    normalizeAnimatedValue,
 } from "evergrid";
 import {
-    kAxisReuseIDs,
+    kAxisBackgroundReuseIDs,
+    kAxisContentReuseIDs,
     kAxisStyleLightDefaults,
 } from './axisConst';
 import debounce from 'lodash.debounce';
@@ -106,10 +108,23 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     getTickLabel: IAxisProps<T, D>['getTickLabel'];
     scale: Scale<T, D>;
     layoutSourceDefaults: IAxisLayoutSourceProps;
-    style: IAxisStyle;
+    readonly style: IAxisStyle;
     isHorizontal: boolean;
     layoutInfo: IAxisLayoutInfo;
-    layout?: FlatLayoutSource;
+
+    /**
+     * Contains axis labels.
+     * 
+     * Always renders when dequeuing a container.
+     */
+    contentLayout?: FlatLayoutSource;
+
+    /**
+     * Contains background, axis line and ticks.
+     * 
+     * Nevers renders when dequeuing a container.
+     */
+    backgroundLayout?: FlatLayoutSource;
 
     constructor(axisType: AxisType, options?: IAxisOptions<T, D>) {
         let {
@@ -151,12 +166,16 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         this.style = {
             ...kAxisStyleLightDefaults,
             ...style,
+            padding: normalizeAnimatedValue(style.padding),
         };
         this.layoutSourceDefaults = layoutSourceDefaults;
 
-
         if (!this.hidden) {
-            this.layout = this._createLayoutSource(
+            this.contentLayout = this._createContentLayoutSource(
+                this.layoutInfo,
+                layoutSourceDefaults,
+            );
+            this.backgroundLayout = this._createBackgroundLayoutSource(
                 this.layoutInfo,
                 layoutSourceDefaults,
             );
@@ -208,12 +227,59 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     }
 
     get chartLayout() {
-        return this.layout?.root as ChartLayout | undefined;
+        return (this.contentLayout || this.backgroundLayout)?.root as ChartLayout | undefined;
+    }
+
+    private _createContentLayoutSource(
+        layoutInfo: IAxisLayoutInfo,
+        defaults: IAxisLayoutSourceProps,
+    ): FlatLayoutSource | undefined {
+        let options: IAxisLayoutSourceProps & FlatLayoutSourceProps = {
+            ...defaults,
+            reuseID: kAxisContentReuseIDs[this.axisType],
+            shouldRenderItem: (item, previous) => {
+                this.onContainerDequeue(previous.index, item.index);
+                return true;
+            },
+        };
+
+        switch (this.axisType) {
+            case 'bottomAxis':
+            case 'topAxis':
+                options.origin = {
+                    x: layoutInfo.negHalfMajorInterval$,
+                    y: 0,
+                };
+                break;
+            case 'leftAxis':
+            case 'rightAxis':
+                options.origin = {
+                    x: 0,
+                    y: layoutInfo.negHalfMajorInterval$,
+                };
+                break;
+        }
+
+        return this._createLayoutSource(layoutInfo, options);
+    }
+
+    private _createBackgroundLayoutSource(
+        layoutInfo: IAxisLayoutInfo,
+        defaults: IAxisLayoutSourceProps,
+    ): FlatLayoutSource | undefined {
+        return this._createLayoutSource(layoutInfo, {
+            ...defaults,
+            reuseID: kAxisBackgroundReuseIDs[this.axisType],
+            shouldRenderItem: () => false,
+            onVisibleRangeChange: r => {
+                layoutInfo.visibleContainerIndexRange = r;
+            },
+        });
     }
 
     private _createLayoutSource(
         layoutInfo: IAxisLayoutInfo,
-        defaults: IAxisLayoutSourceProps,
+        defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
     ): FlatLayoutSource | undefined {
         let layoutPropsBase: FlatLayoutSourceProps = {
             itemSize: {
@@ -221,28 +287,20 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                 y: layoutInfo.containerLength$,
             },
             ...defaults,
-            shouldRenderItem: (item, previous) => {
-                this.onContainerDequeue(previous.index, item.index);
-                return true;
-            },
-            reuseID: kAxisReuseIDs[this.axisType],
-            onVisibleRangeChange: r => {
-                layoutInfo.visibleContainerIndexRange = r;
-            },
         };
+        let thickness = Animated.add(
+            this.style.padding,
+            layoutInfo.thickness$,
+        );
 
         switch (this.axisType) {
             case 'bottomAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { y: layoutInfo.thickness$ }
+                        size: { y: thickness }
                     }),
                     itemOrigin: { x: 0, y: 0 },
-                    origin: {
-                        x: layoutInfo.negHalfMajorInterval$,
-                        y: 0,
-                    },
                     horizontal: true,
                     stickyEdge: 'bottom',
                 });
@@ -250,13 +308,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { y: layoutInfo.thickness$ }
+                        size: { y: thickness }
                     }),
                     itemOrigin: { x: 0, y: 1 },
-                    origin: {
-                        x: layoutInfo.negHalfMajorInterval$,
-                        y: 0,
-                    },
                     horizontal: true,
                     stickyEdge: 'top',
                 });
@@ -264,13 +318,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { x: layoutInfo.thickness$ }
+                        size: { x: thickness }
                     }),
                     itemOrigin: { x: 0, y: 0 },
-                    origin: {
-                        x: 0,
-                        y: layoutInfo.negHalfMajorInterval$,
-                    },
                     horizontal: false,
                     stickyEdge: 'left',
                 });
@@ -278,13 +328,9 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
                     getItemViewLayout: () => ({
-                        size: { x: layoutInfo.thickness$ }
+                        size: { x: thickness }
                     }),
                     itemOrigin: { x: 1, y: 0 },
-                    origin: {
-                        x: 0,
-                        y: layoutInfo.negHalfMajorInterval$,
-                    },
                     horizontal: false,
                     stickyEdge: 'right',
                 });
@@ -300,7 +346,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     // }
 
     update(updateOptions: IItemUpdateManyOptions): boolean {
-        if (!this.layout) {
+        if (!this.backgroundLayout && !this.contentLayout) {
             return false;
         }
 
@@ -321,7 +367,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         if (this.layoutInfo.recenteringOffset) {
             // FIXME: We are assuming that the axis controls
             // the chart, but this may be an independent axis.
-            this.layout.root.scrollBy({
+            this.chartLayout?.scrollBy({
                 offset: this.isHorizontal
                     ? { x: this.layoutInfo.recenteringOffset }
                     : { y: this.layoutInfo.recenteringOffset },
@@ -329,7 +375,8 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         }
 
         this.didChangeLayout();
-        this.layout.updateItems(updateOptions);
+        this.contentLayout?.updateItems(updateOptions);
+        this.backgroundLayout?.updateItems(updateOptions);
         return true;
     }
 
@@ -349,7 +396,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     }
 
     scheduleThicknessUpdate() {
-        if (!this.layout) {
+        if (!this.contentLayout) {
             return;
         }
         InteractionManager.runAfterInteractions(() => (
@@ -408,17 +455,17 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     }
 
     getVisibleLocationRange(): [number, number] {
-        let r = this.layout!.getVisibleLocationRange();
+        let r = this.backgroundLayout!.root.getVisibleLocationRange();
         return this.isHorizontal
             ? [r[0].x, r[1].x]
             : [r[0].y, r[1].y];
     }
 
     private _getLengthInfo(): IAxisLengthLayoutBaseInfo | undefined {
-        if (!this.layout) {
+        if (!this.backgroundLayout) {
             return undefined;
         }
-        let viewScaleVector = this.layout.getScale();
+        let viewScaleVector = this.backgroundLayout.getScale();
         let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
         let visibleRange = this.getVisibleLocationRange();
 
@@ -535,7 +582,7 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
      * Returns `true` if the axis has a negative scale.
      */
     isInverted() {
-        let scale = this.layout?.getScale() || zeroPoint();
+        let scale = this.backgroundLayout?.getScale() || zeroPoint();
         return (this.isHorizontal ? scale.x : scale.y) < 0;
     }
 
