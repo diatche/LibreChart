@@ -21,8 +21,20 @@ export * from './layout/axis/DateAxis';
 export { default as Axis } from './layout/axis/Axis';
 export * from './layout/axis/Axis';
 
+export { default as DataSource } from './layout/DataSource';
+export * from './layout/DataSource';
+
 import Chart from './components/Chart';
 export default Chart;
 
-export { default as DataSource } from './layout/DataSource';
-export * from './layout/DataSource';
+export { default as ChartAxisBackground } from './components/ChartAxisBackground';
+export * from './components/ChartAxisBackground';
+
+export { default as ChartAxisContent } from './components/ChartAxisContent';
+export * from './components/ChartAxisContent';
+
+export { default as ChartGrid } from './components/ChartGrid';
+export * from './components/ChartGrid';
+
+export { default as ChartPoint } from './components/ChartPoint';
+export * from './components/ChartPoint';

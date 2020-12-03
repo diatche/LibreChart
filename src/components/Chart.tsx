@@ -12,7 +12,7 @@ import {
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
-import ChartAxis from './ChartAxis';
+import ChartAxisContent from './ChartAxisContent';
 import {
     kAxisBackgroundReuseIDSet,
     kAxisBackgroundReuseIDTypes,
@@ -107,7 +107,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         let isInverted = axis.isInverted();
         let labelLength = axis.layoutInfo.containerLength * axis.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
         return (
-            <ChartAxis
+            <ChartAxisContent
                 {...axis.style}
                 axisType={axisType}
                 ticks={ticks}
