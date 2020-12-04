@@ -7,8 +7,11 @@ import DataSource, { DataSourceInput } from './DataSource';
 import { ChartDataType } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 import { indigo700, white } from '../utils/colors';
+import { PathCurves } from '../utils/svg';
 
 const kDefaultLineStyle: ILineStyle = {
+    curve: 'linear',
+
     strokeWidth: 2,
     strokeColor: indigo700,
     strokeDashArray: [],
@@ -25,6 +28,8 @@ export interface ILinePoint extends IPoint {
 }
 
 export interface ILineStyleInput {
+    curve?: PathCurves;
+
     /** Stroke width in view coordinates. */
     strokeWidth?: number;
     strokeColor?: string | number;

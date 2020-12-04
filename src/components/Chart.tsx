@@ -108,7 +108,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
     renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
         let points = dataSource.getCanvasPointsInContainer(item.index);
-        let path = SvgUtil.pathWithPoints(points);
+        let path = SvgUtil.pathWithPoints(points, dataSource.style);
         if (!path) {
             return null;
         }
