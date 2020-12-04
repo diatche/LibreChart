@@ -2,10 +2,10 @@ import Decimal from 'decimal.js';
 import React from 'react';
 import { Animated, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { ILinePoint, ILineStyle } from '../data/LineDataSource';
+import { ILinePoint, ILineDataStyle } from '../data/LineDataSource';
 import { isMatch } from '../utils/comp';
 
-export interface ChartLineProps extends ILineStyle {
+export interface ChartLineProps extends ILineDataStyle {
     /** SVG view box. For example: `0 0 100 100`. */
     viewBox: string;
     /** Overlap as a fraction. */
@@ -19,7 +19,7 @@ export interface ChartLineProps extends ILineStyle {
 }
 
 type ScaledValues = Pick<
-    ILineStyle, 
+    Required<ILineDataStyle>, 
     'strokeWidth'
     | 'strokeDashArray'
     | 'pointInnerRadius'
@@ -43,13 +43,14 @@ const k100p = '100%';
 
 const ChartLine = React.memo((props: ChartLineProps) => {
     const propsToScale: ScaledValues = {
-        strokeWidth: props.strokeWidth,
-        strokeDashArray: props.strokeDashArray,
-        pointInnerRadius: props.pointInnerRadius,
-        pointOuterRadius: props.pointOuterRadius,
+        strokeWidth: props.strokeWidth || 0,
+        strokeDashArray: props.strokeDashArray || [],
+        pointInnerRadius: props.pointInnerRadius || 0,
+        pointOuterRadius: props.pointOuterRadius || 0,
     };
     const sizePct = `${((1 + props.overlap) * 100)}%`;
     const marginPct = `${(-props.overlap * 100)}%`;
+    const pointOuterColor = props.pointOuterColor || props.strokeColor;
 
     let pointsToDraw = props.points;
     let pointsLen = pointsToDraw.length;
@@ -93,7 +94,7 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                 width={k100p}
                 viewBox={props.viewBox}
             >
-                {scaledValues.strokeWidth > 0 && (
+                {props.strokeColor && scaledValues.strokeWidth > 0 && (
                     <Path
                         d={props.path}
                         fill='none'
@@ -107,16 +108,16 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         )}
                     />
                 )}
-                {scaledValues.pointOuterRadius > 0 && pointsToDraw.map((p, i) => (
+                {pointOuterColor && scaledValues.pointOuterRadius > 0 && pointsToDraw.map((p, i) => (
                     <Circle
                         key={`o${i}`}
                         cx={p.x}
                         cy={p.y}
                         r={scaledValues.pointOuterRadius}
-                        fill={props.pointOuterColor}
+                        fill={pointOuterColor}
                     />
                 ))}
-                {scaledValues.pointInnerRadius > 0 && pointsToDraw.map((p, i) => (
+                {props.pointInnerColor && scaledValues.pointInnerRadius > 0 && pointsToDraw.map((p, i) => (
                     <Circle
                         key={`i${i}`}
                         cx={p.x}

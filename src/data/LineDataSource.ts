@@ -4,30 +4,15 @@ import {
     IPoint,
 } from 'evergrid';
 import DataSource, { DataSourceInput } from './DataSource';
-import { ChartDataType } from '../types';
+import { ChartDataType, IDataPointStyle } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
-import { indigo700, white } from '../utils/colors';
 import { PathCurves } from '../utils/svg';
-
-const kDefaultLineStyle: ILineStyle = {
-    curve: 'linear',
-
-    strokeWidth: 2,
-    strokeColor: indigo700,
-    strokeDashArray: [],
-
-    pointInnerRadius: 0,
-    pointOuterRadius: 0,
-
-    pointInnerColor: white,
-    pointOuterColor: indigo700,
-};
 
 export interface ILinePoint extends IPoint {
     clipped: boolean;
 }
 
-export interface ILineStyleInput {
+export interface ILineDataStyle extends IDataPointStyle {
     curve?: PathCurves;
 
     /** Stroke width in view coordinates. */
@@ -35,33 +20,20 @@ export interface ILineStyleInput {
     strokeColor?: string | number;
     /** Stroke dash array in view coordinates. */
     strokeDashArray?: number[];
-
-    /** Point inner radius in view coordinates. */
-    pointInnerRadius?: number;
-    /** Point outer radius in view coordinates. */
-    pointOuterRadius?: number;
-
-    pointInnerColor?: string | number;
-    pointOuterColor?: string | number;
 }
 
-export interface ILineStyle extends Required<ILineStyleInput> {}
-
 export interface LineDataSourceInput {
-    style?: ILineStyleInput;
+    style?: ILineDataStyle;
 }
 
 export default class LineDataSource<X = any, Y = any> extends DataSource<
     X, Y, IPoint, GridLayoutSourceProps, GridLayoutSource
 > {
-    style: ILineStyle;
+    style: ILineDataStyle;
 
     constructor(input: LineDataSourceInput & DataSourceInput<X, Y, IPoint, GridLayoutSourceProps>) {
         super(input);
-        this.style = {
-            ...kDefaultLineStyle,
-            ...input.style,
-        };
+        this.style = { ...input.style };
     }
 
     /**

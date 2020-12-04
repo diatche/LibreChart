@@ -9,6 +9,17 @@ import { AxisType } from "./layout/axis/axisTypes";
 export interface IDataPoint<X, Y> {
     x: X,
     y: Y,
+    style?: IDataPointStyle;
+}
+
+export interface IDataPointStyle {
+    /** Point inner radius in view coordinates. */
+    pointInnerRadius?: number;
+    /** Point outer radius in view coordinates. */
+    pointOuterRadius?: number;
+
+    pointInnerColor?: string | number;
+    pointOuterColor?: string | number;
 }
 
 export interface ITickLabel {
