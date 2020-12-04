@@ -11,6 +11,7 @@ import { indigo700, white } from '../utils/colors';
 const kDefaultLineStyle: ILineStyle = {
     strokeWidth: 2,
     strokeColor: indigo700,
+    strokeDashArray: [],
 
     pointInnerRadius: 0,
     pointOuterRadius: 0,
@@ -27,6 +28,8 @@ export interface ILineStyleInput {
     /** Stroke width in view coordinates. */
     strokeWidth?: number;
     strokeColor?: string | number;
+    /** Stroke dash array in view coordinates. */
+    strokeDashArray?: number[];
 
     /** Point inner radius in view coordinates. */
     pointInnerRadius?: number;
@@ -62,7 +65,7 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
      * Some overlap is recommended to avoid clipping
      * points and ends of rounded lines.
      */
-    overlap = 0.01;
+    overlap = 0.001;
 
     get type(): ChartDataType {
         return 'path';

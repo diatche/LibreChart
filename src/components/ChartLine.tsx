@@ -3,6 +3,7 @@ import React from 'react';
 import { Animated, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { ILinePoint, ILineStyle } from '../data/LineDataSource';
+import { isMatch } from '../utils/comp';
 
 export interface ChartLineProps extends ILineStyle {
     /** SVG view box. For example: `0 0 100 100`. */
@@ -20,6 +21,7 @@ export interface ChartLineProps extends ILineStyle {
 type ScaledValues = Pick<
     ILineStyle, 
     'strokeWidth'
+    | 'strokeDashArray'
     | 'pointInnerRadius'
     | 'pointOuterRadius'
 >;
@@ -31,6 +33,7 @@ const scaleToView = (value: number, scale: number): number => {
 const scaleValues = (values: ScaledValues, scale: number): ScaledValues => {
     return {
         strokeWidth: scaleToView(values.strokeWidth, scale),
+        strokeDashArray: values.strokeDashArray.map(x => scaleToView(x, scale)),
         pointInnerRadius: scaleToView(values.pointInnerRadius, scale),
         pointOuterRadius: scaleToView(values.pointOuterRadius, scale),
     };
@@ -41,6 +44,7 @@ const k100p = '100%';
 const ChartLine = React.memo((props: ChartLineProps) => {
     const propsToScale: ScaledValues = {
         strokeWidth: props.strokeWidth,
+        strokeDashArray: props.strokeDashArray,
         pointInnerRadius: props.pointInnerRadius,
         pointOuterRadius: props.pointOuterRadius,
     };
@@ -95,6 +99,11 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                     strokeLinecap='round'
                     strokeWidth={scaledValues.strokeWidth}
                     stroke={props.strokeColor}
+                    strokeDasharray={(
+                        scaledValues.strokeDashArray.length !== 0
+                            ? scaledValues.strokeDashArray.map(String).join(',')
+                            : ''
+                    )}
                 />
                 {scaledValues.pointOuterRadius && pointsToDraw.map((p, i) => (
                     <Circle
@@ -130,6 +139,13 @@ const ChartLine = React.memo((props: ChartLineProps) => {
     if (keys.has('points')) {
         // Compare using "path" instead
         keys.delete('points');
+    }
+    if (keys.has('strokeDashArray')) {
+        // Compare separately
+        if (!isMatch(prevProps.strokeDashArray, nextProps.strokeDashArray)) {
+            return false;
+        }
+        keys.delete('strokeDashArray');
     }
     for (let key of keys) {
         if (prevProps[key] !== nextProps[key]) {
