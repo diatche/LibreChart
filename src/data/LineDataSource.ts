@@ -9,6 +9,7 @@ import { VectorUtil } from '../utils/vectorUtil';
 import { PathCurves } from '../utils/svg';
 
 export interface ILinePoint extends IPoint {
+    dataIndex: number;
     clipped: boolean;
 }
 
@@ -91,12 +92,14 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
                 points.push({
                     x: clip[0],
                     y: clip[1],
+                    dataIndex: i - 1,
                     clipped: clip[0] !== p0.x || clip[1] !== p0.y,
                 });
                 if (clip[0] !== clip[2] || clip[1] !== clip[3]) {
                     points.push({
                         x: clip[2],
                         y: clip[3],
+                        dataIndex: i,
                         clipped: clip[2] !== p.x || clip[3] !== p.y,
                     });
                 }
@@ -104,13 +107,15 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
             p0 = p;
         }
 
-        if (points.length !== 0) {
+        const pointsLen = points.length;
+        if (pointsLen !== 0) {
             let width = rect[1].x - rect[0].x;
             let height = rect[1].y - rect[0].y;
             let scale = this.layout.getScale();
             let invertX = scale.x < 0;
             let invertY = scale.y < 0;
-            points = points.map(p => {
+            for (let i = 0; i < pointsLen; i++) {
+                let p = points[i];
                 p.x = p.x - rect[0].x;
                 p.y = p.y - rect[0].y;
                 if (invertX) {
@@ -119,8 +124,7 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
                 if (invertY) {
                     p.y = height - p.y;
                 }
-                return p;
-            });
+            }
         }
 
         return points;

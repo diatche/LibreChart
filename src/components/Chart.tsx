@@ -23,6 +23,7 @@ import ChartAxisBackground from './ChartAxisBackground';
 import ChartLine from './ChartLine';
 import LineDataSource from '../data/LineDataSource';
 import { SvgUtil } from '../utils/svg';
+import { IDataPointStyle } from '../types';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -112,12 +113,30 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (!path) {
             return null;
         }
+        let pointsToDraw = points;
+        let pointsLen = pointsToDraw.length;
+        if (pointsLen !== 0) {
+            if (pointsToDraw[0].clipped && pointsToDraw[pointsLen - 1].clipped) {
+                pointsToDraw = pointsToDraw.slice(1, -1);
+            } else if (pointsToDraw[0].clipped) {
+                pointsToDraw = pointsToDraw.slice(1);
+            } else if (pointsToDraw[pointsLen - 1].clipped) {
+                pointsToDraw = pointsToDraw.slice(0, -1);
+            }
+        }
+        let pointStyles: (IDataPointStyle | undefined)[] | undefined = pointsToDraw.map(p => dataSource.data[p.dataIndex].style);
+        if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
+            pointStyles = undefined;
+        }
+
         // console.debug(`${JSON.stringify(item.index)} viewBox: ` + dataSource.getViewBox());
         // console.debug(`${JSON.stringify(item.index)} path: ` + path);
+        // console.debug(`${JSON.stringify(item.index)} point styles: ` + JSON.stringify(pointStyles, null, 2));
         return (
             <ChartLine
                 path={path}
-                points={points}
+                points={pointsToDraw}
+                pointStyles={pointStyles}
                 overlap={dataSource.overlap}
                 viewBox={dataSource.getViewBox()}
                 scale={dataSource.layout.root.scale$.y}

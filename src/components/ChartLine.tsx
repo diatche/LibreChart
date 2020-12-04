@@ -1,8 +1,10 @@
 import Decimal from 'decimal.js';
+import { IPoint } from 'evergrid';
 import React from 'react';
 import { Animated, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { ILinePoint, ILineDataStyle } from '../data/LineDataSource';
+import { ILineDataStyle } from '../data/LineDataSource';
+import { IDataPointStyle } from '../types';
 import { isMatch } from '../utils/comp';
 
 export interface ChartLineProps extends ILineDataStyle {
@@ -13,29 +15,44 @@ export interface ChartLineProps extends ILineDataStyle {
     /** Svg `d` prop. */
     path: string;
     /** Point locations in canvas coordinates. */
-    points: ILinePoint[];
+    points: IPoint[];
+    /** Point styles corresponding to points. */
+    pointStyles?: (IDataPointStyle | undefined)[];
     /** View scale. */
     scale: Animated.Value;
 }
 
-type ScaledValues = Pick<
-    Required<ILineDataStyle>, 
+interface ScaledPointValues extends Pick<
+    IDataPointStyle, 
+    'pointInnerRadius'
+    | 'pointOuterRadius'
+> {}
+
+interface ScaledValues extends ScaledPointValues, Pick<
+    ILineDataStyle, 
     'strokeWidth'
     | 'strokeDashArray'
-    | 'pointInnerRadius'
-    | 'pointOuterRadius'
->;
+> {
+    pointStyles?: (ScaledPointValues | undefined)[];
+}
 
-const scaleToView = (value: number, scale: number): number => {
-    return new Decimal(value / Math.abs(scale)).toNumber();
+const scaleToView = (value: number | undefined, scale: number): number => {
+    return value && new Decimal(value / Math.abs(scale || 1)).toNumber() || 0;
+};
+
+const scalePointStyle = (values: ScaledPointValues, scale: number): ScaledPointValues => {
+    return {
+        pointInnerRadius: scaleToView(values.pointInnerRadius, scale),
+        pointOuterRadius: scaleToView(values.pointOuterRadius, scale),
+    };
 };
 
 const scaleValues = (values: ScaledValues, scale: number): ScaledValues => {
     return {
+        ...scalePointStyle(values, scale),
         strokeWidth: scaleToView(values.strokeWidth, scale),
-        strokeDashArray: values.strokeDashArray.map(x => scaleToView(x, scale)),
-        pointInnerRadius: scaleToView(values.pointInnerRadius, scale),
-        pointOuterRadius: scaleToView(values.pointOuterRadius, scale),
+        strokeDashArray: values.strokeDashArray?.map(x => scaleToView(x, scale)),
+        pointStyles: values.pointStyles?.map(style => style && scalePointStyle(style, scale)),
     };
 };
 
@@ -44,35 +61,21 @@ const k100p = '100%';
 const ChartLine = React.memo((props: ChartLineProps) => {
     const propsToScale: ScaledValues = {
         strokeWidth: props.strokeWidth || 0,
-        strokeDashArray: props.strokeDashArray || [],
+        strokeDashArray: props.strokeDashArray,
         pointInnerRadius: props.pointInnerRadius || 0,
         pointOuterRadius: props.pointOuterRadius || 0,
+        pointStyles: props.pointStyles,
     };
     const sizePct = `${((1 + props.overlap) * 100)}%`;
     const marginPct = `${(-props.overlap * 100)}%`;
     const pointOuterColor = props.pointOuterColor || props.strokeColor;
 
-    let pointsToDraw = props.points;
-    let pointsLen = pointsToDraw.length;
-    if (pointsLen !== 0) {
-        if (pointsToDraw[0].clipped && pointsToDraw[pointsLen - 1].clipped) {
-            pointsToDraw = pointsToDraw.slice(1, -1);
-        } else if (pointsToDraw[0].clipped) {
-            pointsToDraw = pointsToDraw.slice(1);
-        } else if (pointsToDraw[pointsLen - 1].clipped) {
-            pointsToDraw = pointsToDraw.slice(0, -1);
-        }
-    }
-
-    const [scaledValues, setScaledValues] = React.useState(() => (
-        // @ts-ignore: _value is private
-        scaleValues(propsToScale, props.scale._value || 0)
-    ));
+    // @ts-ignore: _value is private
+    const [scale, setScale] = React.useState(() => props.scale._value || 0);
+    const scaledValues = scaleValues(propsToScale, scale);
 
     React.useEffect(() => {
-        let sub = props.scale.addListener(({ value: scale }) => {
-            setScaledValues(scaleValues(propsToScale, scale));
-        });
+        let sub = props.scale.addListener(x => setScale(x.value));
         return () => props.scale.removeListener(sub);
     }, [
         props.scale,
@@ -94,7 +97,7 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                 width={k100p}
                 viewBox={props.viewBox}
             >
-                {props.strokeColor && scaledValues.strokeWidth > 0 && (
+                {props.strokeColor && scaledValues.strokeWidth! > 0 && (
                     <Path
                         d={props.path}
                         fill='none'
@@ -102,28 +105,28 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         strokeWidth={scaledValues.strokeWidth}
                         stroke={props.strokeColor}
                         strokeDasharray={(
-                            scaledValues.strokeDashArray.length !== 0
+                            scaledValues.strokeDashArray && scaledValues.strokeDashArray.length !== 0
                                 ? scaledValues.strokeDashArray.map(String).join(',')
                                 : ''
                         )}
                     />
                 )}
-                {pointOuterColor && scaledValues.pointOuterRadius > 0 && pointsToDraw.map((p, i) => (
+                {(scaledValues.pointStyles || pointOuterColor && scaledValues.pointOuterRadius! > 0) && props.points.map((p, i) => (
                     <Circle
                         key={`o${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={scaledValues.pointOuterRadius}
-                        fill={pointOuterColor}
+                        r={scaledValues.pointStyles?.[i]?.pointOuterRadius || scaledValues.pointOuterRadius}
+                        fill={props.pointStyles?.[i]?.pointOuterColor || pointOuterColor}
                     />
                 ))}
-                {props.pointInnerColor && scaledValues.pointInnerRadius > 0 && pointsToDraw.map((p, i) => (
+                {(scaledValues.pointStyles || props.pointInnerColor && scaledValues.pointInnerRadius! > 0) && props.points.map((p, i) => (
                     <Circle
                         key={`i${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={scaledValues.pointInnerRadius}
-                        fill={props.pointInnerColor}
+                        r={scaledValues.pointStyles?.[i]?.pointInnerRadius || scaledValues.pointInnerRadius}
+                        fill={props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor}
                     />
                 ))}
             </Svg>
@@ -149,6 +152,13 @@ const ChartLine = React.memo((props: ChartLineProps) => {
             return false;
         }
         keys.delete('strokeDashArray');
+    }
+    if (keys.has('pointStyles')) {
+        // Compare separately
+        if (!isMatch(prevProps.pointStyles, nextProps.pointStyles)) {
+            return false;
+        }
+        keys.delete('pointStyles');
     }
     for (let key of keys) {
         if (prevProps[key] !== nextProps[key]) {
