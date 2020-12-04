@@ -1,5 +1,7 @@
 export * from './internal';
 
+export * from './utils/colors';
+
 export * from './utils/date';
 
 export { default as Scale } from './scale/Scale';

@@ -4,7 +4,7 @@ import {
     IAxisStyle,
     IAxisStyleInput,
 } from "./axisTypes";
-import * as Colors from '../../utils/colors';
+import { Colors } from '../../utils/colors';
 
 export const kAxisContentReuseIDs: AxisTypeMapping<string> = {
     topAxis: 'topAxisContent',

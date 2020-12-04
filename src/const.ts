@@ -2,7 +2,7 @@ import {
     IChartGridStyle,
     IChartGridStyleInput,
 } from "./types";
-import * as Colors from './utils/colors';
+import { Colors } from './utils/colors';
 
 export const kGridReuseID = 'grid';
 
