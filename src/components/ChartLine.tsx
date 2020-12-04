@@ -93,19 +93,21 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                 width={k100p}
                 viewBox={props.viewBox}
             >
-                <Path
-                    d={props.path}
-                    fill='none'
-                    strokeLinecap='round'
-                    strokeWidth={scaledValues.strokeWidth}
-                    stroke={props.strokeColor}
-                    strokeDasharray={(
-                        scaledValues.strokeDashArray.length !== 0
-                            ? scaledValues.strokeDashArray.map(String).join(',')
-                            : ''
-                    )}
-                />
-                {scaledValues.pointOuterRadius && pointsToDraw.map((p, i) => (
+                {scaledValues.strokeWidth > 0 && (
+                    <Path
+                        d={props.path}
+                        fill='none'
+                        strokeLinecap='round'
+                        strokeWidth={scaledValues.strokeWidth}
+                        stroke={props.strokeColor}
+                        strokeDasharray={(
+                            scaledValues.strokeDashArray.length !== 0
+                                ? scaledValues.strokeDashArray.map(String).join(',')
+                                : ''
+                        )}
+                    />
+                )}
+                {scaledValues.pointOuterRadius > 0 && pointsToDraw.map((p, i) => (
                     <Circle
                         key={`o${i}`}
                         cx={p.x}
@@ -114,7 +116,7 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         fill={props.pointOuterColor}
                     />
                 ))}
-                {scaledValues.pointInnerRadius && pointsToDraw.map((p, i) => (
+                {scaledValues.pointInnerRadius > 0 && pointsToDraw.map((p, i) => (
                     <Circle
                         key={`i${i}`}
                         cx={p.x}
