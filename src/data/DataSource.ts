@@ -1,21 +1,24 @@
 import {
+    IItem,
     IItemCustomLayout,
     IPoint,
     isPointInRange,
     LayoutSource,
     LayoutSourceProps,
 } from 'evergrid';
-import { IDataPoint } from '../types';
-import Scale from '../scale/Scale';
+import { ChartDataType, IDataPoint, IDecimalPoint } from '../types';
+import Axis from '../layout/axis/Axis';
+
+let _idCounter = 0;
 
 export interface DataSourceProps<
     X = any,
     Y = any,
 > {
     data?: IDataPoint<X, Y>[];
-    scale: {
-        x: Scale<X, any>;
-        y: Scale<Y, any>;
+    axes: {
+        x: Axis<X, any>;
+        y: Axis<Y, any>;
     };
 }
 
@@ -36,38 +39,63 @@ export default abstract class DataSource<
     LayoutProps extends LayoutSourceProps<Index> = LayoutSourceProps<Index>,
     Layout extends LayoutSource<Index, LayoutProps> = LayoutSource<Index, LayoutProps>,
 > implements DataSourceProps<X, Y> {
+    id: string;
     data: IDataPoint<X, Y>[] = [];
-    scale: {
-        x: Scale<X, any>;
-        y: Scale<Y, any>;
+    axes: {
+        x: Axis<X, any>;
+        y: Axis<Y, any>;
     };
     layout: Layout;
 
     constructor(props: DataSourceInput<X, Y, Index, LayoutProps>) {
+        this.id = `${(++_idCounter)}`;
         if (props.noCopy && !props.data) {
             throw new Error('Cannot use "noCopy" with null data.');
         }
         this.data = props.noCopy ? props.data! : [...props.data];
-        this.scale = { ...props.scale };
-        if (!(this.scale.x instanceof Scale)) {
-            throw new Error('Invalid data source x-axis scale.');
+        this.axes = { ...props.axes };
+        if (!(this.axes.x instanceof Axis)) {
+            throw new Error('Invalid data source x-axis.');
         }
-        if (!(this.scale.y instanceof Scale)) {
-            throw new Error('Invalid data source y-axis scale.');
+        if (!(this.axes.y instanceof Axis)) {
+            throw new Error('Invalid data source y-axis.');
         }
         this.layout = this.createLayoutSource(props.layout);
     }
 
-    getVisibleIndexSet(pointRange: [IPoint, IPoint]): Set<number> {
-        let indexSet = new Set<number>();
+    abstract get type(): ChartDataType;
+
+    abstract get itemReuseID(): string;
+
+    abstract createLayoutSource(props?: LayoutProps): Layout;
+
+    ownsItem(item: IItem<any>): item is IItem<Index> {
+        // TODO: need to use different reuse ids for each data source
+        return item.reuseID === this.itemReuseID;
+    }
+
+    getItemsInLocationRange(pointRange: [IPoint, IPoint]): IDataPoint<X, Y>[] {
+        let items: IDataPoint<X, Y>[] = [];
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
             const p = this.getItemLocation(this.data[i]);
             if (isPointInRange(p, pointRange)) {
-                indexSet.add(i);
+                items.push(this.data[i]);
             }
         }
-        return indexSet;
+        return items;
+    }
+
+    getItemsIndexesInLocationRange(pointRange: [IPoint, IPoint]): number[] {
+        let indexes: number[] = [];
+        const c = this.data.length;
+        for (let i = 0; i < c; i++) {
+            const p = this.getItemLocation(this.data[i]);
+            if (isPointInRange(p, pointRange)) {
+                indexes.push(i);
+            }
+        }
+        return indexes;
     }
 
     getItemLayout(index: number): IItemCustomLayout {
@@ -76,12 +104,15 @@ export default abstract class DataSource<
         };
     }
 
-    getItemLocation(point: IDataPoint<X, Y>): IPoint {
+    getItemDecimalLocation(point: IDataPoint<X, Y>): IDecimalPoint {
         return {
-            x: this.scale.x.locationOfValue(point.x).toNumber(),
-            y: this.scale.y.locationOfValue(point.y).toNumber(),
+            x: this.axes.x.scale.locationOfValue(point.x),
+            y: this.axes.y.scale.locationOfValue(point.y),
         };
     }
 
-    abstract createLayoutSource(props?: LayoutProps): Layout;
+    getItemLocation(point: IDataPoint<X, Y>): IPoint {
+        let d = this.getItemDecimalLocation(point);
+        return { x: d.x.toNumber(), y: d.y.toNumber() };
+    }
 }

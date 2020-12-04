@@ -2,9 +2,9 @@ import React from 'react';
 import Evergrid, {
     EvergridProps,
     IItem,
+    IPoint,
 } from 'evergrid'
 import {
-    kPointReuseID,
     kGridReuseID,
 } from '../const';
 import {
@@ -20,6 +20,9 @@ import {
     kAxisContentReuseIDTypes,
 } from '../layout/axis/axisConst';
 import ChartAxisBackground from './ChartAxisBackground';
+import ChartLine from './ChartLine';
+import LineDataSource from '../data/LineDataSource';
+import { SvgUtil } from '../utils/svg';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -84,13 +87,43 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
 
         switch (item.reuseID) {
-            case kPointReuseID:
-                return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
             case kGridReuseID:
                 return this.renderGrid();
-            default: 
-                return null;
         }
+
+        for (let dataSource of this.layout.dataSources) {
+            if (dataSource.ownsItem(item)) {
+                switch (dataSource.type) {
+                    case 'path':
+                        return this.renderPath(item, dataSource as LineDataSource);
+                    case 'point':
+                        return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
+                }
+            }
+        }
+
+        console.warn(`Unknown item reuse ID: ${item.reuseID}`);
+        return null;
+    }
+
+    renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
+        let points = dataSource.getCanvasPointsInContainer(item.index);
+        let path = SvgUtil.pathWithPoints(points);
+        if (!path) {
+            return null;
+        }
+        // console.debug(`${JSON.stringify(item.index)} viewBox: ` + dataSource.getViewBox());
+        // console.debug(`${JSON.stringify(item.index)} path: ` + path);
+        return (
+            <ChartLine
+                path={path}
+                points={points}
+                overlap={dataSource.overlap}
+                viewBox={dataSource.getViewBox()}
+                scale={dataSource.layout.root.scale$.y}
+                {...dataSource.style}
+            />
+        );
     }
 
     renderAxisContent({ index, reuseID }: IItem<any>) {

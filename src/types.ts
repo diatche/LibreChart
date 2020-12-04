@@ -51,3 +51,5 @@ export interface IChartGrid extends IChartGridInput {
     layout?: LayoutSource;
     style: Required<IChartGridStyle>;
 }
+
+export type ChartDataType = 'path' | 'point';
