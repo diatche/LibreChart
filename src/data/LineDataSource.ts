@@ -6,7 +6,11 @@ import {
 import DataSource, { DataSourceInput } from './DataSource';
 import { ChartDataType, IDataPointStyle } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
-import { LinePath, PathCurve, SvgUtil } from '../utils/svg';
+import {
+    LinePath,
+    PathCurve,
+    CanvasUtil,
+} from '../utils/canvas';
 
 export interface ILinePoint extends IPoint {
     dataIndex: number;
@@ -170,7 +174,7 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
     }
 
     getCanvasLinePath(): LinePath {
-        return SvgUtil.createLinePath(this.style);
+        return CanvasUtil.createLinePath(this.style);
     }
 
     createLayoutSource(props?: GridLayoutSourceProps) {

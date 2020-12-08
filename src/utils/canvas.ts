@@ -8,7 +8,7 @@ export type LinePath = d3.Line<IPoint>;
 
 const kLine: LinePath = d3.line<IPoint>(p => p.x, p => p.y);
 
-export namespace SvgUtil {
+export namespace CanvasUtil {
 
     export const getCurve = (
         options?: {
