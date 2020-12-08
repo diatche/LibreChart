@@ -1,5 +1,7 @@
 export * from './internal';
 
+export * from './utils/colors';
+
 export * from './utils/date';
 
 export { default as Scale } from './scale/Scale';
@@ -23,6 +25,12 @@ export * from './layout/axis/Axis';
 
 export { default as DataSource } from './data/DataSource';
 export * from './data/DataSource';
+
+export { default as LineDataSource } from './data/LineDataSource';
+export * from './data/LineDataSource';
+
+export { default as PointDataSource } from './data/PointDataSource';
+export * from './data/PointDataSource';
 
 import Chart from './components/Chart';
 export default Chart;

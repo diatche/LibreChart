@@ -2,9 +2,8 @@ import {
     IChartGridStyle,
     IChartGridStyleInput,
 } from "./types";
-import * as Colors from './utils/colors';
+import { Colors } from './utils/colors';
 
-export const kPointReuseID = 'point';
 export const kGridReuseID = 'grid';
 
 export const kChartGridStyleBaseDefaults: IChartGridStyleInput = {

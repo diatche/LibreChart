@@ -2,9 +2,9 @@ import React from 'react';
 import Evergrid, {
     EvergridProps,
     IItem,
+    IPoint,
 } from 'evergrid'
 import {
-    kPointReuseID,
     kGridReuseID,
 } from '../const';
 import {
@@ -20,6 +20,9 @@ import {
     kAxisContentReuseIDTypes,
 } from '../layout/axis/axisConst';
 import ChartAxisBackground from './ChartAxisBackground';
+import LineDataSource from '../data/LineDataSource';
+import { IDataPointStyle } from '../types';
+import ChartLine from './ChartLine';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -84,13 +87,64 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         }
 
         switch (item.reuseID) {
-            case kPointReuseID:
-                return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
             case kGridReuseID:
                 return this.renderGrid();
-            default: 
-                return null;
         }
+
+        for (let dataSource of this.layout.dataSources) {
+            if (dataSource.ownsItem(item)) {
+                switch (dataSource.type) {
+                    case 'path':
+                        return this.renderPath(item, dataSource as LineDataSource);
+                    case 'point':
+                        return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
+                }
+            }
+        }
+
+        console.warn(`Unknown item reuse ID: ${item.reuseID}`);
+        return null;
+    }
+
+    renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
+        let points = dataSource.getCanvasPointsInContainer(item.index);
+        if (points.length === 0) {
+            return null;
+        }
+        let line = dataSource.getCanvasLinePath();
+        let path = line(points);
+        if (!path) {
+            return null;
+        }
+        let rect = dataSource.getContainerCanvasRect(item.index);
+        let pointsToDraw = points;
+        let pointsLen = pointsToDraw.length;
+        if (pointsLen !== 0) {
+            if (pointsToDraw[0].clipped && pointsToDraw[pointsLen - 1].clipped) {
+                pointsToDraw = pointsToDraw.slice(1, -1);
+            } else if (pointsToDraw[0].clipped) {
+                pointsToDraw = pointsToDraw.slice(1);
+            } else if (pointsToDraw[pointsLen - 1].clipped) {
+                pointsToDraw = pointsToDraw.slice(0, -1);
+            }
+        }
+        let pointStyles: (IDataPointStyle | undefined)[] | undefined = pointsToDraw.map(p => dataSource.data[p.dataIndex].style);
+        if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
+            pointStyles = undefined;
+        }
+
+        // console.debug(`${JSON.stringify(item.index)} rect: ` + JSON.stringify(rect));
+        // console.debug(`${JSON.stringify(item.index)} path: ` + path);
+        return (
+            <ChartLine
+                rect={rect}
+                path={path}
+                points={pointsToDraw}
+                pointStyles={pointStyles}
+                scale={dataSource.layout.root.scale$}
+                {...dataSource.style}
+            />
+        );
     }
 
     renderAxisContent({ index, reuseID }: IItem<any>) {
