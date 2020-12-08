@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js';
 import { IPoint } from 'evergrid';
+import debounce from 'lodash.debounce';
 import React from 'react';
 import { Animated, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -75,15 +76,21 @@ const ChartLine = React.memo((props: ChartLineProps) => {
     const scaledValues = scaleValues(propsToScale, scale);
 
     React.useEffect(() => {
-        let sub = props.scale.addListener(x => setScale(Math.abs(x.value)));
-        return () => props.scale.removeListener(sub);
-    }, [
-        props.scale,
-        props.strokeWidth,
-        props.pointInnerRadius,
-        props.pointOuterRadius,
-    ]);
+        let mounted = true;
+        let updater = debounce(({ value }: { value: number }) => {
+            if (!mounted) {
+                return;
+            }
+            setScale(Math.abs(value));
+        }, 50);
+        let sub = props.scale.addListener(updater);
+        return () => {
+            mounted = false;
+            props.scale.removeListener(sub);
+        };
+    }, [props.scale]);
 
+    // console.debug('rendering path: ' + props.path);
     return (
         <View style={{
             width: sizePct,
