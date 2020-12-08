@@ -14,8 +14,6 @@ export interface ChartLineProps extends ILineDataStyle {
      * in canvas coordinates.
      */
     rect: number[];
-    /** Overlap as a fraction. */
-    overlap: number;
     /** Svg `d` prop. */
     path: string;
     /** Point locations in canvas coordinates. */

@@ -141,7 +141,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 path={path}
                 points={pointsToDraw}
                 pointStyles={pointStyles}
-                overlap={dataSource.overlap}
                 scale={dataSource.layout.root.scale$}
                 {...dataSource.style}
             />
