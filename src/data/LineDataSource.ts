@@ -37,14 +37,6 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
         this.style = { ...input.style };
     }
 
-    /**
-     * Overlap as a fraction of the view size.
-     * 
-     * Some overlap is recommended to avoid clipping
-     * points and ends of rounded lines.
-     */
-    overlap = 0.000;
-
     get type(): ChartDataType {
         return 'path';
     }
@@ -56,16 +48,41 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
     getContainerLocationRange(index: IPoint): [IPoint, IPoint] {
         let width = this.axes.x.layoutInfo.containerLength;
         let height = this.axes.y.layoutInfo.containerLength;
-        let xOverlap = this.overlap * width;
-        let yOverlap = this.overlap * height;
         let start = {
-            x: index.x * width - xOverlap,
-            y: index.y * height - yOverlap,
+            x: index.x * width,
+            y: index.y * height,
         };
         return [start, {
-            x: start.x + width + xOverlap * 2,
-            y: start.y + height + yOverlap * 2,
+            x: start.x + width,
+            y: start.y + height,
         }];
+    }
+
+    /**
+     * Returns the canvas view box for the specified
+     * container in the form [x, y, width, height].
+     * @param index 
+     */
+    getContainerCanvasRect(index: IPoint): number[] {
+        let range = this.getContainerLocationRange(index);
+        let xLen = range[1].x - range[0].x;
+        let yLen = range[1].y - range[0].y;
+        let rect = [
+            range[0].x,
+            range[0].y,
+            xLen,
+            yLen,
+        ];
+
+        let scale = this.layout.getScale();
+        if (scale.x < 0) {
+            rect[0] = -xLen - rect[0];
+        }
+        if (scale.y < 0) {
+            rect[1] = -yLen - rect[1];
+        }
+        
+        return rect;
     }
 
     /**
@@ -78,30 +95,58 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
             return [];
         }
         let rect = this.getContainerLocationRange(index);
+
+        // let scale = this.layout.getScale();
+        // let xScaleSign = scale.x >= 0 ? 1 : -1;
+        // let yScaleSign = scale.y >= 0 ? 1 : -1;
+
+        // let points: ILinePoint[] = this.data.map((item, i) => {
+        //     let p = this.getItemLocation(item);
+        //     let clipped = p.x >= rect[0].x && p.x < rect[1].x && p.y >= rect[0].y && p.y < rect[1].y;
+
+        //     if (xScaleSign < 0 || yScaleSign < 0) {
+        //         p.x *= xScaleSign;
+        //         p.y *= yScaleSign;
+        //     }
+
+        //     return {
+        //         x: p.x,
+        //         y: p.y,
+        //         dataIndex: i,
+        //         clipped,
+        //     };
+        // });
+
         let points: ILinePoint[] = [];
         let p0 = this.getItemLocation(this.data[0]);
+        let iAdded = -1;
         for (let i = 1; i < c; i++) {
             let p = this.getItemLocation(this.data[i]);
-            let clip = VectorUtil.cohenSutherlandLineClip(
+            let line = VectorUtil.cohenSutherlandLineClip(
                 p0.x, p0.y,
                 p.x, p.y,
                 rect[0].x, rect[0].y,
                 rect[1].x, rect[1].y
             );
-            if (clip) {
-                points.push({
-                    x: clip[0],
-                    y: clip[1],
-                    dataIndex: i - 1,
-                    clipped: clip[0] !== p0.x || clip[1] !== p0.y,
-                });
-                if (clip[0] !== clip[2] || clip[1] !== clip[3]) {
+            if (line) {
+                let isPoint = line[0] === line[2] && line[1] === line[3];
+                if (!isPoint) {
+                    if (iAdded !== i - 1) {
+                        points.push({
+                            x: line[0],
+                            y: line[1],
+                            dataIndex: i - 1,
+                            clipped: !VectorUtil.isPointInClosedRange(p0, rect),
+                        });
+                        iAdded = i - 1;
+                    }
                     points.push({
-                        x: clip[2],
-                        y: clip[3],
+                        x: line[2],
+                        y: line[3],
                         dataIndex: i,
-                        clipped: clip[2] !== p.x || clip[3] !== p.y,
+                        clipped: !VectorUtil.isPointInClosedRange(p, rect),
                     });
+                    iAdded = i;
                 }
             }
             p0 = p;
@@ -109,20 +154,14 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
 
         const pointsLen = points.length;
         if (pointsLen !== 0) {
-            let width = rect[1].x - rect[0].x;
-            let height = rect[1].y - rect[0].y;
             let scale = this.layout.getScale();
-            let invertX = scale.x < 0;
-            let invertY = scale.y < 0;
-            for (let i = 0; i < pointsLen; i++) {
-                let p = points[i];
-                p.x = p.x - rect[0].x;
-                p.y = p.y - rect[0].y;
-                if (invertX) {
-                    p.x = width - p.x;
-                }
-                if (invertY) {
-                    p.y = height - p.y;
+            let xScaleSign = scale.x >= 0 ? 1 : -1;
+            let yScaleSign = scale.y >= 0 ? 1 : -1;
+            if (xScaleSign < 0 || yScaleSign < 0) {
+                for (let i = 0; i < pointsLen; i++) {
+                    let p = points[i];
+                    p.x *= xScaleSign;
+                    p.y *= yScaleSign;
                 }
             }
         }
@@ -132,13 +171,6 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
 
     getCanvasLinePath(): LinePath {
         return SvgUtil.createLinePath(this.style);
-    }
-
-    getViewBox(): string {
-        let overlapCoef = 1 + this.overlap;
-        let width = this.axes.x.layoutInfo.containerLength * overlapCoef;
-        let height = this.axes.y.layoutInfo.containerLength * overlapCoef;
-        return `0 0 ${width} ${height}`
     }
 
     createLayoutSource(props?: GridLayoutSourceProps) {

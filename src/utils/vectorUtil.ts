@@ -1,3 +1,4 @@
+import { IPoint } from "evergrid";
 
 export namespace VectorUtil {
 
@@ -151,54 +152,17 @@ export namespace VectorUtil {
         return code;
     }
 
-    // export const lineIntersectsRect = (line: IVector, rect: IVector): boolean => {
-    //     return vectorsIntersect(line, rectTopVector(rect))
-    //         || vectorsIntersect(line, rectLeftVector(rect))
-    //         || vectorsIntersect(line, rectRightVector(rect))
-    //         || vectorsIntersect(line, rectBottomVector(rect));
-    // };
-
-    // export const vectorsIntersect = (v1: IVector, v2: IVector): boolean => {
-
-    // };
-
-    // export const rectTopVector = (rect: IVector): IVector => {
-    //     return {
-    //         start: { ...rect.start },
-    //         end: {
-    //             x: rect.end.x,
-    //             y: rect.start.y,
-    //         },
-    //     };
-    // }
-
-    // export const rectLeftVector = (rect: IVector): IVector => {
-    //     return {
-    //         start: { ...rect.start },
-    //         end: {
-    //             x: rect.start.x,
-    //             y: rect.end.y,
-    //         },
-    //     };
-    // }
-
-    // export const rectRightVector = (rect: IVector): IVector => {
-    //     return {
-    //         start: {
-    //             x: rect.end.x,
-    //             y: rect.start.y,
-    //         },
-    //         end: { ...rect.end },
-    //     };
-    // }
-
-    // export const rectBottomVector = (rect: IVector): IVector => {
-    //     return {
-    //         start: {
-    //             x: rect.start.x,
-    //             y: rect.end.y,
-    //         },
-    //         end: { ...rect.end },
-    //     };
-    // }
+    /**
+     * Returns true if the specified point `p` is inside the
+     * specified range `r`.
+     * 
+     * The range lower bounds are inclusive and upper bounds
+     * are inclusive.
+     * 
+     * @param p {IPoint} The point. 
+     * @param r {[IPoint, IPoint]} The point range.
+     */
+    export const isPointInClosedRange = (p: IPoint, r: [IPoint, IPoint]): boolean => {
+        return p.x >= r[0].x && p.x <= r[1].x && p.y >= r[0].y && p.y <= r[1].y;
+    };
 }

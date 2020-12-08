@@ -9,8 +9,11 @@ import { IDataPointStyle } from '../types';
 import { isMatch } from '../utils/comp';
 
 export interface ChartLineProps extends ILineDataStyle {
-    /** SVG view box. For example: `0 0 100 100`. */
-    viewBox: string;
+    /**
+     * View rect in the form [x, y, width, height]
+     * in canvas coordinates.
+     */
+    rect: number[];
     /** Overlap as a fraction. */
     overlap: number;
     /** Svg `d` prop. */
@@ -20,7 +23,7 @@ export interface ChartLineProps extends ILineDataStyle {
     /** Point styles corresponding to points. */
     pointStyles?: (IDataPointStyle | undefined)[];
     /** View scale. */
-    scale: Animated.Value;
+    scale: Animated.ValueXY;
 }
 
 interface ScaledPointValues extends Pick<
@@ -57,31 +60,57 @@ const scaleValues = (values: ScaledValues, scale: number): ScaledValues => {
     };
 };
 
-const k100p = '100%';
-
 const ChartLine = React.memo((props: ChartLineProps) => {
-    const propsToScale: ScaledValues = {
+    const scaledProps: ScaledValues = {
         strokeWidth: props.strokeWidth || 0,
         strokeDashArray: props.strokeDashArray,
         pointInnerRadius: props.pointInnerRadius || 0,
         pointOuterRadius: props.pointOuterRadius || 0,
         pointStyles: props.pointStyles,
     };
-    const sizePct = `${((1 + props.overlap) * 100)}%`;
-    const marginPct = `${(-props.overlap * 100)}%`;
+    // const sizePct = `${((1 + props.overlap) * 100)}%`;
+    // const marginPct = `${(-props.overlap * 100)}%`;
     const pointOuterColor = props.pointOuterColor || props.strokeColor;
 
-    // @ts-ignore: _value is private
-    const [scale, setScale] = React.useState(() => Math.abs(props.scale._value || 0));
-    const scaledValues = scaleValues(propsToScale, scale);
+    const [scale, setScale] = React.useState<IPoint>(() => ({
+        // @ts-ignore: _value is private
+        x: Math.abs(props.scale.x._value || 0),
+        // @ts-ignore: _value is private
+        y: Math.abs(props.scale.y._value || 0),
+    }));
+    const scaledValues = scaleValues(scaledProps, scale.x);
+
+    const viewOverlap = Math.max(
+        (props.strokeWidth || 0) / 2,
+        props.pointOuterRadius || 0,
+        ...Object.values(props.pointStyles || {})
+            .map(s => s?.pointOuterRadius || 0),
+    );
+    // const viewOverlap2 = viewOverlap * 2;
+    const xContentOverlap = viewOverlap / scale.x;
+    const yContentOverlap = viewOverlap / scale.y;
+
+    const rectWithOverlap = [
+        props.rect[0] - xContentOverlap,
+        props.rect[1] - yContentOverlap,
+        props.rect[2] + xContentOverlap * 2,
+        props.rect[3] + yContentOverlap * 2,
+    ];
+    const viewBox = rectWithOverlap.map(String).join(' ');
+
+    const xOverlap = xContentOverlap / props.rect[2];
+    const yOverlap = yContentOverlap / props.rect[3];
 
     React.useEffect(() => {
         let mounted = true;
-        let updater = debounce(({ value }: { value: number }) => {
+        let updater = debounce((scale: IPoint) => {
             if (!mounted) {
                 return;
             }
-            setScale(Math.abs(value));
+            setScale({
+                x: Math.abs(scale.x),
+                y: Math.abs(scale.y),
+            });
         }, 50);
         let sub = props.scale.addListener(updater);
         return () => {
@@ -93,17 +122,13 @@ const ChartLine = React.memo((props: ChartLineProps) => {
     // console.debug('rendering path: ' + props.path);
     return (
         <View style={{
-            width: sizePct,
-            height: sizePct,
-            margin: marginPct,
-            // borderWidth: 2,
-            // borderColor: 'rgba(200, 210, 130, 0.5)',
+            width: `${(1 + xOverlap * 2) * 100}%`,
+            height: `${(1 + yOverlap * 2) * 100}%`,
+            marginHorizontal: `${-xOverlap * 100}%`,
+            marginVertical: `${-yOverlap * 100}%`,
+            // backgroundColor: 'rgba(200, 210, 130, 0.1)',
         }}>
-            <Svg
-                height={k100p}
-                width={k100p}
-                viewBox={props.viewBox}
-            >
+            <Svg viewBox={viewBox} >
                 {props.strokeColor && scaledValues.strokeWidth! > 0 && (
                     <Path
                         d={props.path}
@@ -136,6 +161,10 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         fill={props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor}
                     />
                 ))}
+                {/* <Circle cx={props.rect[0]} cy={props.rect[1]} r={scaledValues.strokeWidth! * 2} fill='red' />
+                <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1]} r={scaledValues.strokeWidth! * 2} fill='red' />
+                <Circle cx={props.rect[0]} cy={props.rect[1] + props.rect[3]} r={scaledValues.strokeWidth! * 2} fill='red' />
+                <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1] + props.rect[3]} r={scaledValues.strokeWidth! * 2} fill='red' /> */}
             </Svg>
         </View>
     );
@@ -149,6 +178,13 @@ const ChartLine = React.memo((props: ChartLineProps) => {
         ...prevKeys,
         ...nextKeys,
     ]);
+    if (keys.has('rect')) {
+        // Compare separately
+        if (!isMatch(prevProps.rect, nextProps.rect)) {
+            return false;
+        }
+        keys.delete('rect');
+    }
     if (keys.has('points')) {
         // Compare using "path" instead
         keys.delete('points');
