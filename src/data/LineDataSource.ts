@@ -6,7 +6,7 @@ import {
 import DataSource, { DataSourceInput } from './DataSource';
 import { ChartDataType, IDataPointStyle } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
-import { PathCurves } from '../utils/svg';
+import { LinePath, PathCurve, SvgUtil } from '../utils/svg';
 
 export interface ILinePoint extends IPoint {
     dataIndex: number;
@@ -14,7 +14,7 @@ export interface ILinePoint extends IPoint {
 }
 
 export interface ILineDataStyle extends IDataPointStyle {
-    curve?: PathCurves;
+    curve?: PathCurve;
 
     /** Stroke width in view coordinates. */
     strokeWidth?: number;
@@ -43,7 +43,7 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
      * Some overlap is recommended to avoid clipping
      * points and ends of rounded lines.
      */
-    overlap = 0.001;
+    overlap = 0.000;
 
     get type(): ChartDataType {
         return 'path';
@@ -128,6 +128,10 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
         }
 
         return points;
+    }
+
+    getCanvasLinePath(): LinePath {
+        return SvgUtil.createLinePath(this.style);
     }
 
     getViewBox(): string {

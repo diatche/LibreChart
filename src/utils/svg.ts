@@ -3,18 +3,18 @@ import * as d3 from 'd3-shape';
 
 // TODO: Add other curves
 
-export type PathCurves = 'linear' | 'natural' | 'monotoneX' | d3.CurveFactory;
+export type PathCurve = 'linear' | 'natural' | 'monotoneX' | d3.CurveFactory;
+export type LinePath = d3.Line<IPoint>;
 
-const kLine = d3.line<IPoint>(p => p.x, p => p.y);
+const kLine: LinePath = d3.line<IPoint>(p => p.x, p => p.y);
 
 export namespace SvgUtil {
 
-    export const pathWithPoints = (
-        points: IPoint[],
+    export const getCurve = (
         options?: {
-            curve?: PathCurves;
+            curve?: PathCurve;
         },
-    ): string => {
+    ): d3.CurveFactory => {
         const { curve = d3.curveLinear } = options || {};
         let curveFactory: d3.CurveFactory;
         if (typeof curve === 'string') {
@@ -34,7 +34,24 @@ export namespace SvgUtil {
         } else {
             curveFactory = curve;
         }
-        let line = kLine.curve(curveFactory);
+        return curveFactory;
+    }
+
+    export const createLinePath = (
+        options?: {
+            curve?: PathCurve;
+        },
+    ): LinePath => {
+        return kLine.curve(getCurve(options));
+    }
+
+    export const pathWithPoints = (
+        points: IPoint[],
+        options?: {
+            curve?: PathCurve;
+        },
+    ): string => {
+        let line = createLinePath(options);
         return line(points) || '';
     };
 }

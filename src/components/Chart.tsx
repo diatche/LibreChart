@@ -20,7 +20,7 @@ import {
     kAxisContentReuseIDTypes,
 } from '../layout/axis/axisConst';
 import ChartAxisBackground from './ChartAxisBackground';
-import ChartLine from './ChartLine';
+import ChartCanvasLine from './ChartCanvasLine';
 import LineDataSource from '../data/LineDataSource';
 import { SvgUtil } from '../utils/svg';
 import { IDataPointStyle } from '../types';
@@ -109,10 +109,11 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
     renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
         let points = dataSource.getCanvasPointsInContainer(item.index);
-        let path = SvgUtil.pathWithPoints(points, dataSource.style);
-        if (!path) {
-            return null;
-        }
+        let line = dataSource.getCanvasLinePath();
+        // let path = SvgUtil.pathWithPoints(points, dataSource.style);
+        // if (!path) {
+        //     return null;
+        // }
         let pointsToDraw = points;
         let pointsLen = pointsToDraw.length;
         if (pointsLen !== 0) {
@@ -133,13 +134,13 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         // console.debug(`${JSON.stringify(item.index)} path: ` + path);
         // console.debug(`${JSON.stringify(item.index)} point styles: ` + JSON.stringify(pointStyles, null, 2));
         return (
-            <ChartLine
-                path={path}
+            <ChartCanvasLine
+                line={line}
                 points={pointsToDraw}
                 pointStyles={pointStyles}
                 overlap={dataSource.overlap}
                 viewBox={dataSource.getViewBox()}
-                scale={dataSource.layout.root.scale$.y}
+                scale={dataSource.layout.root.scale$}
                 {...dataSource.style}
             />
         );

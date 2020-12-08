@@ -71,11 +71,11 @@ const ChartLine = React.memo((props: ChartLineProps) => {
     const pointOuterColor = props.pointOuterColor || props.strokeColor;
 
     // @ts-ignore: _value is private
-    const [scale, setScale] = React.useState(() => props.scale._value || 0);
+    const [scale, setScale] = React.useState(() => Math.abs(props.scale._value || 0));
     const scaledValues = scaleValues(propsToScale, scale);
 
     React.useEffect(() => {
-        let sub = props.scale.addListener(x => setScale(x.value));
+        let sub = props.scale.addListener(x => setScale(Math.abs(x.value)));
         return () => props.scale.removeListener(sub);
     }, [
         props.scale,
