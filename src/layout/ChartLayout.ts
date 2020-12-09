@@ -9,11 +9,11 @@ import {
     Cancelable,
 } from "../types";
 import { InteractionManager } from "react-native";
-import Plot, { PlotManyInput } from "./Plot";
+import { Plot, PlotManyInput } from "../internal";
 
 const kGridUpdateDebounceInterval = 100;
 
-export interface ChartLayoutProps extends EvergridLayoutCallbacks, EvergridLayoutProps {
+export interface ChartLayoutProps extends EvergridLayoutCallbacks, Omit<EvergridLayoutProps, 'layoutSources'> {
     plots: PlotManyInput;
 }
 
@@ -26,21 +26,20 @@ export default class ChartLayout extends EvergridLayout {
             this.anchor$.setValue({ x: 0.5, y: 0.5 });
         }
         this.plots = this._validatedPlots(props);
-        this.setLayoutSources(props?.layoutSources || []);
     }
 
-    setLayoutSources(layoutSources: LayoutSource[]) {
-        super.setLayoutSources([
-            ...this._getChartLayoutSources(),
-            ...layoutSources,
-        ]);
+    didInitChart() {
+        for (let plot of this.plots) {
+            plot.configure(this);
+        }
+        this.setLayoutSources(this._getChartLayoutSources());
     }
 
-    configure() {
-        this.updateChart();
+    unconfigureChart() {
+        for (let plot of this.plots) {
+            plot.unconfigure();
+        }
     }
-
-    unconfigure() {}
 
     didChangeViewportSize() {
         super.didChangeViewportSize();
@@ -81,7 +80,7 @@ export default class ChartLayout extends EvergridLayout {
         this.cancelChartUpdate();
 
         for (let plot of this.plots) {
-            plot.updatePlot();
+            plot.update();
         }
     }
 

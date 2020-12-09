@@ -7,6 +7,7 @@ import Evergrid, {
 } from 'evergrid'
 import {
     ChartLayout,
+    Plot,
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
@@ -19,7 +20,6 @@ import ChartAxisBackground from './ChartAxisBackground';
 import LineDataSource from '../data/LineDataSource';
 import { IDataPointStyle } from '../types';
 import ChartLine from './ChartLine';
-import Plot from '../layout/Plot';
 import { axisTypeMap } from '../layout/axis/axisUtil';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
@@ -38,6 +38,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     constructor(props: ChartProps) {
         super(props);
         this.layout = props.layout;
+        this.layout.didInitChart();
 
         this.itemRenderMap = {};
         this.updateItemRenderMap();
@@ -48,14 +49,6 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
     get innerView() {
         return this.innerRef.current;
-    }
-
-    componentDidMount() {
-        this.layout.configure();
-    }
-
-    componentWillUnmount() {
-        this.layout.unconfigure();
     }
 
     updateItemRenderMap() {
@@ -97,6 +90,9 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
             // Data
             for (let dataSource of plot.dataSources) {
+                if (!dataSource.layout) {
+                    continue;
+                }
                 switch (dataSource.type) {
                     case 'path':
                         itemRenderMap[dataSource.layout.id] = {
@@ -132,6 +128,9 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
+        if (!dataSource.layout) {
+            return null;
+        }
         let points = dataSource.getCanvasPointsInContainer(item.index);
         if (points.length === 0) {
             return null;
@@ -181,10 +180,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (!axis || axis.hidden) {
             return null;
         }
-        let range = axis.getContainerRangeAtIndex(index);
-        let ticks = axis.scale.getTicksInLocationRange(range[0], range[1]);
-        let isInverted = axis.isInverted();
-        let labelLength = axis.layoutInfo.containerLength * axis.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
+        let range = axis.scaleLayout.getContainerRangeAtIndex(index);
+        let ticks = axis.scaleLayout.scale.getTicksInLocationRange(range[0], range[1]);
+        let isInverted = axis.scaleLayout.isInverted();
+        let labelLength = axis.scaleLayout.layoutInfo.containerLength * axis.scaleLayout.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
         return (
             <ChartAxisContent
                 {...axis.style}
@@ -214,7 +213,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             <ChartAxisBackground
                 {...axis.style}
                 axisType={axis.axisType}
-                majorCount={axis.layoutInfo.majorCount}
+                majorCount={axis.scaleLayout.layoutInfo.majorCount}
             />
         );
     }
@@ -223,18 +222,18 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (plot.grid.hidden) {
             return null;
         }
-        let hAxis = plot.grid.horizontalAxis;
-        let vAxis = plot.grid.verticalAxis;
-        if (!hAxis && !vAxis) {
+        let hLayout = plot.grid.horizontal ? plot.xLayout : undefined;
+        let vLayout = plot.grid.vertical ? plot.yLayout : undefined
+        if (!hLayout && !vLayout) {
             return null;
         }
         return (
             <ChartGrid
                 {...plot.grid.style}
-                majorCountX={hAxis?.layoutInfo.majorCount || 0}
-                minorCountX={hAxis?.layoutInfo.minorCount || 0}
-                majorCountY={vAxis?.layoutInfo.majorCount || 0}
-                minorCountY={vAxis?.layoutInfo.minorCount || 0}
+                majorCountX={hLayout?.layoutInfo.majorCount || 0}
+                minorCountX={hLayout?.layoutInfo.minorCount || 0}
+                majorCountY={vLayout?.layoutInfo.majorCount || 0}
+                minorCountY={vLayout?.layoutInfo.minorCount || 0}
             />
         );
     }

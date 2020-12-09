@@ -2,6 +2,7 @@ import {
     GridLayoutSource,
     GridLayoutSourceProps,
     IPoint,
+    zeroPoint,
 } from 'evergrid';
 import DataSource, { DataSourceInput } from './DataSource';
 import { ChartDataType, IDataPointStyle } from '../types';
@@ -50,8 +51,9 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
     }
 
     getContainerLocationRange(index: IPoint): [IPoint, IPoint] {
-        let width = this.axes.x.layoutInfo.containerLength;
-        let height = this.axes.y.layoutInfo.containerLength;
+        let plot = this.plot;
+        let width = plot.xLayout.layoutInfo.containerLength;
+        let height = plot.yLayout.layoutInfo.containerLength;
         let start = {
             x: index.x * width,
             y: index.y * height,
@@ -160,11 +162,12 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
     }
 
     createLayoutSource(props?: GridLayoutSourceProps) {
+        let plot = this.plot;
         return new GridLayoutSource({
             reuseID: this.itemReuseID,
             itemSize: {
-                x: this.axes.x.layoutInfo.containerLength$,
-                y: this.axes.y.layoutInfo.containerLength$,
+                x: plot.xLayout.layoutInfo.containerLength$,
+                y: plot.yLayout.layoutInfo.containerLength$,
             },
             ...props,
             shouldRenderItem: () => true,

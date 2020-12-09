@@ -5,9 +5,10 @@ import {
     isPointInRange,
     LayoutSource,
     LayoutSourceProps,
+    weakref,
 } from 'evergrid';
 import { ChartDataType, IDataPoint, IDecimalPoint } from '../types';
-import Axis from '../layout/axis/Axis';
+import { Plot } from '../internal';
 
 let _idCounter = 0;
 
@@ -16,10 +17,6 @@ export interface DataSourceProps<
     Y = any,
 > {
     data?: IDataPoint<X, Y>[];
-    axes: {
-        x: Axis<X, any>;
-        y: Axis<Y, any>;
-    };
 }
 
 export interface DataSourceInput<
@@ -41,11 +38,10 @@ export default abstract class DataSource<
 > implements DataSourceProps<X, Y> {
     id: string;
     data: IDataPoint<X, Y>[] = [];
-    axes: {
-        x: Axis<X, any>;
-        y: Axis<Y, any>;
-    };
-    layout: Layout;
+    layout?: Layout;
+    layoutProps?: LayoutProps;
+
+    private _plotWeakRef = weakref<Plot<X, Y>>();
 
     constructor(props: DataSourceInput<X, Y, Index, LayoutProps>) {
         this.id = `${(++_idCounter)}`;
@@ -53,14 +49,27 @@ export default abstract class DataSource<
             throw new Error('Cannot use "noCopy" with null data.');
         }
         this.data = props.noCopy ? props.data! : [...props.data];
-        this.axes = { ...props.axes };
-        if (!(this.axes.x instanceof Axis)) {
-            throw new Error('Invalid data source x-axis.');
+        this.layoutProps = props.layout;
+    }
+
+    get plot(): Plot<X, Y> {
+        return this._plotWeakRef.getOrFail();
+    }
+
+    set plot(plot: Plot<X, Y>) {
+        if (!plot || !(plot instanceof Plot)) {
+            throw new Error('Invalid plot');
         }
-        if (!(this.axes.y instanceof Axis)) {
-            throw new Error('Invalid data source y-axis.');
-        }
-        this.layout = this.createLayoutSource(props.layout);
+        this._plotWeakRef.set(plot);
+    }
+
+    configure(plot: Plot<X, Y>) {
+        this.plot = plot;
+        this.layout = this.createLayoutSource(this.layoutProps);
+    }
+
+    unconfigure() {
+        this.layout = undefined;
     }
 
     abstract get type(): ChartDataType;
@@ -105,9 +114,10 @@ export default abstract class DataSource<
     }
 
     getItemDecimalLocation(point: IDataPoint<X, Y>): IDecimalPoint {
+        let plot = this.plot;
         return {
-            x: this.axes.x.scale.locationOfValue(point.x),
-            y: this.axes.y.scale.locationOfValue(point.y),
+            x: plot.xLayout.scale.locationOfValue(point.x),
+            y: plot.yLayout.scale.locationOfValue(point.y),
         };
     }
 

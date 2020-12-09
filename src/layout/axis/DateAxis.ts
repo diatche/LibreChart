@@ -1,5 +1,4 @@
-import moment from "moment";
-import { Duration, Moment } from "moment";
+import { Moment } from "moment";
 import { TextStyle } from "react-native";
 import { ITickLabel } from "../../types";
 import Axis from "./Axis";
@@ -9,22 +8,18 @@ import {
     formatDateDelta,
     getTickStyles,
 } from "../../utils/date";
-import DateScale from "../../scale/DateScale";
 import {
     AxisType,
     IAxisOptions,
 } from "./axisTypes";
 
-export default class DateAxis extends Axis<Moment, Duration> {
+export default class DateAxis extends Axis<Moment> {
     private _tickStyles?: DateUnitMapping<TextStyle>;
 
-    constructor(axisType: AxisType, options?: IAxisOptions<Moment, Duration>) {
+    constructor(axisType: AxisType, options?: IAxisOptions<Moment>) {
         options = {
-            scale: new DateScale({
-                originDate: moment().startOf('year'),
-            }),
             getTickLabel: tick => {
-                let duration = this.scale.tickScale.interval.valueInterval;
+                let duration = this.scaleLayout.scale.tickScale.interval.valueInterval;
                 const [interval, unit] = dateUnitsWithDuration(duration);
                 let labelFormat = formatDateDelta(tick.value, duration);
                 let label: ITickLabel = {
@@ -38,10 +33,10 @@ export default class DateAxis extends Axis<Moment, Duration> {
         super(axisType, options);
     }
 
-    didChangeLayout() {
-        super.didChangeLayout();
+    willUpdateLayout() {
+        super.willUpdateLayout();
         this._tickStyles = getTickStyles(
-            this.scale.tickScale.interval.valueInterval,
+            this.scaleLayout.scale.tickScale.interval.valueInterval,
             this.style,
         );
     }
