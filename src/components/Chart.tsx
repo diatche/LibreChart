@@ -3,10 +3,8 @@ import Evergrid, {
     EvergridProps,
     IItem,
     IPoint,
+    ItemRenderMap,
 } from 'evergrid'
-import {
-    kGridReuseID,
-} from '../const';
 import {
     ChartLayout,
 } from '../internal';
@@ -14,15 +12,15 @@ import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
 import {
-    kAxisBackgroundReuseIDSet,
     kAxisBackgroundReuseIDTypes,
-    kAxisContentReuseIDSet,
     kAxisContentReuseIDTypes,
 } from '../layout/axis/axisConst';
 import ChartAxisBackground from './ChartAxisBackground';
 import LineDataSource from '../data/LineDataSource';
 import { IDataPointStyle } from '../types';
 import ChartLine from './ChartLine';
+import Plot from '../layout/Plot';
+import { axisTypeMap } from '../layout/axis/axisUtil';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -35,10 +33,14 @@ interface ChartState {}
 export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     innerRef = React.createRef<Evergrid>();
     layout: ChartLayout;
+    itemRenderMap: ItemRenderMap;
 
     constructor(props: ChartProps) {
         super(props);
         this.layout = props.layout;
+
+        this.itemRenderMap = {};
+        this.updateItemRenderMap();
 
         // TODO: validate property changes
         // TODO: prevent changing axes on the fly
@@ -56,54 +58,77 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         this.layout.unconfigure();
     }
 
+    updateItemRenderMap() {
+        let itemRenderMap: ItemRenderMap = {};
+        for (let plot of this.layout.plots) {
+            // Grid
+            if (plot.grid.layout) {
+                itemRenderMap[plot.grid.layout.id] = {
+                    renderItem: (item, layoutSource, context) => (
+                        this.renderGrid(context)
+                    ),
+                    context: plot,
+                };
+            }
+
+            // Axes
+            axisTypeMap(axisType => {
+                let axis = plot.axes[axisType];
+                if (!axis) {
+                    return;
+                }
+                if (axis.contentLayout) {
+                    itemRenderMap[axis.contentLayout.id] = {
+                        renderItem: (item, layoutSource, context) => (
+                            this.renderAxisContent(item, context)
+                        ),
+                        context: plot,
+                    };
+                }
+                if (axis.backgroundLayout) {
+                    itemRenderMap[axis.backgroundLayout.id] = {
+                        renderItem: (item, layoutSource, context) => (
+                            this.renderAxisBackground(item, context)
+                        ),
+                        context: plot,
+                    };
+                }
+            });
+
+            // Data
+            for (let dataSource of plot.dataSources) {
+                switch (dataSource.type) {
+                    case 'path':
+                        itemRenderMap[dataSource.layout.id] = {
+                            renderItem: (item, layoutSource, context) => (
+                                this.renderPath(item, context)
+                            ),
+                            context: dataSource as LineDataSource,
+                        };
+                        break;
+                    case 'point':
+                        itemRenderMap[dataSource.layout.id] = {
+                            renderItem: (item, layoutSource, context) => (
+                                <ChartPoint diameter={item.animated.viewLayout.size.x} />
+                            ),
+                            context: dataSource as LineDataSource,
+                        };
+                        break;
+                }
+            }
+        }
+        this.itemRenderMap = itemRenderMap;
+    }
+
     render() {
         return (
             <Evergrid
                 {...this.props}
                 ref={this.innerRef}
-                renderItem={(item: IItem<any>) => this.renderItem(item)}
+                renderItem={this.itemRenderMap}
                 layout={this.layout}
             />
         );
-    }
-
-    renderItem(item: IItem<any>) {
-        if (!item.reuseID) {
-            return null;
-        }
-        
-        // let itemDebug = {
-        //     reuseID: item.reuseID,
-        //     index: item.index,
-        //     contentLayout: item.contentLayout,
-        // };
-        // console.debug('rendering item: ' + JSON.stringify(itemDebug, null, 2));
-
-        if (kAxisContentReuseIDSet.has(item.reuseID)) {
-            return this.renderAxisContent(item);
-        }
-        if (kAxisBackgroundReuseIDSet.has(item.reuseID)) {
-            return this.renderAxisBackground(item);
-        }
-
-        switch (item.reuseID) {
-            case kGridReuseID:
-                return this.renderGrid();
-        }
-
-        for (let dataSource of this.layout.dataSources) {
-            if (dataSource.ownsItem(item)) {
-                switch (dataSource.type) {
-                    case 'path':
-                        return this.renderPath(item, dataSource as LineDataSource);
-                    case 'point':
-                        return <ChartPoint diameter={item.animated.viewLayout.size.x} />;
-                }
-            }
-        }
-
-        console.warn(`Unknown item reuse ID: ${item.reuseID}`);
-        return null;
     }
 
     renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
@@ -147,12 +172,12 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         );
     }
 
-    renderAxisContent({ index, reuseID }: IItem<any>) {
+    renderAxisContent({ index, reuseID }: IItem<any>, plot: Plot) {
         if (!reuseID) {
             return null;
         }
         let axisType = kAxisContentReuseIDTypes[reuseID];
-        let axis = this.layout.axes[axisType];
+        let axis = plot.axes[axisType];
         if (!axis || axis.hidden) {
             return null;
         }
@@ -176,12 +201,12 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         );
     }
 
-    renderAxisBackground({ reuseID }: IItem<any>) {
+    renderAxisBackground({ reuseID }: IItem<any>, plot: Plot) {
         if (!reuseID) {
             return null;
         }
         let axisType = kAxisBackgroundReuseIDTypes[reuseID];
-        let axis = this.layout.axes[axisType];
+        let axis = plot.axes[axisType];
         if (!axis || axis.hidden) {
             return null;
         }
@@ -194,18 +219,18 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         );
     }
 
-    renderGrid() {
-        if (this.layout.grid.hidden) {
+    renderGrid(plot: Plot) {
+        if (plot.grid.hidden) {
             return null;
         }
-        let hAxis = this.layout.getHorizontalGridAxis();
-        let vAxis = this.layout.getVerticalGridAxis();
+        let hAxis = plot.getHorizontalGridAxis();
+        let vAxis = plot.getVerticalGridAxis();
         if (!hAxis && !vAxis) {
             return null;
         }
         return (
             <ChartGrid
-                {...this.layout.grid.style}
+                {...plot.grid.style}
                 majorCountX={hAxis?.layoutInfo.majorCount || 0}
                 minorCountX={hAxis?.layoutInfo.minorCount || 0}
                 majorCountY={vAxis?.layoutInfo.majorCount || 0}

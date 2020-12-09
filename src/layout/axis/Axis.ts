@@ -31,6 +31,7 @@ import {
     isAxisHorizontal,
     isAxisType,
 } from "./axisUtil";
+import { Cancelable } from "../../types";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -398,12 +399,20 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
     }
 
     scheduleThicknessUpdate() {
-        if (!this.contentLayout) {
+        if (!this.contentLayout || this._scheduledThicknessUpdate) {
             return;
         }
-        InteractionManager.runAfterInteractions(() => (
+        this._scheduledThicknessUpdate = InteractionManager.runAfterInteractions(() => (
             this._debouncedThicknessUpdate()
         ));
+    }
+
+    cancelThicknessUpdate() {
+        if (this._scheduledThicknessUpdate) {
+            this._scheduledThicknessUpdate.cancel();
+            this._scheduledThicknessUpdate = undefined;
+        }
+        this._debouncedThicknessUpdate.cancel();
     }
     
     private _debouncedThicknessUpdate = debounce(
@@ -411,7 +420,11 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
         kAxisUpdateDebounceInterval,
     );
 
+    private _scheduledThicknessUpdate?: Cancelable;
+
     updateThickness() {
+        this.cancelThicknessUpdate();
+
         // Get optimal axis thickness
         let thickness = 0;
         for (let optimalThickness of Object.values(this.layoutInfo.optimalThicknesses)) {

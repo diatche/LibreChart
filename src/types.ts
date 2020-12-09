@@ -64,3 +64,5 @@ export interface IChartGrid extends IChartGridInput {
 }
 
 export type ChartDataType = 'path' | 'point';
+
+export type Cancelable = { cancel: () => void };
