@@ -223,8 +223,8 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (plot.grid.hidden) {
             return null;
         }
-        let hAxis = plot.getHorizontalGridAxis();
-        let vAxis = plot.getVerticalGridAxis();
+        let hAxis = plot.grid.horizontalAxis;
+        let vAxis = plot.grid.verticalAxis;
         if (!hAxis && !vAxis) {
             return null;
         }

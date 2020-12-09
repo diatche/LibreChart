@@ -1,10 +1,8 @@
 import Decimal from "decimal.js";
 import {
     GridLayoutSourceProps,
-    LayoutSource,
 } from "evergrid";
 import { ColorValue, TextStyle } from "react-native";
-import { AxisType } from "./layout/axis/axisTypes";
 
 export interface IDataPoint<X, Y> {
     x: X,
@@ -32,19 +30,6 @@ export interface IDecimalPoint {
     y: Decimal;
 }
 
-export interface IChartGridInput {
-    /**
-     * Toggles grid visiblity.
-     * Grid is visible by default.
-     **/
-    hidden?: boolean;
-
-    horizontalAxis?: AxisType;
-    verticalAxis?: AxisType;
-
-    style?: IChartGridStyle;
-}
-
 export interface IChartGridStyleInput {
     majorGridLineThickness?: number;
     majorGridLineColor?: ColorValue;
@@ -56,12 +41,6 @@ export interface IChartGridStyleInput {
 export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
-
-export interface IChartGrid extends IChartGridInput {
-    hidden: boolean;
-    layout?: LayoutSource;
-    style: Required<IChartGridStyle>;
-}
 
 export type ChartDataType = 'path' | 'point';
 
