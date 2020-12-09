@@ -232,7 +232,7 @@ export default class ChartLayout extends EvergridLayout {
                 },
                 getItemViewLayout: () => ({
                     offset: { y: 0 },
-                    size: { y: this.containerSize$.y }
+                    size: { y: '100%' }
                 }),
                 horizontal: true,
                 stickyEdge: 'bottom',
@@ -247,7 +247,7 @@ export default class ChartLayout extends EvergridLayout {
                 },
                 getItemViewLayout: () => ({
                     offset: { x: 0 },
-                    size: { x: this.containerSize$.x }
+                    size: { x: '100%' }
                 }),
                 stickyEdge: 'left',
                 itemOrigin: { x: 0, y: 0 },

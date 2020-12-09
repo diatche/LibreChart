@@ -297,42 +297,44 @@ export default class Axis<T = Decimal, D = T> implements IAxisProps<T, D> {
             case 'bottomAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    getItemViewLayout: () => ({
-                        size: { y: thickness }
-                    }),
-                    itemOrigin: { x: 0, y: 0 },
+                    willUseItemViewLayout: (i, layout, source) => {
+                        layout.offset.y = Animated.subtract(
+                            source.root.containerSize$.y,
+                            thickness,
+                        );
+                        layout.size.y = thickness;
+                    },
                     horizontal: true,
-                    stickyEdge: 'bottom',
                 });
             case 'topAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    getItemViewLayout: () => ({
-                        size: { y: thickness }
-                    }),
-                    itemOrigin: { x: 0, y: 1 },
+                    willUseItemViewLayout: (i, layout) => {
+                        layout.offset.y = new Animated.Value(0);
+                        layout.size.y = thickness;
+                    },
                     horizontal: true,
-                    stickyEdge: 'top',
                 });
             case 'leftAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    getItemViewLayout: () => ({
-                        size: { x: thickness }
-                    }),
-                    itemOrigin: { x: 0, y: 0 },
+                    willUseItemViewLayout: (i, layout) => {
+                        layout.offset.x = new Animated.Value(0);
+                        layout.size.x = thickness;
+                    },
                     horizontal: false,
-                    stickyEdge: 'left',
                 });
             case 'rightAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    getItemViewLayout: () => ({
-                        size: { x: thickness }
-                    }),
-                    itemOrigin: { x: 1, y: 0 },
+                    willUseItemViewLayout: (i, layout, source) => {
+                        layout.offset.x = Animated.subtract(
+                            source.root.containerSize$.x,
+                            thickness,
+                        );
+                        layout.size.x = thickness;
+                    },
                     horizontal: false,
-                    stickyEdge: 'right',
                 });
         }
     }
