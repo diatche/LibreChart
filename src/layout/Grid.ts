@@ -89,10 +89,10 @@ export default class Grid {
             forceRender: true,
         };
         // FIXME: Do only one update if both x and y layouts change.
-        this._xScaleLayoutUpdates = this.horizontal && plot.xLayout.updates.addObserver(
+        this._xScaleLayoutUpdates = this.vertical && plot.xLayout.updates.addObserver(
             () => this.update(updateOptions)
         ) || 0;
-        this._yScaleLayoutUpdates = this.vertical && plot.yLayout.updates.addObserver(
+        this._yScaleLayoutUpdates = this.horizontal && plot.yLayout.updates.addObserver(
             () => this.update(updateOptions)
         ) || 0;
     }
@@ -128,25 +128,21 @@ export default class Grid {
         }
 
         let commonProps: LayoutSourceProps<any> = {
+            itemSize: {
+                x: plot.xLayout.layoutInfo.containerLength$,
+                y: plot.yLayout.layoutInfo.containerLength$,
+            },
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
         }
 
         if (vertical && horizontal) {
-            return new GridLayoutSource({
-                ...commonProps,
-                itemSize: {
-                    x: plot.xLayout.layoutInfo.containerLength$,
-                    y: plot.yLayout.layoutInfo.containerLength$,
-                },
-            });
+            return new GridLayoutSource(commonProps);
         } else if (vertical) {
+            // Grid lines are vertical,
+            // containers are horizontal.
             return new FlatLayoutSource({
                 ...commonProps,
-                itemSize: {
-                    x: plot.xLayout.layoutInfo.containerLength$,
-                    y: plot.yLayout.layoutInfo.containerLength$,
-                },
                 getItemViewLayout: () => ({
                     offset: { y: 0 },
                     size: { y: '100%' }
@@ -156,16 +152,15 @@ export default class Grid {
                 itemOrigin: { x: 0, y: 1 },
             });
         } else if (horizontal) {
+            // Grid lines are horizontal,
+            // containers are vertical.
             return new FlatLayoutSource({
                 ...commonProps,
-                itemSize: {
-                    x: plot.xLayout.layoutInfo.containerLength$,
-                    y: plot.yLayout.layoutInfo.containerLength$,
-                },
                 getItemViewLayout: () => ({
                     offset: { x: 0 },
                     size: { x: '100%' }
                 }),
+                horizontal: false,
                 stickyEdge: 'left',
                 itemOrigin: { x: 0, y: 0 },
             });

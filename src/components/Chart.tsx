@@ -213,18 +213,18 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (plot.grid.hidden) {
             return null;
         }
-        let hLayout = plot.grid.horizontal ? plot.xLayout : undefined;
-        let vLayout = plot.grid.vertical ? plot.yLayout : undefined
-        if (!hLayout && !vLayout) {
+        let xLayout = plot.grid.vertical ? plot.xLayout : undefined;
+        let yLayout = plot.grid.horizontal ? plot.yLayout : undefined
+        if (!xLayout && !yLayout) {
             return null;
         }
         return (
             <ChartGrid
                 {...plot.grid.style}
-                majorCountX={hLayout?.layoutInfo.majorCount || 0}
-                minorCountX={hLayout?.layoutInfo.minorCount || 0}
-                majorCountY={vLayout?.layoutInfo.majorCount || 0}
-                minorCountY={vLayout?.layoutInfo.minorCount || 0}
+                majorCountX={xLayout?.layoutInfo.majorCount || 0}
+                minorCountX={xLayout?.layoutInfo.minorCount || 0}
+                majorCountY={yLayout?.layoutInfo.majorCount || 0}
+                minorCountY={yLayout?.layoutInfo.minorCount || 0}
             />
         );
     }
