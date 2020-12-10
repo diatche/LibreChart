@@ -132,19 +132,36 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         }
     }
 
-    getLayoutSources(): LayoutSource[] {
+    getGridLayoutSources(): LayoutSource[] {
+        // The order of layout sources determines
+        // their z-order.
+        let layout = this.grid?.layout;
+        return !!layout ? [layout] : [];
+    }
+
+    getDataLayoutSources(): LayoutSource[] {
+        // The order of layout sources determines
+        // their z-order.
+        return (this.dataSources || [])
+            .map(d => d.layout)
+            .filter(s => !!s) as LayoutSource[];
+    }
+
+    getHorizontalAxisLayoutSources(): LayoutSource[] {
         // The order of layout sources determines
         // their z-order.
         return [
-            // Grid in back by default
-            this.grid?.layout,
-            // Data above grid and below axes
-            ...(this.dataSources || []).map(d => d.layout),
-            // Horizontal axes below vertical axes
             this.axes?.bottomAxis?.backgroundLayout,
             this.axes?.bottomAxis?.contentLayout,
             this.axes?.topAxis?.backgroundLayout,
             this.axes?.topAxis?.contentLayout,
+        ].filter(s => !!s) as LayoutSource[];
+    }
+
+    getVerticalAxisLayoutSources(): LayoutSource[] {
+        // The order of layout sources determines
+        // their z-order.
+        return [
             this.axes?.rightAxis?.backgroundLayout,
             this.axes?.rightAxis?.contentLayout,
             this.axes?.leftAxis?.backgroundLayout,

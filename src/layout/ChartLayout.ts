@@ -125,11 +125,23 @@ export default class ChartLayout extends EvergridLayout {
         }
         // The order of layout sources determines
         // their z-order.
-        let layoutSources: LayoutSource[] = [];
+        // Order from bottom to top: grid, data, h-axes, v-axes.
+        let grids: LayoutSource[] = [];
+        let data: LayoutSource[] = [];
+        let hAxes: LayoutSource[] = [];
+        let vAxes: LayoutSource[] = [];
         for (let plot of this.plots) {
-            layoutSources = layoutSources.concat(plot.getLayoutSources());
+            grids = [...grids, ...plot.getGridLayoutSources()];
+            data = [...data, ...plot.getDataLayoutSources()];
+            hAxes = [...hAxes, ...plot.getHorizontalAxisLayoutSources()];
+            vAxes = [...vAxes, ...plot.getVerticalAxisLayoutSources()];
         }
-        return layoutSources;
+        return [
+            ...grids,
+            ...data,
+            ...hAxes,
+            ...vAxes,
+        ];
     }
 
     private _validatedPlots(props: ChartLayoutProps | undefined): Plot[] {
