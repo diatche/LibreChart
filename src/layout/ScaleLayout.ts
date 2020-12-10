@@ -74,6 +74,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
     updates = Observable.create();
 
     private _plotWeakRef = weakref<Plot>();
+    private _isHorizontalStrict = false;
 
     constructor(options?: IScaleLayoutOptions<T, D>) {
         let {
@@ -82,9 +83,11 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
             style = {},
         } = options || {};
 
+        this._isHorizontalStrict = typeof options?.isHorizontal !== 'undefined';
+
         this.scale = scale as any;
         this.scale.minorTickDepth = 1;
-        this.isHorizontal = isHorizontal,
+        this.isHorizontal = isHorizontal;
 
         this.layoutInfo = {
             viewScale: 0,
@@ -113,8 +116,17 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
         this._plotWeakRef.set(plot);
     }
 
-    configure(plot: Plot) {
+    configure(
+        plot: Plot,
+        config: {
+            isHorizontal: boolean;
+        }
+    ) {
         this.plot = plot;
+        if (this._isHorizontalStrict && this.isHorizontal !== config.isHorizontal) {
+            throw new Error('Scale layout direction mismatch');
+        }
+        this.isHorizontal = config.isHorizontal;
         this.custom = (plot.index.x !== 0 || plot.index.y !== 0);
     }
 

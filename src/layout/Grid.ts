@@ -49,6 +49,8 @@ export default class Grid {
     layout?: LayoutSource;
 
     private _plotWeakRef = weakref<Plot>();
+    private _xScaleLayoutUpdates = 0;
+    private _yScaleLayoutUpdates = 0;
 
     constructor(options?: IChartGridInput) {
         let {
@@ -80,10 +82,28 @@ export default class Grid {
     configure(plot: Plot) {
         this.plot = plot;
         this.layout = this._createGridLayout();
+
+        const updateOptions: IItemUpdateManyOptions = {
+            visible: true,
+            queued: true,
+            forceRender: true,
+        };
+        // FIXME: Do only one update if both x and y layouts change.
+        this._xScaleLayoutUpdates = this.horizontal && plot.xLayout.updates.addObserver(
+            () => this.update(updateOptions)
+        ) || 0;
+        this._yScaleLayoutUpdates = this.vertical && plot.yLayout.updates.addObserver(
+            () => this.update(updateOptions)
+        ) || 0;
     }
 
     unconfigure() {
+        this.layout = undefined;
 
+        this.plot.xLayout.updates.removeObserver(this._xScaleLayoutUpdates);
+        this.plot.yLayout.updates.removeObserver(this._yScaleLayoutUpdates);
+        this._xScaleLayoutUpdates = 0;
+        this._yScaleLayoutUpdates = 0;
     }
 
     update(updateOptions: IItemUpdateManyOptions) {

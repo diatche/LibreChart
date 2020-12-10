@@ -104,8 +104,8 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
     configure(chart: ChartLayout) {
         this.chart = chart;
         
-        this.xLayout.configure(this);
-        this.yLayout.configure(this);
+        this.xLayout.configure(this, { isHorizontal: true });
+        this.yLayout.configure(this, { isHorizontal: false });
 
         axisTypeMap(axisType => {
             let axis = this.axes[axisType];
