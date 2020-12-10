@@ -51,6 +51,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     updateItemRenderMap() {
         let itemRenderMap: ItemRenderMap = {};
         for (let plot of this.layout.plots) {
+            // Reference
+            if (plot.refLayout) {
+                itemRenderMap[plot.refLayout.id] = {
+                    renderItem: () => null,
+                    context: null,
+                };
+            }
+
             // Grid
             if (plot.grid.layout) {
                 itemRenderMap[plot.grid.layout.id] = {

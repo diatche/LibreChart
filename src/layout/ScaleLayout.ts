@@ -158,8 +158,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
     }
 
     getVisibleLocationRange(): [number, number] {
-        console.warn('TODO: scale layout needs plot rect, not chart rect');
-        let r = this.plot.chart.getVisibleLocationRange();
+        let r = this.plot.getVisibleLocationRange();
         return this.isHorizontal
             ? [r[0].x, r[1].x]
             : [r[0].y, r[1].y];

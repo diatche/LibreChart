@@ -3,6 +3,7 @@ import {
     IPoint,
     zeroPoint,
     weakref,
+    GridLayoutSource,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -17,6 +18,7 @@ import {
     IChartGridInput,
     ScaleLayout,
 } from "../internal";
+import { kRefLayoutReuseID } from "../const";
 
 export interface PlotOptions<X = any, Y = any, DX = any, DY = any> {
     /**
@@ -47,6 +49,9 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
 
     /** Grid layout info. */
     readonly grid: Grid;
+
+    /** Reference grid layout (not displayed). */
+    refLayout?: GridLayoutSource;
 
     private _chartWeakRef = weakref<ChartLayout>();
 
@@ -104,6 +109,8 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
     configure(chart: ChartLayout) {
         this.chart = chart;
         
+        this.refLayout = this._createRefLayout();
+
         this.xLayout.configure(this, { isHorizontal: true });
         this.yLayout.configure(this, { isHorizontal: false });
 
@@ -130,6 +137,17 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         for (let dataSource of this.dataSources) {
             dataSource.unconfigure();
         }
+
+        this.refLayout = undefined;
+    }
+
+    getVisibleLocationRange(): [IPoint, IPoint] {
+        return this.refLayout?.getVisibleLocationRange() || [zeroPoint(), zeroPoint()];
+    }
+
+    getRefLayoutSources(): LayoutSource[] {
+        let layout = this.refLayout;
+        return !!layout ? [layout] : [];
     }
 
     getGridLayoutSources(): LayoutSource[] {
@@ -179,5 +197,16 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
             return gridOrOptions;
         }
         return new Grid(gridOrOptions);
+    }
+
+    private _createRefLayout(): GridLayoutSource {
+        return new GridLayoutSource({
+            itemSize: {
+                x: this.xLayout.layoutInfo.containerLength$,
+                y: this.yLayout.layoutInfo.containerLength$,
+            },
+            shouldRenderItem: () => false,
+            reuseID: kRefLayoutReuseID,
+        });
     }
 }
