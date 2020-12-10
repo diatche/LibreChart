@@ -10,8 +10,12 @@ import Decimal from "decimal.js";
 import Scale from "../scale/Scale";
 import LinearScale from "../scale/LinearScale";
 import { Plot } from "../internal";
-import { IAxisStyle, IAxisStyleInput } from "./axis/axisTypes";
+import { 
+    IAxisStyle,
+    IAxisStyleInput,
+} from "./axis/axisTypes";
 import { kAxisStyleLightDefaults } from "./axis/axisConst";
+import { Observable } from "../utils/observable";
 
 const k0 = new Decimal(0);
 
@@ -58,15 +62,16 @@ interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
      * This is used to syncronize the grid with labels.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
-    /** The currently visible container index ranges. */
-    visibleContainerIndexRange: [number, number];
 }
 
 export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProps<T, D> {
     scale: Scale<T, D>;
+    /** If true, then the layout is detached from the standard grid. */
+    custom = false;
     readonly style: IAxisStyle;
     isHorizontal: boolean;
     layoutInfo: IScaleLayoutInfo;
+    updates = Observable.create();
 
     private _plotWeakRef = weakref<Plot>();
 
@@ -89,7 +94,6 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
             recenteringOffset: 0,
             containerLength$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
-            visibleContainerIndexRange: [0, 0],
         };
         this.style = {
             ...kAxisStyleLightDefaults,
@@ -111,6 +115,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
 
     configure(plot: Plot) {
         this.plot = plot;
+        this.custom = (plot.index.x !== 0 || plot.index.y !== 0);
     }
 
     unconfigure() {
@@ -137,10 +142,11 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
     }
 
     didChangeLayout() {
-        console.warn('TODO: scale layout changed, notify observers');
+        this.updates.emit();
     }
 
     getVisibleLocationRange(): [number, number] {
+        console.warn('TODO: scale layout needs plot rect, not chart rect');
         let r = this.plot.chart.getVisibleLocationRange();
         return this.isHorizontal
             ? [r[0].x, r[1].x]

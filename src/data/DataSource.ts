@@ -1,13 +1,18 @@
 import {
     IItem,
     IItemCustomLayout,
+    IItemUpdateManyOptions,
     IPoint,
     isPointInRange,
     LayoutSource,
     LayoutSourceProps,
     weakref,
 } from 'evergrid';
-import { ChartDataType, IDataPoint, IDecimalPoint } from '../types';
+import {
+    ChartDataType,
+    IDataPoint,
+    IDecimalPoint,
+} from '../types';
 import { Plot } from '../internal';
 
 let _idCounter = 0;
@@ -42,6 +47,8 @@ export default abstract class DataSource<
     layoutProps?: LayoutProps;
 
     private _plotWeakRef = weakref<Plot<X, Y>>();
+    private _xScaleLayoutUpdates = 0;
+    private _yScaleLayoutUpdates = 0;
 
     constructor(props: DataSourceInput<X, Y, Index, LayoutProps>) {
         this.id = `${(++_idCounter)}`;
@@ -66,10 +73,32 @@ export default abstract class DataSource<
     configure(plot: Plot<X, Y>) {
         this.plot = plot;
         this.layout = this.createLayoutSource(this.layoutProps);
+
+        const updateOptions: IItemUpdateManyOptions = {
+            visible: true,
+            queued: true,
+            forceRender: true,
+        };
+        // FIXME: Do only one update if both x and y layouts change.
+        this._xScaleLayoutUpdates = plot.xLayout.updates.addObserver(
+            () => this.update(updateOptions)
+        ) || 0;
+        this._yScaleLayoutUpdates = plot.yLayout.updates.addObserver(
+            () => this.update(updateOptions)
+        ) || 0;
     }
 
     unconfigure() {
         this.layout = undefined;
+        
+        this.plot.xLayout.updates.removeObserver(this._xScaleLayoutUpdates);
+        this.plot.yLayout.updates.removeObserver(this._yScaleLayoutUpdates);
+        this._xScaleLayoutUpdates = 0;
+        this._yScaleLayoutUpdates = 0;
+    }
+
+    update(updateOptions: IItemUpdateManyOptions) {
+        this.layout?.updateItems(updateOptions);
     }
 
     abstract get type(): ChartDataType;

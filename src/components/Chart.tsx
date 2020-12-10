@@ -180,10 +180,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         if (!axis || axis.hidden) {
             return null;
         }
-        let range = axis.scaleLayout.getContainerRangeAtIndex(index);
-        let ticks = axis.scaleLayout.scale.getTicksInLocationRange(range[0], range[1]);
-        let isInverted = axis.scaleLayout.isInverted();
-        let labelLength = axis.scaleLayout.layoutInfo.containerLength * axis.scaleLayout.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
+        let scaleLayout = axis.scaleLayout;
+        if (!scaleLayout) {
+            return null;
+        }
+        let range = scaleLayout.getContainerRangeAtIndex(index);
+        let ticks = scaleLayout.scale.getTicksInLocationRange(range[0], range[1]);
+        let isInverted = scaleLayout.isInverted();
+        let labelLength = scaleLayout.layoutInfo.containerLength * scaleLayout.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
         return (
             <ChartAxisContent
                 {...axis.style}
@@ -213,7 +217,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
             <ChartAxisBackground
                 {...axis.style}
                 axisType={axis.axisType}
-                majorCount={axis.scaleLayout.layoutInfo.majorCount}
+                majorCount={axis.scaleLayout?.layoutInfo.majorCount || 0}
             />
         );
     }

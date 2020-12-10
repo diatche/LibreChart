@@ -9,7 +9,7 @@ import {
     Cancelable,
 } from "../types";
 import { InteractionManager } from "react-native";
-import { Plot, PlotManyInput } from "../internal";
+import { Plot, PlotManyInput, ScaleLayout } from "../internal";
 
 const kGridUpdateDebounceInterval = 100;
 
@@ -20,12 +20,16 @@ export interface ChartLayoutProps extends EvergridLayoutCallbacks, Omit<Evergrid
 export default class ChartLayout extends EvergridLayout { 
     readonly plots: Plot[];
 
+    /** Unique list of scale layouts. */
+    private _scaleLayouts: ScaleLayout[] = [];
+
     constructor(props?: ChartLayoutProps) {
         super(props);
         if (!props?.anchor) {
             this.anchor$.setValue({ x: 0.5, y: 0.5 });
         }
         this.plots = this._validatedPlots(props);
+        this._updateScaleLayouts();
     }
 
     didInitChart() {
@@ -33,6 +37,7 @@ export default class ChartLayout extends EvergridLayout {
             plot.configure(this);
         }
         this.setLayoutSources(this._getChartLayoutSources());
+        this.updateChart();
     }
 
     unconfigureChart() {
@@ -78,10 +83,40 @@ export default class ChartLayout extends EvergridLayout {
 
     updateChart() {
         this.cancelChartUpdate();
-
-        for (let plot of this.plots) {
-            plot.update();
+        
+        let hChanged: ScaleLayout | undefined;
+        let vChanged: ScaleLayout | undefined;
+        for (let scaleLayout of this._scaleLayouts) {
+            if (scaleLayout.update() && !scaleLayout.custom) {
+                if (scaleLayout.isHorizontal) {
+                    hChanged = scaleLayout;
+                } else {
+                    vChanged = scaleLayout;
+                }
+            }
         }
+
+        if (hChanged?.layoutInfo.recenteringOffset || vChanged?.layoutInfo.recenteringOffset) {
+            this.scrollBy({
+                offset: {
+                    x: hChanged?.layoutInfo.recenteringOffset,
+                    y: vChanged?.layoutInfo.recenteringOffset,
+                }
+            });
+        }
+    }
+
+    private _updateScaleLayouts() {
+        let scaleLayouts: ScaleLayout[] = [];
+        for (let plot of this.plots) {
+            if (scaleLayouts.indexOf(plot.xLayout) < 0) {
+                scaleLayouts.push(plot.xLayout);
+            }
+            if (scaleLayouts.indexOf(plot.yLayout) < 0) {
+                scaleLayouts.push(plot.yLayout);
+            }
+        }
+        this._scaleLayouts = scaleLayouts;
     }
 
     private _getChartLayoutSources(): LayoutSource[] {

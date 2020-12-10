@@ -8,7 +8,6 @@ import {
     IItemUpdateManyOptions,
     isRangeEmpty,
     normalizeAnimatedValue,
-    weakref,
 } from "evergrid";
 import {
     kAxisBackgroundReuseIDs,
@@ -30,6 +29,7 @@ import {
     isAxisType,
 } from "./axisUtil";
 import { Cancelable } from "../../types";
+import ScaleLayout from "../ScaleLayout";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -38,6 +38,13 @@ const kDefaultAxisThicknessStep = 10;
 export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
 
 export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
+
+export interface IAxes<X = any, Y = any, DX = any, DY = any> {
+    topAxis?: Axis<X, DX>;
+    bottomAxis?: Axis<X, DX>;
+    leftAxis?: Axis<Y, DY>;
+    rightAxis?: Axis<Y, DY>;
+}
 
 interface IAxisLayoutInfo {
     /** The axis thickness. */
@@ -60,9 +67,11 @@ interface IAxisLayoutInfo {
      * view layout, with the new optimal thickness.
      */
     onOptimalThicknessChange: (thickness: number, index: number) => void;
+    /** The currently visible container index ranges. */
+    visibleContainerIndexRange: [number, number];
 }
 
-export default class Axis<T = any> implements IAxisProps<T> {
+export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     axisType: AxisType;
     hidden: boolean;
     getTickLabel: IAxisProps<T>['getTickLabel'];
@@ -85,7 +94,8 @@ export default class Axis<T = any> implements IAxisProps<T> {
      */
     backgroundLayout?: FlatLayoutSource;
 
-    private _plotWeakRef = weakref<Plot>();
+    private _scaleLayout?: ScaleLayout<T, DT>;
+    private _scaleLayoutUpdates = 0;
 
     constructor(axisType: AxisType, options?: IAxisOptions<T>) {
         let {
@@ -112,6 +122,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
             onOptimalThicknessChange: (thickness, index) => (
                 this.onOptimalThicknessChange(thickness, index)
             ),
+            visibleContainerIndexRange: [0, 0],
         };
         this.style = {
             ...kAxisStyleLightDefaults,
@@ -121,19 +132,19 @@ export default class Axis<T = any> implements IAxisProps<T> {
         this.layoutSourceDefaults = layoutSourceDefaults;
     }
 
-    static createMany<T = any>(input: AxisManyInput | undefined): Partial<AxisTypeMapping<Axis<T>>> {
+    static createMany(input: AxisManyInput | undefined): IAxes {
         let axisArrayOrMap: any = input;
         if (!axisArrayOrMap) {
             return {};
         }
 
         // Validate and normalize axis types
-        let axisOrOptionsArray: (Axis<T> | IAxisOptions<T> & { axisType?: AxisType })[] = [];
-        let axisOrOption: Axis<T> | (IAxisOptions<T> & { axisType?: AxisType });
+        let axisOrOptionsArray: (Axis | IAxisOptions & { axisType?: AxisType })[] = [];
+        let axisOrOption: Axis | (IAxisOptions & { axisType?: AxisType });
         if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
             axisOrOptionsArray = axisArrayOrMap;
         } else {
-            let axisMap: { [key: string]: (Axis<T> | IAxisOptions<T>) } = axisArrayOrMap;
+            let axisMap: { [key: string]: (Axis | IAxisOptions) } = axisArrayOrMap;
             for (let key of Object.keys(axisMap)) {
                 axisOrOption = axisMap[key];
                 if (!axisOrOption.axisType) {
@@ -149,8 +160,8 @@ export default class Axis<T = any> implements IAxisProps<T> {
             }
         }
 
-        let axis: Axis<T>;
-        let axes: Partial<AxisTypeMapping<Axis<T>>> = {};
+        let axis: Axis;
+        let axes: Partial<AxisTypeMapping<Axis>> = {};
         for (axisOrOption of axisOrOptionsArray) {
             if (axisOrOption instanceof Axis) {
                 axis = axisOrOption;
@@ -165,23 +176,14 @@ export default class Axis<T = any> implements IAxisProps<T> {
         return axes;
     }
 
-    get plot(): Plot {
-        return this._plotWeakRef.getOrFail();
-    }
-
-    set plot(plot: Plot) {
-        if (!plot || !(plot instanceof Plot)) {
-            throw new Error('Invalid plot');
-        }
-        this._plotWeakRef.set(plot);
-    }
-
-    get scaleLayout() {
-        return this.isHorizontal ? this.plot.xLayout : this.plot.yLayout;
+    get scaleLayout(): ScaleLayout<T, DT> | undefined {
+        return this._scaleLayout;
     }
 
     configure(plot: Plot) {
-        this.plot = plot;
+        this._scaleLayout = this.isHorizontal
+            ? plot.xLayout
+            : plot.yLayout;
 
         if (!this.hidden) {
             this.contentLayout = this._createContentLayoutSource(
@@ -192,12 +194,24 @@ export default class Axis<T = any> implements IAxisProps<T> {
                 this.layoutInfo,
                 this.layoutSourceDefaults,
             );
+
+            const updateOptions: IItemUpdateManyOptions = {
+                visible: true,
+                queued: true,
+                forceRender: true,
+            };
+            this._scaleLayoutUpdates = this.scaleLayout?.updates.addObserver(
+                () => this.update(updateOptions)
+            ) || 0;
         }
     }
 
     unconfigure() {
         this.contentLayout = undefined;
         this.backgroundLayout = undefined;
+        
+        this.scaleLayout?.updates.removeObserver(this._scaleLayoutUpdates);
+        this._scaleLayoutUpdates = 0;
     }
 
     private _createContentLayoutSource(
@@ -217,7 +231,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
             case 'bottomAxis':
             case 'topAxis':
                 options.origin = {
-                    x: this.scaleLayout.layoutInfo.negHalfMajorInterval$,
+                    x: this.scaleLayout?.layoutInfo.negHalfMajorInterval$,
                     y: 0,
                 };
                 break;
@@ -225,7 +239,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
             case 'rightAxis':
                 options.origin = {
                     x: 0,
-                    y: this.scaleLayout.layoutInfo.negHalfMajorInterval$,
+                    y: this.scaleLayout?.layoutInfo.negHalfMajorInterval$,
                 };
                 break;
         }
@@ -242,7 +256,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
             reuseID: kAxisBackgroundReuseIDs[this.axisType],
             shouldRenderItem: () => false,
             onVisibleRangeChange: r => {
-                this.scaleLayout.layoutInfo.visibleContainerIndexRange = r;
+                this.layoutInfo.visibleContainerIndexRange = r;
             },
         });
     }
@@ -253,8 +267,8 @@ export default class Axis<T = any> implements IAxisProps<T> {
     ): FlatLayoutSource | undefined {
         let layoutPropsBase: FlatLayoutSourceProps = {
             itemSize: {
-                x: this.scaleLayout.layoutInfo.containerLength$,
-                y: this.scaleLayout.layoutInfo.containerLength$,
+                x: this.scaleLayout?.layoutInfo.containerLength$,
+                y: this.scaleLayout?.layoutInfo.containerLength$,
             },
             ...defaults,
         };
@@ -390,7 +404,7 @@ export default class Axis<T = any> implements IAxisProps<T> {
 
     private _cleanThicknessInfo() {
         // Remove hidden axis container indexes
-        let visibleRange = this.scaleLayout.layoutInfo.visibleContainerIndexRange;
+        let visibleRange = this.layoutInfo.visibleContainerIndexRange;
         if (isRangeEmpty(visibleRange)) {
             return;
         }

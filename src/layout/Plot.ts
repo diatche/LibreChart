@@ -1,32 +1,20 @@
 import {
-    GridLayoutSource,
-    IItemUpdateManyOptions,
     LayoutSource,
-    FlatLayoutSource,
-    LayoutSourceProps,
     IPoint,
     zeroPoint,
     weakref,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
-    kChartGridStyleLightDefaults,
-    kGridReuseID,
-} from '../const';
-import {
-    IChartGridStyle,
-} from "../types";
-import {
     axisTypeMap,
-    isAxisHorizontal,
 } from "./axis/axisUtil";
-import {
-    AxisTypeMapping,
-} from "./axis/axisTypes";
 import {
     Axis,
     AxisManyInput,
     ChartLayout,
+    Grid,
+    IAxes,
+    IChartGridInput,
     ScaleLayout,
 } from "../internal";
 
@@ -41,42 +29,11 @@ export interface PlotOptions<X = any, Y = any, DX = any, DY = any> {
     xLayout?: ScaleLayout<X, DX>;
     yLayout?: ScaleLayout<Y, DY>;
     dataSources?: DataSource<X, Y>[];
-    grid?: IChartGridInput;
+    grid?: IChartGridInput | Grid;
     axes?: AxisManyInput;
 }
 
 export type PlotManyInput = (Plot | PlotOptions)[];
-
-export interface IChartGridInput {
-
-    /**
-     * Toggles grid visiblity.
-     * Grid is visible by default.
-     */
-    hidden?: boolean;
-
-    /**
-     * Toggles vertical grid lines.
-     * Vertical grid is hidden by default.
-     */
-    vertical?: boolean;
-
-    /**
-     * Toggles horizontal grid lines.
-     * Horizontal grid is hidden by default.
-     */
-    horizontal?: boolean;
-
-    style?: IChartGridStyle;
-}
-
-export interface IChartGrid extends IChartGridInput {
-    hidden: boolean;
-    vertical: boolean;
-    horizontal: boolean;
-    layout?: LayoutSource;
-    style: Required<IChartGridStyle>;
-}
 
 export default class Plot<X = any, Y = any, DX = any, DY = any> { 
     index: IPoint;
@@ -86,10 +43,10 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
     readonly yLayout: ScaleLayout<Y, DY>;
 
     /** Axis layout info. */
-    readonly axes: Partial<AxisTypeMapping<Axis>>;
+    readonly axes: IAxes<X, Y, DX, DY>;
 
     /** Grid layout info. */
-    readonly grid: IChartGrid;
+    readonly grid: Grid;
 
     private _chartWeakRef = weakref<ChartLayout>();
 
@@ -155,13 +112,11 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
             axis?.configure(this);
         });
 
-        this.grid.layout = this._createGridLayout(this.grid);
+        this.grid.configure(this);
 
         for (let dataSource of this.dataSources) {
             dataSource.configure(this);
         }
-
-        this.update();
     }
 
     unconfigure() {
@@ -175,49 +130,6 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         for (let dataSource of this.dataSources) {
             dataSource.unconfigure();
         }
-    }
-
-    update() {
-        let xChanged = this.xLayout.update();
-        let yChanged = this.yLayout.update();
-        if (!xChanged && !yChanged) {
-            return;
-        }
-        let allChanged = xChanged && yChanged;
-
-        if (this.xLayout.layoutInfo.recenteringOffset || this.yLayout.layoutInfo.recenteringOffset) {
-            // FIXME: We are assuming that the plot controls
-            // the chart, but this may be an independent plot.
-            this.chart.scrollBy({
-                offset: {
-                    x: this.xLayout.layoutInfo.recenteringOffset,
-                    y: this.yLayout.layoutInfo.recenteringOffset,
-                }
-            });
-        }
-
-        const updateOptions: IItemUpdateManyOptions = {
-            visible: true,
-            queued: true,
-            forceRender: true,
-            // animated: true,
-            // timing: {
-            //     duration: 200,
-            // }
-        };
-        
-        axisTypeMap(axisType => {
-            let axis = this.axes[axisType];
-            if (axis && (allChanged || (isAxisHorizontal(axisType) ? xChanged : yChanged))) {
-                axis.update(updateOptions);
-            };
-        });
-
-        for (let dataSource of this.dataSources) {
-            dataSource.layout?.updateItems(updateOptions);
-        }
-        
-        this.grid.layout?.updateItems(updateOptions);
     }
 
     getLayoutSources(): LayoutSource[] {
@@ -240,83 +152,15 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         ].filter(s => !!s) as LayoutSource[];
     }
 
-    private _validatedAxes(props: PlotOptions | undefined): Partial<AxisTypeMapping<Axis>> {
+    private _validatedAxes(props: PlotOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);
     }
 
-    private _validatedGrid(props: PlotOptions | undefined): IChartGrid {
-        return {
-            hidden: false,
-            vertical: false,
-            horizontal: false,
-            ...props?.grid,
-            style: {
-                ...kChartGridStyleLightDefaults,
-                ...props?.grid?.style,
-            },
-        };
-    }
-
-    private _createGridLayout(grid: IChartGrid): LayoutSource | undefined {
-        let {
-            hidden,
-            vertical,
-            horizontal,
-        } = grid;
-
-        if (hidden) {
-            vertical = false;
-            horizontal = false;
+    private _validatedGrid(props: PlotOptions | undefined): Grid {
+        let gridOrOptions = props?.grid || {};
+        if (gridOrOptions instanceof Grid) {
+            return gridOrOptions;
         }
-
-        if (!vertical && !horizontal) {
-            return undefined;
-        }
-
-        let commonProps: LayoutSourceProps<any> = {
-            shouldRenderItem: () => false,
-            reuseID: kGridReuseID,
-        }
-
-        if (vertical && horizontal) {
-            return new GridLayoutSource({
-                ...commonProps,
-                itemSize: {
-                    x: this.xLayout.layoutInfo.containerLength$,
-                    y: this.yLayout.layoutInfo.containerLength$,
-                },
-            });
-        } else if (vertical) {
-            return new FlatLayoutSource({
-                ...commonProps,
-                itemSize: {
-                    x: this.xLayout.layoutInfo.containerLength$,
-                    y: this.yLayout.layoutInfo.containerLength$,
-                },
-                getItemViewLayout: () => ({
-                    offset: { y: 0 },
-                    size: { y: '100%' }
-                }),
-                horizontal: true,
-                stickyEdge: 'bottom',
-                itemOrigin: { x: 0, y: 1 },
-            });
-        } else if (horizontal) {
-            return new FlatLayoutSource({
-                ...commonProps,
-                itemSize: {
-                    x: this.xLayout.layoutInfo.containerLength$,
-                    y: this.yLayout.layoutInfo.containerLength$,
-                },
-                getItemViewLayout: () => ({
-                    offset: { x: 0 },
-                    size: { x: '100%' }
-                }),
-                stickyEdge: 'left',
-                itemOrigin: { x: 0, y: 0 },
-            });
-        }
-
-        return undefined;
+        return new Grid(gridOrOptions);
     }
 }
