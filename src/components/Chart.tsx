@@ -6,16 +6,13 @@ import Evergrid, {
     ItemRenderMap,
 } from 'evergrid'
 import {
+    Axis,
     ChartLayout,
     Plot,
 } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
-import {
-    kAxisBackgroundReuseIDTypes,
-    kAxisContentReuseIDTypes,
-} from '../layout/axis/axisConst';
 import ChartAxisBackground from './ChartAxisBackground';
 import LineDataSource from '../data/LineDataSource';
 import { IDataPointStyle } from '../types';
@@ -75,7 +72,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                         renderItem: (item, layoutSource, context) => (
                             this.renderAxisContent(item, context)
                         ),
-                        context: plot,
+                        context: axis,
                     };
                 }
                 if (axis.backgroundLayout) {
@@ -83,7 +80,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                         renderItem: (item, layoutSource, context) => (
                             this.renderAxisBackground(item, context)
                         ),
-                        context: plot,
+                        context: axis,
                     };
                 }
             });
@@ -171,13 +168,8 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         );
     }
 
-    renderAxisContent({ index, reuseID }: IItem<any>, plot: Plot) {
-        if (!reuseID) {
-            return null;
-        }
-        let axisType = kAxisContentReuseIDTypes[reuseID];
-        let axis = plot.axes[axisType];
-        if (!axis || axis.hidden) {
+    renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis) {
+        if (axis.hidden) {
             return null;
         }
         let scaleLayout = axis.scaleLayout;
@@ -191,7 +183,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         return (
             <ChartAxisContent
                 {...axis.style}
-                axisType={axisType}
+                axisType={axis.axisType}
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
@@ -204,13 +196,8 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         );
     }
 
-    renderAxisBackground({ reuseID }: IItem<any>, plot: Plot) {
-        if (!reuseID) {
-            return null;
-        }
-        let axisType = kAxisBackgroundReuseIDTypes[reuseID];
-        let axis = plot.axes[axisType];
-        if (!axis || axis.hidden) {
+    renderAxisBackground({ reuseID }: IItem<any>, axis: Axis) {
+        if (axis.hidden) {
             return null;
         }
         return (
