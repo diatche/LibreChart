@@ -128,10 +128,7 @@ export default class Grid {
         }
 
         let commonProps: LayoutSourceProps<any> = {
-            itemSize: {
-                x: plot.xLayout.layoutInfo.containerLength$,
-                y: plot.yLayout.layoutInfo.containerLength$,
-            },
+            ...this.plot.getLayoutSourceOptions(),
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
         }

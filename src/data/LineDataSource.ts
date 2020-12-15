@@ -162,13 +162,9 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
     }
 
     createLayoutSource(props?: GridLayoutSourceProps) {
-        let plot = this.plot;
         return new GridLayoutSource({
+            ...this.plot.getLayoutSourceOptions(),
             reuseID: this.itemReuseID,
-            itemSize: {
-                x: plot.xLayout.layoutInfo.containerLength$,
-                y: plot.yLayout.layoutInfo.containerLength$,
-            },
             ...props,
             shouldRenderItem: () => true,
         });

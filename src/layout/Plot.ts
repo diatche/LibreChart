@@ -4,6 +4,9 @@ import {
     zeroPoint,
     weakref,
     GridLayoutSource,
+    LayoutSourceProps,
+    IAnimatedPoint,
+    ILayout,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -19,6 +22,7 @@ import {
     ScaleLayout,
 } from "../internal";
 import { kRefLayoutReuseID } from "../const";
+import { Animated } from "react-native";
 
 export interface PlotOptions<X = any, Y = any, DX = any, DY = any> {
     /**
@@ -187,6 +191,23 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         ].filter(s => !!s) as LayoutSource[];
     }
 
+    getLayout$(): ILayout<Animated.ValueXY> {
+        return this.chart.getPlotLayout$(this.index);
+    }
+
+    getLayoutSourceOptions(layout?: ILayout<Animated.ValueXY>): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
+        layout = layout || this.getLayout$();
+        return {
+            itemSize: {
+                x: this.xLayout.layoutInfo.containerLength$,
+                y: this.yLayout.layoutInfo.containerLength$,
+            },
+            // viewportOffset: layout.offset,
+            // viewportSize: layout.size,
+            // clipToBounds: false,
+        };
+    }
+
     private _validatedAxes(props: PlotOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);
     }
@@ -201,10 +222,7 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
 
     private _createRefLayout(): GridLayoutSource {
         return new GridLayoutSource({
-            itemSize: {
-                x: this.xLayout.layoutInfo.containerLength$,
-                y: this.yLayout.layoutInfo.containerLength$,
-            },
+            ...this.getLayoutSourceOptions(),
             shouldRenderItem: () => false,
             reuseID: kRefLayoutReuseID,
         });

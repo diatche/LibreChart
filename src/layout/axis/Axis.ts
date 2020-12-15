@@ -8,6 +8,7 @@ import {
     IItemUpdateManyOptions,
     isRangeEmpty,
     normalizeAnimatedValue,
+    weakref,
 } from "evergrid";
 import {
     kAxisBackgroundReuseIDs,
@@ -94,6 +95,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
      */
     backgroundLayout?: FlatLayoutSource;
 
+    private _plotWeakRef = weakref<Plot>();
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates = 0;
 
@@ -176,11 +178,23 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         return axes;
     }
 
+    get plot(): Plot {
+        return this._plotWeakRef.getOrFail();
+    }
+
+    set plot(plot: Plot) {
+        if (!plot || !(plot instanceof Plot)) {
+            throw new Error('Invalid plot');
+        }
+        this._plotWeakRef.set(plot);
+    }
+
     get scaleLayout(): ScaleLayout<T, DT> | undefined {
         return this._scaleLayout;
     }
 
     configure(plot: Plot) {
+        this.plot = plot;
         this._scaleLayout = this.isHorizontal
             ? plot.xLayout
             : plot.yLayout;
@@ -265,11 +279,10 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         layoutInfo: IAxisLayoutInfo,
         defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
     ): FlatLayoutSource | undefined {
+        let plot = this.plot;
+        let plotLayout = plot.getLayout$();
         let layoutPropsBase: FlatLayoutSourceProps = {
-            itemSize: {
-                x: this.scaleLayout?.layoutInfo.containerLength$,
-                y: this.scaleLayout?.layoutInfo.containerLength$,
-            },
+            ...plot.getLayoutSourceOptions(plotLayout),
             ...defaults,
         };
         let thickness = Animated.add(
@@ -283,7 +296,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                     ...layoutPropsBase,
                     willUseItemViewLayout: (i, layout, source) => {
                         layout.offset.y = Animated.subtract(
-                            source.root.containerSize$.y,
+                            plotLayout.size.y,
                             thickness,
                         );
                         layout.size.y = thickness;
@@ -313,7 +326,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                     ...layoutPropsBase,
                     willUseItemViewLayout: (i, layout, source) => {
                         layout.offset.x = Animated.subtract(
-                            source.root.containerSize$.x,
+                            plotLayout.size.x,
                             thickness,
                         );
                         layout.size.x = thickness;
