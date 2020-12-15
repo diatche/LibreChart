@@ -23,7 +23,6 @@ import {
     IChartGridInput,
     ScaleLayout,
 } from "../internal";
-import { kRefLayoutReuseID } from "../const";
 import { Animated, InteractionManager } from "react-native";
 import { Cancelable } from "../types";
 import debounce from "lodash.debounce";

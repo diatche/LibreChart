@@ -55,8 +55,8 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                 layout={plot}
                 style={{
                     flex: 1,
-                    borderWidth: 2,
-                    borderColor: 'gray',
+                    // borderWidth: 2,
+                    // borderColor: 'gray',
                 }}
             />
         );

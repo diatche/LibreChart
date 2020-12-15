@@ -42,7 +42,7 @@ export default abstract class DataSource<
     Layout extends LayoutSource<Index, LayoutProps> = LayoutSource<Index, LayoutProps>,
 > implements DataSourceProps<X, Y> {
     id: string;
-    data: IDataPoint<X, Y>[] = [];
+    data: IDataPoint<X, Y>[];
     layout?: Layout;
     layoutProps?: LayoutProps;
 
@@ -55,7 +55,7 @@ export default abstract class DataSource<
         if (props.noCopy && !props.data) {
             throw new Error('Cannot use "noCopy" with null data.');
         }
-        this.data = props.noCopy ? props.data! : [...props.data];
+        this.data = props.noCopy ? props.data! : [...props.data!];
         this.layoutProps = props.layout;
     }
 
