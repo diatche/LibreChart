@@ -93,8 +93,8 @@ const ChartLine = React.memo((props: ChartLineProps) => {
         ...Object.values(props.pointStyles || {})
             .map(s => s?.pointOuterRadius || 0),
     );
-    const xContentOverlap = viewOverlap / scale.x * 0;
-    const yContentOverlap = viewOverlap / scale.y * 0;
+    const xContentOverlap = viewOverlap / scale.x;
+    const yContentOverlap = viewOverlap / scale.y;
 
     const rectWithOverlap = [
         props.rect[0] - xContentOverlap,
