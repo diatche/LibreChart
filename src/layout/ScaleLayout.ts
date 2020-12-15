@@ -9,7 +9,7 @@ import {
 import Decimal from "decimal.js";
 import Scale from "../scale/Scale";
 import LinearScale from "../scale/LinearScale";
-import { Plot } from "../internal";
+import { PlotLayout } from "../internal";
 import { 
     IAxisStyle,
     IAxisStyleInput,
@@ -73,7 +73,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
     layoutInfo: IScaleLayoutInfo;
     updates = Observable.create();
 
-    private _plotWeakRef = weakref<Plot>();
+    private _plotWeakRef = weakref<PlotLayout>();
     private _isHorizontalStrict = false;
 
     constructor(options?: IScaleLayoutOptions<T, D>) {
@@ -105,19 +105,19 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
         };
     }
 
-    get plot(): Plot {
+    get plot(): PlotLayout {
         return this._plotWeakRef.getOrFail();
     }
 
-    set plot(plot: Plot) {
-        if (!plot || !(plot instanceof Plot)) {
+    set plot(plot: PlotLayout) {
+        if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
         this._plotWeakRef.set(plot);
     }
 
     configure(
-        plot: Plot,
+        plot: PlotLayout,
         config: {
             isHorizontal: boolean;
         }
@@ -165,7 +165,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
     }
 
     private _getLengthInfo(): IScaleLayoutLengthBaseInfo | undefined {
-        let viewScaleVector = this.plot.chart.scale;
+        let viewScaleVector = this.plot.scale;
         let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
         let visibleRange = this.getVisibleLocationRange();
 
@@ -282,7 +282,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
      * Returns `true` if the axis has a negative scale.
      */
     isInverted() {
-        let scale = this.plot.chart.scale;
+        let scale = this.plot.scale;
         return (this.isHorizontal ? scale.x : scale.y) < 0;
     }
 }

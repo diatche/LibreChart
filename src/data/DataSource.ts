@@ -13,7 +13,7 @@ import {
     IDataPoint,
     IDecimalPoint,
 } from '../types';
-import { Plot } from '../internal';
+import { PlotLayout } from '../internal';
 
 let _idCounter = 0;
 
@@ -46,7 +46,7 @@ export default abstract class DataSource<
     layout?: Layout;
     layoutProps?: LayoutProps;
 
-    private _plotWeakRef = weakref<Plot<X, Y>>();
+    private _plotWeakRef = weakref<PlotLayout<X, Y>>();
     private _xScaleLayoutUpdates = 0;
     private _yScaleLayoutUpdates = 0;
 
@@ -59,18 +59,18 @@ export default abstract class DataSource<
         this.layoutProps = props.layout;
     }
 
-    get plot(): Plot<X, Y> {
+    get plot(): PlotLayout<X, Y> {
         return this._plotWeakRef.getOrFail();
     }
 
-    set plot(plot: Plot<X, Y>) {
-        if (!plot || !(plot instanceof Plot)) {
+    set plot(plot: PlotLayout<X, Y>) {
+        if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
         this._plotWeakRef.set(plot);
     }
 
-    configure(plot: Plot<X, Y>) {
+    configure(plot: PlotLayout<X, Y>) {
         this.plot = plot;
         this.layout = this.createLayoutSource(this.layoutProps);
 

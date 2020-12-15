@@ -5,8 +5,10 @@ import {
     weakref,
     GridLayoutSource,
     LayoutSourceProps,
-    IAnimatedPoint,
     ILayout,
+    EvergridLayoutCallbacks,
+    EvergridLayoutProps,
+    EvergridLayout,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -22,9 +24,13 @@ import {
     ScaleLayout,
 } from "../internal";
 import { kRefLayoutReuseID } from "../const";
-import { Animated } from "react-native";
+import { Animated, InteractionManager } from "react-native";
+import { Cancelable } from "../types";
+import debounce from "lodash.debounce";
 
-export interface PlotOptions<X = any, Y = any, DX = any, DY = any> {
+const kGridUpdateDebounceInterval = 100;
+
+export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends EvergridLayoutCallbacks, Omit<EvergridLayoutProps, 'layoutSources'> {
     /**
      * Location index of the plot with the top left
      * corner having a location { x: 0, y: 0 } and the
@@ -39,9 +45,9 @@ export interface PlotOptions<X = any, Y = any, DX = any, DY = any> {
     axes?: AxisManyInput;
 }
 
-export type PlotManyInput = (Plot | PlotOptions)[];
+export type PlotLayoutManyInput = (PlotLayout | PlotLayoutOptions)[];
 
-export default class Plot<X = any, Y = any, DX = any, DY = any> { 
+export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends EvergridLayout { 
     index: IPoint;
     dataSources: DataSource<X, Y>[];
 
@@ -54,12 +60,17 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
     /** Grid layout info. */
     readonly grid: Grid;
 
-    /** Reference grid layout (not displayed). */
-    refLayout?: GridLayoutSource;
+    // /** Reference grid layout (not displayed). */
+    // refLayout?: GridLayoutSource;
 
     private _chartWeakRef = weakref<ChartLayout>();
 
-    constructor(options?: PlotOptions<X, Y, DX, DY>) {
+    constructor(options?: PlotLayoutOptions<X, Y, DX, DY>) {
+        super(options);
+        if (!options?.anchor) {
+            this.anchor$.setValue({ x: 0.5, y: 0.5 });
+        }
+        
         this.index = options?.index || zeroPoint();
         this.xLayout = options?.xLayout || new ScaleLayout<X, DX>();
         this.yLayout = options?.yLayout || new ScaleLayout<Y, DY>();
@@ -68,22 +79,22 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         this.grid = this._validatedGrid(options);
     }
 
-    static createMany(input: PlotManyInput | undefined): Plot[] {
+    static createMany(input: PlotLayoutManyInput | undefined): PlotLayout[] {
         if (!input) {
             return [];
         }
 
-        let plot: Plot;
+        let plot: PlotLayout;
         let index = zeroPoint();
         let indexes = new Set<string>();
-        let plots: Plot[] = [];
+        let plots: PlotLayout[] = [];
         for (let plotOrOptions of input) {
-            if (plotOrOptions instanceof Plot) {
+            if (plotOrOptions instanceof PlotLayout) {
                 plot = plotOrOptions;
             } else {
                 // Shift plots down by default
                 index.y += 1;
-                plot = new Plot({
+                plot = new PlotLayout({
                     index: { ...index },
                     ...plotOrOptions,
                 });
@@ -110,13 +121,20 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         this._chartWeakRef.set(chart);
     }
 
-    configure(chart: ChartLayout) {
+    configurePlot(chart: ChartLayout) {
         this.chart = chart;
         
-        this.refLayout = this._createRefLayout();
+        // this.refLayout = this._createRefLayout();
 
         this.xLayout.configure(this, { isHorizontal: true });
         this.yLayout.configure(this, { isHorizontal: false });
+
+        // this.scrollToOffset({
+        //     offset: {
+        //         x: -this.xLayout.scale.locationOfValue(this.xLayout.scale.zeroValue()).toNumber(),
+        //         y: -this.yLayout.scale.locationOfValue(this.yLayout.scale.zeroValue()).toNumber(),
+        //     }
+        // });
 
         axisTypeMap(axisType => {
             let axis = this.axes[axisType];
@@ -128,9 +146,12 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         for (let dataSource of this.dataSources) {
             dataSource.configure(this);
         }
+
+        this.setLayoutSources(this.getLayoutSources());
+        this.updatePlot();
     }
 
-    unconfigure() {
+    unconfigurePlot() {
         axisTypeMap(axisType => {
             let axis = this.axes[axisType];
             axis?.unconfigure();
@@ -142,17 +163,78 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
             dataSource.unconfigure();
         }
 
-        this.refLayout = undefined;
+        // this.refLayout = undefined;
     }
 
-    getVisibleLocationRange(): [IPoint, IPoint] {
-        return this.refLayout?.getVisibleLocationRange() || [zeroPoint(), zeroPoint()];
+    didChangeViewportSize() {
+        super.didChangeViewportSize();
+        this.schedulePlotUpdate();
     }
 
-    getRefLayoutSources(): LayoutSource[] {
-        let layout = this.refLayout;
-        return !!layout ? [layout] : [];
+    didChangeScale() {
+        super.didChangeScale();
+        this.schedulePlotUpdate();
     }
+
+    schedulePlotUpdate() {
+        if (this._scheduledPlotUpdate) {
+            return;
+        }
+
+        this._scheduledPlotUpdate = InteractionManager.runAfterInteractions(() => (
+            this._debouncedPlotUpdate()
+        ));
+    }
+
+    cancelPlotUpdate() {
+        if (this._scheduledPlotUpdate) {
+            this._scheduledPlotUpdate.cancel();
+            this._scheduledPlotUpdate = undefined;
+        }
+        this._debouncedPlotUpdate.cancel();
+    }
+    
+    private _scheduledPlotUpdate?: Cancelable;
+
+    private _debouncedPlotUpdate = debounce(
+        () => this.updatePlot(),
+        kGridUpdateDebounceInterval,
+    );
+
+    updatePlot() {
+        this.cancelPlotUpdate();
+        
+        this.xLayout.update();
+        this.yLayout.update();
+
+        this.scrollBy({
+            offset: {
+                x: this.xLayout.layoutInfo.recenteringOffset,
+                y: this.yLayout.layoutInfo.recenteringOffset,
+            }
+        });
+    }
+
+    // getVisibleLocationRange(): [IPoint, IPoint] {
+    //     return this.refLayout?.getVisibleLocationRange() || [zeroPoint(), zeroPoint()];
+    // }
+
+    getLayoutSources(): LayoutSource[] {
+        // The order of layout sources determines
+        // their z-order.
+        return [
+            // ...this.getRefLayoutSources(),
+            ...this.getGridLayoutSources(),
+            ...this.getDataLayoutSources(),
+            ...this.getHorizontalAxisLayoutSources(),
+            ...this.getVerticalAxisLayoutSources(),
+        ];
+    }
+
+    // getRefLayoutSources(): LayoutSource[] {
+    //     let layout = this.refLayout;
+    //     return !!layout ? [layout] : [];
+    // }
 
     getGridLayoutSources(): LayoutSource[] {
         // The order of layout sources determines
@@ -192,11 +274,11 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
     }
 
     getLayout$(): ILayout<Animated.ValueXY> {
-        return this.chart.getPlotLayout$(this.index);
+        return this.chart.getPlotLayout$(this);
     }
 
     getLayoutSourceOptions(layout?: ILayout<Animated.ValueXY>): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
-        layout = layout || this.getLayout$();
+        // layout = layout || this.getLayout$();
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
@@ -208,11 +290,11 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         };
     }
 
-    private _validatedAxes(props: PlotOptions | undefined): IAxes<X, Y, DX, DY> {
+    private _validatedAxes(props: PlotLayoutOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);
     }
 
-    private _validatedGrid(props: PlotOptions | undefined): Grid {
+    private _validatedGrid(props: PlotLayoutOptions | undefined): Grid {
         let gridOrOptions = props?.grid || {};
         if (gridOrOptions instanceof Grid) {
             return gridOrOptions;
@@ -220,11 +302,11 @@ export default class Plot<X = any, Y = any, DX = any, DY = any> {
         return new Grid(gridOrOptions);
     }
 
-    private _createRefLayout(): GridLayoutSource {
-        return new GridLayoutSource({
-            ...this.getLayoutSourceOptions(),
-            shouldRenderItem: () => false,
-            reuseID: kRefLayoutReuseID,
-        });
-    }
+    // private _createRefLayout(): GridLayoutSource {
+    //     return new GridLayoutSource({
+    //         ...this.getLayoutSourceOptions(),
+    //         shouldRenderItem: () => false,
+    //         reuseID: kRefLayoutReuseID,
+    //     });
+    // }
 }

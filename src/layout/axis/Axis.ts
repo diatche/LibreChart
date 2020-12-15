@@ -24,7 +24,7 @@ import {
     IAxisStyle,
 } from "./axisTypes";
 import { ITickLocation } from "../../scale/Scale";
-import { Plot } from "../../internal";
+import { PlotLayout } from "../../internal";
 import {
     isAxisHorizontal,
     isAxisType,
@@ -95,7 +95,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
      */
     backgroundLayout?: FlatLayoutSource;
 
-    private _plotWeakRef = weakref<Plot>();
+    private _plotWeakRef = weakref<PlotLayout>();
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates = 0;
 
@@ -178,12 +178,12 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         return axes;
     }
 
-    get plot(): Plot {
+    get plot(): PlotLayout {
         return this._plotWeakRef.getOrFail();
     }
 
-    set plot(plot: Plot) {
-        if (!plot || !(plot instanceof Plot)) {
+    set plot(plot: PlotLayout) {
+        if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
         this._plotWeakRef.set(plot);
@@ -193,7 +193,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         return this._scaleLayout;
     }
 
-    configure(plot: Plot) {
+    configure(plot: PlotLayout) {
         this.plot = plot;
         this._scaleLayout = this.isHorizontal
             ? plot.xLayout

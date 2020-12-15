@@ -1,51 +1,36 @@
 import {
-    LayoutSource,
-    EvergridLayout,
-    EvergridLayoutCallbacks,
-    EvergridLayoutProps,
     IPoint,
     ILayout,
     zeroPoint,
 } from "evergrid";
-import debounce from 'lodash.debounce';
+import { Animated } from "react-native";
 import {
-    Cancelable,
-} from "../types";
-import { Animated, InteractionManager } from "react-native";
-import { Plot, PlotManyInput, ScaleLayout } from "../internal";
-
-const kGridUpdateDebounceInterval = 100;
+    PlotLayout,
+    PlotLayoutManyInput,
+} from "../internal";
 
 /** Rows and nested columns. */
-export type PlotSizeMatrix = number[][];
+export type PlotLayoutSizeMatrix = number[][];
 
-export interface ChartLayoutProps extends EvergridLayoutCallbacks, Omit<EvergridLayoutProps, 'layoutSources'> {
+export interface ChartLayoutProps {
     plotSizes?: number[][];
-    plots: PlotManyInput;
+    plots: PlotLayoutManyInput;
 }
 
-export default class ChartLayout extends EvergridLayout { 
-    // plotSizeMatrix: PlotSizeMatrix;
-    readonly plots: Plot[];
-
-    /** Unique list of scale layouts. */
-    private _scaleLayouts: ScaleLayout[] = [];
+export default class ChartLayout { 
+    // plotSizeMatrix: PlotLayoutSizeMatrix;
+    readonly plots: PlotLayout[];
 
     constructor(props?: ChartLayoutProps) {
-        super(props);
-        if (!props?.anchor) {
-            this.anchor$.setValue({ x: 0.5, y: 0.5 });
-        }
-        this.plots = this._validatedPlots(props);
-        // this.plotSizeMatrix = this._validatedPlotSizeMatrix(this.plots, props);
-        this._updateScaleLayouts();
+        this.plots = this._validatedPlotLayouts(props);
+        // this.plotSizeMatrix = this._validatedPlotLayoutSizeMatrix(this.plots, props);
     }
 
     /**
      * Returns the plot index range.
      * Start is inclusive, end is exclusive.
      */
-    getPlotIndexRange(): [IPoint, IPoint] | undefined {
+    getPlotLayoutIndexRange(): [IPoint, IPoint] | undefined {
         if (this.plots.length === 0) {
             return undefined;
         }
@@ -69,160 +54,60 @@ export default class ChartLayout extends EvergridLayout {
         return [start, end];
     }
 
-    getPlotLayout$(index: IPoint): ILayout<Animated.ValueXY> {
+    getPlotLayout$(plot: PlotLayout): ILayout<Animated.ValueXY> {
         // TODO: calculate layout from props
-        let indexRange = this.getPlotIndexRange();
-        if (!indexRange) {
-            return {
-                offset: new Animated.ValueXY(),
-                size: new Animated.ValueXY(),
-            };
-        }
-        // Spread plots evenly
-        let xTotalLen = indexRange[1].x - indexRange[0].x;
-        let yTotalLen = indexRange[1].y - indexRange[0].y;
         return {
-            offset: new Animated.ValueXY({
-                x: 0,
-                y: 0,
-                // x: 10,
-                // y: 10,
-                // x: index.x - indexRange[0].x,
-                // y: index.y - indexRange[0].y,
-            }),
-            size: new Animated.ValueXY({
-                // x: 600,
-                // y: 400,
-                x: this.containerSize$.x,
-                y: this.containerSize$.y,
-            }),
-            //  {
-            //     x: Animated.divide(this.containerSize$.x, xTotalLen),
-            //     y: Animated.divide(this.containerSize$.y, yTotalLen),
-            // },
+            offset: new Animated.ValueXY(),
+            size: plot.containerSize$,
         };
+
+        // let indexRange = this.getPlotLayoutIndexRange();
+        // if (!indexRange) {
+        //     return {
+        //         offset: new Animated.ValueXY(),
+        //         size: new Animated.ValueXY(),
+        //     };
+        // }
+        // // Spread plots evenly
+        // let xTotalLen = indexRange[1].x - indexRange[0].x;
+        // let yTotalLen = indexRange[1].y - indexRange[0].y;
+        // return {
+        //     offset: new Animated.ValueXY({
+        //         x: 0,
+        //         y: 0,
+        //         // x: 10,
+        //         // y: 10,
+        //         // x: plot.index.x - indexRange[0].x,
+        //         // y: plot.index.y - indexRange[0].y,
+        //     }),
+        //     size: new Animated.ValueXY({
+        //         x: 600,
+        //         y: 400,
+        //         // x: this.containerSize$.x,
+        //         // y: this.containerSize$.y,
+        //     }),
+        //     //  {
+        //     //     x: Animated.divide(this.containerSize$.x, xTotalLen),
+        //     //     y: Animated.divide(this.containerSize$.y, yTotalLen),
+        //     // },
+        // };
     }
 
-    didInitChart() {
+    configureChart() {
         for (let plot of this.plots) {
-            plot.configure(this);
+            plot.configurePlot(this);
         }
-        this.setLayoutSources(this._getChartLayoutSources());
-        this.updateChart();
     }
 
     unconfigureChart() {
         for (let plot of this.plots) {
-            plot.unconfigure();
+            plot.unconfigurePlot();
         }
     }
 
-    didChangeViewportSize() {
-        super.didChangeViewportSize();
-        this.scheduleChartUpdate();
-    }
-
-    didChangeScale() {
-        super.didChangeScale();
-        this.scheduleChartUpdate();
-    }
-
-    scheduleChartUpdate() {
-        if (this._scheduledChartUpdate) {
-            return;
-        }
-
-        this._scheduledChartUpdate = InteractionManager.runAfterInteractions(() => (
-            this._debouncedChartUpdate()
-        ));
-    }
-
-    cancelChartUpdate() {
-        if (this._scheduledChartUpdate) {
-            this._scheduledChartUpdate.cancel();
-            this._scheduledChartUpdate = undefined;
-        }
-        this._debouncedChartUpdate.cancel();
-    }
-    
-    private _scheduledChartUpdate?: Cancelable;
-
-    private _debouncedChartUpdate = debounce(
-        () => this.updateChart(),
-        kGridUpdateDebounceInterval,
-    );
-
-    updateChart() {
-        this.cancelChartUpdate();
-        
-        let hChanged: ScaleLayout | undefined;
-        let vChanged: ScaleLayout | undefined;
-        for (let scaleLayout of this._scaleLayouts) {
-            if (scaleLayout.update() && !scaleLayout.custom) {
-                if (scaleLayout.isHorizontal) {
-                    hChanged = scaleLayout;
-                } else {
-                    vChanged = scaleLayout;
-                }
-            }
-        }
-
-        if (hChanged?.layoutInfo.recenteringOffset || vChanged?.layoutInfo.recenteringOffset) {
-            this.scrollBy({
-                offset: {
-                    x: hChanged?.layoutInfo.recenteringOffset,
-                    y: vChanged?.layoutInfo.recenteringOffset,
-                }
-            });
-        }
-    }
-
-    private _updateScaleLayouts() {
-        let scaleLayouts: ScaleLayout[] = [];
-        for (let plot of this.plots) {
-            if (scaleLayouts.indexOf(plot.xLayout) < 0) {
-                scaleLayouts.push(plot.xLayout);
-            }
-            if (scaleLayouts.indexOf(plot.yLayout) < 0) {
-                scaleLayouts.push(plot.yLayout);
-            }
-        }
-        this._scaleLayouts = scaleLayouts;
-    }
-
-    private _getChartLayoutSources(): LayoutSource[] {
-        if (!this.plots) {
-            return [];
-        }
-
-        // The order of layout sources determines
-        // their z-order.
-        // Order from bottom to top:
-        // ref, grid, data, h-axes, v-axes.
-        let refs: LayoutSource[] = [];
-        let grids: LayoutSource[] = [];
-        let data: LayoutSource[] = [];
-        let hAxes: LayoutSource[] = [];
-        let vAxes: LayoutSource[] = [];
-        for (let plot of this.plots) {
-            refs = [...refs, ...plot.getRefLayoutSources()];
-            grids = [...grids, ...plot.getGridLayoutSources()];
-            data = [...data, ...plot.getDataLayoutSources()];
-            hAxes = [...hAxes, ...plot.getHorizontalAxisLayoutSources()];
-            vAxes = [...vAxes, ...plot.getVerticalAxisLayoutSources()];
-        }
-        return [
-            ...refs,
-            ...grids,
-            ...data,
-            ...hAxes,
-            ...vAxes,
-        ];
-    }
-
-    // private _validatedPlotSizeMatrix(plots: Plot[], props: ChartLayoutProps | undefined): PlotSizeMatrix {
+    // private _validatedPlotLayoutSizeMatrix(plots: PlotLayout[], props: ChartLayoutProps | undefined): PlotLayoutSizeMatrix {
     //     let mInput = props?.plotSizeMatrix || [];
-    //     let m: PlotSizeMatrix = [];
+    //     let m: PlotLayoutSizeMatrix = [];
     //     for (let plot of plots) {
     //         let { x: j, y: i } = plot.index;
     //         while (m.length <= i) {
@@ -235,7 +120,7 @@ export default class ChartLayout extends EvergridLayout {
     //     }
     // }
 
-    private _validatedPlots(props: ChartLayoutProps | undefined): Plot[] {
-        return Plot.createMany(props?.plots);
+    private _validatedPlotLayouts(props: ChartLayoutProps | undefined): PlotLayout[] {
+        return PlotLayout.createMany(props?.plots);
     }
 }

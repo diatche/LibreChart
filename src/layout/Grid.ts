@@ -14,7 +14,7 @@ import {
     IChartGridStyle,
 } from "../types";
 import {
-    Plot,
+    PlotLayout,
 } from "../internal";
 
 export interface IChartGridInput {
@@ -48,7 +48,7 @@ export default class Grid {
 
     layout?: LayoutSource;
 
-    private _plotWeakRef = weakref<Plot>();
+    private _plotWeakRef = weakref<PlotLayout>();
     private _xScaleLayoutUpdates = 0;
     private _yScaleLayoutUpdates = 0;
 
@@ -68,18 +68,18 @@ export default class Grid {
         this.style = style;
     }
 
-    get plot(): Plot {
+    get plot(): PlotLayout {
         return this._plotWeakRef.getOrFail();
     }
 
-    set plot(plot: Plot) {
-        if (!plot || !(plot instanceof Plot)) {
+    set plot(plot: PlotLayout) {
+        if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
         this._plotWeakRef.set(plot);
     }
 
-    configure(plot: Plot) {
+    configure(plot: PlotLayout) {
         this.plot = plot;
         this.layout = this._createGridLayout();
 
