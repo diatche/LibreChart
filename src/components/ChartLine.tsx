@@ -2,8 +2,14 @@ import Decimal from 'decimal.js';
 import { IPoint } from 'evergrid';
 import debounce from 'lodash.debounce';
 import React from 'react';
-import { Animated, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import {
+    Animated,
+    View,
+} from 'react-native';
+import Svg, {
+    Ellipse,
+    Path,
+} from 'react-native-svg';
 import { ILineDataStyle } from '../data/LineDataSource';
 import { IDataPointStyle } from '../types';
 import { isMatch } from '../utils/comp';
@@ -39,7 +45,7 @@ interface ScaledValues extends ScaledPointValues, Pick<
 }
 
 const scaleToView = (value: number | undefined, scale: number): number => {
-    return value && new Decimal(value / Math.abs(scale || 1)).toNumber() || 0;
+    return value && new Decimal(value / (scale || 1)).toNumber() || 0;
 };
 
 const scalePointStyle = (values: ScaledPointValues, scale: number): ScaledPointValues => {
@@ -59,7 +65,7 @@ const scaleValues = (values: ScaledValues, scale: number): ScaledValues => {
 };
 
 const ChartLine = React.memo((props: ChartLineProps) => {
-    const scaledProps: ScaledValues = {
+    const propsToScale: ScaledValues = {
         strokeWidth: props.strokeWidth || 0,
         strokeDashArray: props.strokeDashArray,
         pointInnerRadius: props.pointInnerRadius || 0,
@@ -76,7 +82,10 @@ const ChartLine = React.memo((props: ChartLineProps) => {
         // @ts-ignore: _value is private
         y: Math.abs(props.scale.y._value || 0),
     }));
-    const scaledValues = scaleValues(scaledProps, scale.x);
+    const combinedScale = Math.min(Math.abs(scale.x), Math.abs(scale.y));
+    const xScaledValues = scaleValues(propsToScale, Math.abs(scale.x));
+    const yScaledValues = scaleValues(propsToScale, Math.abs(scale.y));
+    const scaledValues = scaleValues(propsToScale, combinedScale);
 
     const viewOverlap = Math.max(
         (props.strokeWidth || 0) / 2,
@@ -84,9 +93,8 @@ const ChartLine = React.memo((props: ChartLineProps) => {
         ...Object.values(props.pointStyles || {})
             .map(s => s?.pointOuterRadius || 0),
     );
-    // const viewOverlap2 = viewOverlap * 2;
-    const xContentOverlap = viewOverlap / scale.x;
-    const yContentOverlap = viewOverlap / scale.y;
+    const xContentOverlap = viewOverlap / scale.x * 0;
+    const yContentOverlap = viewOverlap / scale.y * 0;
 
     const rectWithOverlap = [
         props.rect[0] - xContentOverlap,
@@ -126,7 +134,12 @@ const ChartLine = React.memo((props: ChartLineProps) => {
             marginVertical: `${-yOverlap * 100}%`,
             // backgroundColor: 'rgba(200, 210, 130, 0.1)',
         }}>
-            <Svg viewBox={viewBox} >
+            <Svg
+                width="100%"
+                height="100%"
+                preserveAspectRatio="none" 
+                viewBox={viewBox}
+            >
                 {props.strokeColor && scaledValues.strokeWidth! > 0 && (
                     <Path
                         d={props.path}
@@ -142,20 +155,22 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                     />
                 )}
                 {(scaledValues.pointStyles || pointOuterColor && scaledValues.pointOuterRadius! > 0) && props.points.map((p, i) => (
-                    <Circle
+                    <Ellipse
                         key={`o${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={scaledValues.pointStyles?.[i]?.pointOuterRadius || scaledValues.pointOuterRadius}
+                        rx={xScaledValues.pointStyles?.[i]?.pointOuterRadius || xScaledValues.pointOuterRadius}
+                        ry={yScaledValues.pointStyles?.[i]?.pointOuterRadius || yScaledValues.pointOuterRadius}
                         fill={props.pointStyles?.[i]?.pointOuterColor || pointOuterColor}
                     />
                 ))}
                 {(scaledValues.pointStyles || props.pointInnerColor && scaledValues.pointInnerRadius! > 0) && props.points.map((p, i) => (
-                    <Circle
+                    <Ellipse
                         key={`i${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={scaledValues.pointStyles?.[i]?.pointInnerRadius || scaledValues.pointInnerRadius}
+                        rx={xScaledValues.pointStyles?.[i]?.pointInnerRadius || xScaledValues.pointInnerRadius}
+                        ry={yScaledValues.pointStyles?.[i]?.pointInnerRadius || yScaledValues.pointInnerRadius}
                         fill={props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor}
                     />
                 ))}
