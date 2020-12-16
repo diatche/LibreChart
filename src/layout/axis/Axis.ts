@@ -280,9 +280,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
     ): FlatLayoutSource | undefined {
         let plot = this.plot;
-        let plotLayout = plot.getLayout$();
         let layoutPropsBase: FlatLayoutSourceProps = {
-            ...plot.getLayoutSourceOptions(plotLayout),
+            ...plot.getLayoutSourceOptions(),
             ...defaults,
         };
         let thickness = Animated.add(
@@ -296,7 +295,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                     ...layoutPropsBase,
                     willUseItemViewLayout: (i, layout, source) => {
                         layout.offset.y = Animated.subtract(
-                            plotLayout.size.y,
+                            plot.containerSize$.y,
                             thickness,
                         );
                         layout.size.y = thickness;
@@ -326,7 +325,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                     ...layoutPropsBase,
                     willUseItemViewLayout: (i, layout, source) => {
                         layout.offset.x = Animated.subtract(
-                            plotLayout.size.x,
+                            plot.containerSize$.x,
                             thickness,
                         );
                         layout.size.x = thickness;

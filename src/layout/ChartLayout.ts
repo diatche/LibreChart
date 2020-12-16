@@ -1,6 +1,5 @@
 import {
     IPoint,
-    ILayout,
     zeroPoint,
 } from "evergrid";
 import { Animated } from "react-native";
@@ -9,34 +8,161 @@ import {
     PlotLayoutManyInput,
 } from "../internal";
 
-/** Rows and nested columns. */
-export type PlotLayoutSizeMatrix = number[][];
+export type PlotLayoutSizeComponent = Animated.AnimatedInterpolation | Animated.Value | number | string;
 
-export interface ChartLayoutProps {
-    plotSizes?: number[][];
+export type PlotLayoutSizeComponentInput =  Animated.AnimatedInterpolation | Animated.Value | number | string | undefined | {
+    flex: number;
+};
+
+export interface ChartLayoutCallbacks {
+    onViewportSizeChanged?: (layout: ChartLayout) => void;
+}
+
+export interface ChartLayoutProps extends ChartLayoutCallbacks {
+    rowHeights?: PlotLayoutSizeComponentInput[];
+    columnWidths?: PlotLayoutSizeComponentInput[];
     plots: PlotLayoutManyInput;
 }
 
-export default class ChartLayout { 
-    // plotSizeMatrix: PlotLayoutSizeMatrix;
+export default class ChartLayout {
+    readonly rowHeights: PlotLayoutSizeComponent[];
+    readonly columnWidths: PlotLayoutSizeComponent[];
+    readonly containerSize$: Animated.ValueXY;
     readonly plots: PlotLayout[];
 
+    callbacks: ChartLayoutCallbacks;
+
+    private _containerSize: IPoint;
+    private _animatedSubscriptions: { [id: string]: Animated.Value | Animated.ValueXY } = {};
+
     constructor(props?: ChartLayoutProps) {
+        this.callbacks = {};
+        this.callbacks.onViewportSizeChanged = props?.onViewportSizeChanged;
+
+        this._containerSize = zeroPoint();
+        this.containerSize$ = new Animated.ValueXY();
+        let sub = this.containerSize$.addListener(p => {
+            if (p.x <= 0 || p.y <= 0) {
+                // console.debug('Ignoring invalid containerSize value: ' + JSON.stringify(p));
+                return;
+            }
+            if (Math.abs(p.x - this._containerSize.x) < 1 && Math.abs(p.y - this._containerSize.y) < 1) {
+                return;
+            }
+            this._containerSize = p;
+            this.didChangeContainerSize();
+        });
+        this._animatedSubscriptions[sub] = this.containerSize$;
+
         this.plots = this._validatedPlotLayouts(props);
-        // this.plotSizeMatrix = this._validatedPlotLayoutSizeMatrix(this.plots, props);
+        let plotIndexRange = this._getPlotLayoutIndexRange(this.plots);
+        console.debug('plotIndexRange: ' + JSON.stringify(plotIndexRange));
+        this.rowHeights = this._validatedPlotSizeComponents(
+            props?.rowHeights,
+            {
+                relativeLength: this.containerSize$.y,
+                count: plotIndexRange?.[1].y || 1,
+            }
+        );
+        console.debug('rowHeights: ' + JSON.stringify(this.rowHeights));
+        this.columnWidths = this._validatedPlotSizeComponents(
+            props?.columnWidths,
+            {
+                relativeLength: this.containerSize$.x,
+                count: plotIndexRange?.[1].x || 1,
+            }
+        );
+        console.debug('columnWidths: ' + JSON.stringify(this.columnWidths));
+    }
+
+    didChangeContainerSize() {
+        this.callbacks.onViewportSizeChanged?.(this);
+    }
+
+    getPlot(index: IPoint): PlotLayout | undefined {
+        // TODO: optimise this with a matrix lookup or table
+        for (let plot of this.plots) {
+            if (plot.index.x === index.x && plot.index.y === index.y) {
+                return plot;
+            }
+        }
+        return undefined;
+    }
+
+    configureChart() {
+        for (let plot of this.plots) {
+            plot.configurePlot(this);
+        }
+    }
+
+    unconfigureChart() {
+        for (let plot of this.plots) {
+            plot.unconfigurePlot();
+        }
+    }
+
+    private _validatedPlotSizeComponents(
+        sizes: PlotLayoutSizeComponentInput[] | undefined,
+        options: {
+            count: number;
+            relativeLength: Animated.Value;
+        },
+    ): PlotLayoutSizeComponent[] {
+        let { count } = options;
+        if (count < 1) {
+            count = 1;
+        }
+        sizes = sizes || [];
+        let flexTotal = count - sizes.length;
+
+        const getFlex = (size: PlotLayoutSizeComponentInput | undefined): number | undefined => {
+            if (typeof size === 'undefined') {
+                return 1;
+            } else if (typeof size === 'object' && 'flex' in size) {
+                return size.flex;
+            } else {
+                return undefined;
+            }
+        }
+
+        // Convert flex into animated
+        for (let size of sizes) {
+            let flex = getFlex(size);
+            if (typeof flex !== 'undefined') {
+                flexTotal += flex;
+            }
+        }
+        let normSizes: PlotLayoutSizeComponent[] = [];
+        for (let i = 0; i < count; i++) {
+            let size = sizes[i];
+            let flex = getFlex(size);
+            if (typeof flex !== 'undefined') {
+                normSizes.push(Animated.multiply(
+                    flex / flexTotal, 
+                    options.relativeLength,
+                ));
+            } else {
+                normSizes.push(size as PlotLayoutSizeComponent);
+            }
+        }
+        return normSizes;
+    }
+
+    private _validatedPlotLayouts(props: ChartLayoutProps | undefined): PlotLayout[] {
+        return PlotLayout.createMany(props?.plots);
     }
 
     /**
      * Returns the plot index range.
      * Start is inclusive, end is exclusive.
      */
-    getPlotLayoutIndexRange(): [IPoint, IPoint] | undefined {
-        if (this.plots.length === 0) {
+    private _getPlotLayoutIndexRange(plots: PlotLayout[]): [IPoint, IPoint] | undefined {
+        if (plots.length === 0) {
             return undefined;
         }
         let start = zeroPoint();
         let end = zeroPoint();
-        for (let plot of this.plots) {
+        for (let plot of plots) {
             let i = plot.index;
             if (i.x < start.x) {
                 start.x = i.x;
@@ -52,75 +178,5 @@ export default class ChartLayout {
             }
         }
         return [start, end];
-    }
-
-    getPlotLayout$(plot: PlotLayout): ILayout<Animated.ValueXY> {
-        // TODO: calculate layout from props
-        return {
-            offset: new Animated.ValueXY(),
-            size: plot.containerSize$,
-        };
-
-        // let indexRange = this.getPlotLayoutIndexRange();
-        // if (!indexRange) {
-        //     return {
-        //         offset: new Animated.ValueXY(),
-        //         size: new Animated.ValueXY(),
-        //     };
-        // }
-        // // Spread plots evenly
-        // let xTotalLen = indexRange[1].x - indexRange[0].x;
-        // let yTotalLen = indexRange[1].y - indexRange[0].y;
-        // return {
-        //     offset: new Animated.ValueXY({
-        //         x: 0,
-        //         y: 0,
-        //         // x: 10,
-        //         // y: 10,
-        //         // x: plot.index.x - indexRange[0].x,
-        //         // y: plot.index.y - indexRange[0].y,
-        //     }),
-        //     size: new Animated.ValueXY({
-        //         x: 600,
-        //         y: 400,
-        //         // x: this.containerSize$.x,
-        //         // y: this.containerSize$.y,
-        //     }),
-        //     //  {
-        //     //     x: Animated.divide(this.containerSize$.x, xTotalLen),
-        //     //     y: Animated.divide(this.containerSize$.y, yTotalLen),
-        //     // },
-        // };
-    }
-
-    configureChart() {
-        for (let plot of this.plots) {
-            plot.configurePlot(this);
-        }
-    }
-
-    unconfigureChart() {
-        for (let plot of this.plots) {
-            plot.unconfigurePlot();
-        }
-    }
-
-    // private _validatedPlotLayoutSizeMatrix(plots: PlotLayout[], props: ChartLayoutProps | undefined): PlotLayoutSizeMatrix {
-    //     let mInput = props?.plotSizeMatrix || [];
-    //     let m: PlotLayoutSizeMatrix = [];
-    //     for (let plot of plots) {
-    //         let { x: j, y: i } = plot.index;
-    //         while (m.length <= i) {
-    //             m.push([]);
-    //         }
-    //         while (m[i].length <= j) {
-    //             m[i].push(0);
-    //         }
-    //         m[i][j] = 
-    //     }
-    // }
-
-    private _validatedPlotLayouts(props: ChartLayoutProps | undefined): PlotLayout[] {
-        return PlotLayout.createMany(props?.plots);
     }
 }

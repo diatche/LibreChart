@@ -3,9 +3,7 @@ import {
     IPoint,
     zeroPoint,
     weakref,
-    GridLayoutSource,
     LayoutSourceProps,
-    ILayout,
     EvergridLayoutCallbacks,
     EvergridLayoutProps,
     EvergridLayout,
@@ -23,7 +21,7 @@ import {
     IChartGridInput,
     ScaleLayout,
 } from "../internal";
-import { Animated, InteractionManager } from "react-native";
+import { InteractionManager } from "react-native";
 import { Cancelable } from "../types";
 import debounce from "lodash.debounce";
 
@@ -78,7 +76,21 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         this.grid = this._validatedGrid(options);
     }
 
-    static createMany(input: PlotLayoutManyInput | undefined): PlotLayout[] {
+    /**
+     * Normalizes or creates plots from options.
+     * 
+     * By default, plots with no index are distributed into rows.
+     * Set `columns` to `true` to distribute into columns.
+     * 
+     * @param input 
+     * @param options 
+     */
+    static createMany(
+        input: PlotLayoutManyInput | undefined,
+        options?: {
+            columns?: boolean;
+        },
+    ): PlotLayout[] {
         if (!input) {
             return [];
         }
@@ -92,11 +104,18 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
                 plot = plotOrOptions;
             } else {
                 // Shift plots down by default
-                index.y += 1;
-                plot = new PlotLayout({
-                    index: { ...index },
-                    ...plotOrOptions,
-                });
+                plot = new PlotLayout(plotOrOptions);
+            }
+            if (plot.index.x === 0 && plot.index.y === 0 && plots.length !== 0) {
+                if (options?.columns) {
+                    index.x += 1;
+                } else {
+                    index.y += 1;
+                }
+                plot.index = index;
+            }
+            if (plot.index.x < 0 || plot.index.y < 0) {
+                throw new Error('Invalid plot index');
             }
             let indexStr = `{ x: ${index.x}, y: ${index.y} }`;
             if (indexes.has(indexStr)) {
@@ -272,20 +291,12 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         ].filter(s => !!s) as LayoutSource[];
     }
 
-    getLayout$(): ILayout<Animated.ValueXY> {
-        return this.chart.getPlotLayout$(this);
-    }
-
-    getLayoutSourceOptions(layout?: ILayout<Animated.ValueXY>): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
-        // layout = layout || this.getLayout$();
+    getLayoutSourceOptions(): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
                 y: this.yLayout.layoutInfo.containerLength$,
             },
-            // viewportOffset: layout.offset,
-            // viewportSize: layout.size,
-            // clipToBounds: false,
         };
     }
 

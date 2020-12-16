@@ -119,12 +119,19 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
     }
 
     render() {
+        // TODO: Add customisable style prop
         return (
             <Evergrid
                 {...this.props}
                 ref={this.innerRef}
                 renderItem={this.itemRenderMap}
                 layout={this.layout}
+                style={[
+                    this.props.style,
+                    {
+                        backgroundColor: 'white',
+                    }
+                ]}
             />
         );
     }

@@ -2,11 +2,13 @@ import React from 'react';
 import {
     ChartLayout,
     Plot,
-    PlotLayout,
 } from '../internal';
-import { View, ViewProps } from 'react-native';
+import {
+    Animated,
+    ViewProps,
+} from 'react-native';
 
-export interface ChartProps extends ViewProps {
+export interface ChartProps extends Animated.AnimatedProps<ViewProps> {
     layout: ChartLayout;
 }
 
@@ -25,40 +27,55 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     render() {
-        let plots: React.ReactNode[] = [];
-        for (let i = 0; i < this.layout.plots.length; i++) {
-            plots.push(this.renderPlot(
-                this.layout.plots[i],
-                { key: i }
-            ));
+        let rows: React.ReactNode[] = [];
+        for (let i = 0; i < this.layout.rowHeights.length; i++) {
+            let height = this.layout.rowHeights[i];
+            let rowPlots: React.ReactNode[] = [];
+            for (let j = 0; j < this.layout.columnWidths.length; j++) {
+                let width = this.layout.columnWidths[j];
+                let plot = this.layout.getPlot({ x: j, y: i });
+                if (!plot) {
+                    throw new Error(`Plot not found at row ${i}, column ${j}`);
+                }
+                rowPlots.push(
+                    <Plot
+                        key={j}
+                        layout={plot}
+                        style={{
+                            width,
+                            height,
+                        }}
+                    />
+                );
+            }
+            rows.push(
+                <Animated.View
+                    key={i}
+                    style={{
+                        width: '100%',
+                        height,
+                    }}
+                >
+                    {rowPlots}
+                </Animated.View>
+            )
         }
 
         return (
-            <View
+            <Animated.View
                 {...this.props}
-                style={this.props.style}
+                onLayout={Animated.event([{
+                    nativeEvent: {
+                        layout: {
+                            width: this.props.layout.containerSize$.x,
+                            height: this.props.layout.containerSize$.y,
+                        }
+                    }
+                }])}
+                style={{ flex: 1 }}
             >
-                {plots}
-            </View>
-        );
-    }
-
-    renderPlot(
-        plot: PlotLayout,
-        props: {
-            key: number | string;
-        }
-    ) {
-        return (
-            <Plot
-                {...props}
-                layout={plot}
-                style={{
-                    flex: 1,
-                    // borderWidth: 2,
-                    // borderColor: 'gray',
-                }}
-            />
+                {rows}
+            </Animated.View>
         );
     }
 }
