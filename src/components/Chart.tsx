@@ -5,8 +5,11 @@ import {
 } from '../internal';
 import {
     Animated,
+    StyleSheet,
     ViewProps,
+    ViewStyle,
 } from 'react-native';
+import { PlotProps } from './Plot';
 
 export interface ChartProps extends Animated.AnimatedProps<ViewProps> {
     layout: ChartLayout;
@@ -29,38 +32,54 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     render() {
         let rows: React.ReactNode[] = [];
         for (let i = 0; i < this.layout.rowHeights.length; i++) {
-            let height = this.layout.rowHeights[i];
+            let heightInfo = this.layout.rowHeights[i];
+            
+            let rowStyle: Animated.AnimatedProps<ViewStyle> = {};
+            if (typeof heightInfo === 'object' && 'flex' in heightInfo) {
+                rowStyle.flex = heightInfo.flex;
+            } else {
+                rowStyle.width = heightInfo;
+            }
+
             let rowPlots: React.ReactNode[] = [];
             for (let j = 0; j < this.layout.columnWidths.length; j++) {
-                let width = this.layout.columnWidths[j];
+                let widthInfo = this.layout.columnWidths[j];
                 let plot = this.layout.getPlot({ x: j, y: i });
                 if (!plot) {
                     throw new Error(`Plot not found at row ${i}, column ${j}`);
                 }
+
+                let columnStyle: PlotProps['style'] = {};
+                if (typeof widthInfo === 'object' && 'flex' in widthInfo) {
+                    columnStyle.flex = widthInfo.flex;
+                } else {
+                    columnStyle.width = widthInfo;
+                }
+
+                // Render plot inside row
                 rowPlots.push(
                     <Plot
                         key={j}
                         layout={plot}
-                        style={{
-                            width,
-                            height,
-                        }}
+                        style={columnStyle}
                     />
                 );
             }
+            // Render row
             rows.push(
                 <Animated.View
                     key={i}
-                    style={{
-                        width: '100%',
-                        height,
-                    }}
+                    style={[
+                        styles.row,
+                        rowStyle,
+                    ]}
                 >
                     {rowPlots}
                 </Animated.View>
-            )
+            );
         }
 
+        // Render rows
         return (
             <Animated.View
                 {...this.props}
@@ -72,10 +91,26 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                         }
                     }
                 }])}
-                style={{ flex: 1 }}
+                style={[
+                    styles.container,
+                    this.props.style,
+                ]}
             >
                 {rows}
             </Animated.View>
         );
     }
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        flexDirection: 'column',
+        alignContent: 'stretch',
+    },
+    row: {
+        flex: 1,
+        flexDirection: 'row',
+        alignContent: 'stretch',
+    },
+});

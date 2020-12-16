@@ -8,11 +8,11 @@ import {
     PlotLayoutManyInput,
 } from "../internal";
 
-export type PlotLayoutSizeComponent = Animated.AnimatedInterpolation | Animated.Value | number | string;
-
-export type PlotLayoutSizeComponentInput =  Animated.AnimatedInterpolation | Animated.Value | number | string | undefined | {
+export type PlotLayoutSizeComponent = Animated.AnimatedInterpolation | Animated.Value | number | string | {
     flex: number;
-};
+}
+
+export type PlotLayoutSizeComponentInput = PlotLayoutSizeComponent | undefined;
 
 export interface ChartLayoutCallbacks {
     onViewportSizeChanged?: (layout: ChartLayout) => void;
@@ -56,7 +56,8 @@ export default class ChartLayout {
 
         this.plots = this._validatedPlotLayouts(props);
         let plotIndexRange = this._getPlotLayoutIndexRange(this.plots);
-        console.debug('plotIndexRange: ' + JSON.stringify(plotIndexRange));
+        // console.debug('plotIndexRange: ' + JSON.stringify(plotIndexRange));
+
         this.rowHeights = this._validatedPlotSizeComponents(
             props?.rowHeights,
             {
@@ -64,7 +65,8 @@ export default class ChartLayout {
                 count: plotIndexRange?.[1].y || 1,
             }
         );
-        console.debug('rowHeights: ' + JSON.stringify(this.rowHeights));
+        // console.debug('rowHeights: ' + JSON.stringify(this.rowHeights));
+        
         this.columnWidths = this._validatedPlotSizeComponents(
             props?.columnWidths,
             {
@@ -72,7 +74,7 @@ export default class ChartLayout {
                 count: plotIndexRange?.[1].x || 1,
             }
         );
-        console.debug('columnWidths: ' + JSON.stringify(this.columnWidths));
+        // console.debug('columnWidths: ' + JSON.stringify(this.columnWidths));
     }
 
     didChangeContainerSize() {
@@ -137,12 +139,9 @@ export default class ChartLayout {
             let size = sizes[i];
             let flex = getFlex(size);
             if (typeof flex !== 'undefined') {
-                normSizes.push(Animated.multiply(
-                    flex / flexTotal, 
-                    options.relativeLength,
-                ));
-            } else {
-                normSizes.push(size as PlotLayoutSizeComponent);
+                normSizes.push({ flex });
+            } else if (typeof size !== 'undefined') {
+                normSizes.push(size);
             }
         }
         return normSizes;
