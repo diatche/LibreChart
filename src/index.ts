@@ -20,9 +20,6 @@ export * from './layout/axis/axisUtil';
 export { default as DateAxis } from './layout/axis/DateAxis';
 export * from './layout/axis/DateAxis';
 
-export { default as Axis } from './layout/axis/Axis';
-export * from './layout/axis/Axis';
-
 export { default as DataSource } from './data/DataSource';
 export * from './data/DataSource';
 

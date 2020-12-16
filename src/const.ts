@@ -4,6 +4,7 @@ import {
 } from "./types";
 import { Colors } from './utils/colors';
 
+export const kRefLayoutReuseID = 'ref';
 export const kGridReuseID = 'grid';
 
 export const kChartGridStyleBaseDefaults: IChartGridStyleInput = {

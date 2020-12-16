@@ -101,6 +101,7 @@ const ChartGrid = React.memo((props: ChartGridProps) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        // margin: -2,
         // borderWidth: 2,
         // borderColor: 'rgba(200, 210, 130, 0.5)',
     },

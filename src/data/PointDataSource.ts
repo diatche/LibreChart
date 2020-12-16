@@ -28,8 +28,9 @@ export default class PointDataSource<X = any, Y = any> extends DataSource<
 
     createLayoutSource(props?: LayoutSourceProps<number>) {
         return new CustomLayoutSource({
+            ...this.plot.getLayoutSourceOptions(),
+            itemSize: { x: 1, y: 1 },
             reuseID: this.itemReuseID,
-            // itemSize: { x: kDefaultPointRadius * 2, y: kDefaultPointRadius * 2 },
             itemOrigin: { x: 0.5, y: 0.5 },
             ...props,
             getItemLayout: i => this.getItemLayout(i),

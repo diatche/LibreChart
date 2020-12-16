@@ -4,7 +4,7 @@ import {
 } from "evergrid";
 import { Animated, ColorValue, TextStyle } from "react-native";
 import { ITickLabel } from "../../types";
-import Scale, { ITickLocation } from "../../scale/Scale";
+import { ITickLocation } from "../../scale/Scale";
 
 export type AxisType = 'topAxis' | 'rightAxis' | 'bottomAxis' | 'leftAxis';
 export type Direction = 'horizontal' | 'vertical';
@@ -62,7 +62,7 @@ export interface IAxisStyle extends Required<IAxisStyleInput> {
 
 export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 
-export interface IAxisOptions<T = any, D = T> {
+export interface IAxisOptions<T = any> {
     /**
      * Toggles axis visiblity.
      * Axis is visible by default.
@@ -70,12 +70,6 @@ export interface IAxisOptions<T = any, D = T> {
     hidden?: boolean;
 
     getTickLabel?: (tick: ITickLocation<T>) => string | ITickLabel;
-
-    /**
-     * Customises the tick location.
-     * Be default, linear ticks are used.
-     */
-    scale?: Scale<T, D>;
 
     layoutSourceDefaults?: IAxisLayoutSourceProps;
 

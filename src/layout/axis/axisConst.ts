@@ -12,28 +12,12 @@ export const kAxisContentReuseIDs: AxisTypeMapping<string> = {
     rightAxis: 'rightAxisContent',
     leftAxis: 'leftAxisContent',
 };
-export const kAxisContentReuseIDSet = new Set(Object.values(kAxisContentReuseIDs));
-
-export const kAxisContentReuseIDTypes: { [reuseID: string]: AxisType } = {
-    topAxisContent: 'topAxis',
-    rightAxisContent: 'rightAxis',
-    bottomAxisContent: 'bottomAxis',
-    leftAxisContent: 'leftAxis',
-};
 
 export const kAxisBackgroundReuseIDs: AxisTypeMapping<string> = {
     topAxis: 'topAxisBackground',
     bottomAxis: 'bottomAxisBackground',
     rightAxis: 'rightAxisBackground',
     leftAxis: 'leftAxisBackground',
-};
-export const kAxisBackgroundReuseIDSet = new Set(Object.values(kAxisBackgroundReuseIDs));
-
-export const kAxisBackgroundReuseIDTypes: { [reuseID: string]: AxisType } = {
-    topAxisBackground: 'topAxis',
-    rightAxisBackground: 'rightAxis',
-    bottomAxisBackground: 'bottomAxis',
-    leftAxisBackground: 'leftAxis',
 };
 
 export const kHorizontalAxisTypes: AxisType[] = [
