@@ -33,12 +33,12 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         let rows: React.ReactNode[] = [];
         for (let i = 0; i < this.layout.rowHeights.length; i++) {
             let heightInfo = this.layout.rowHeights[i];
-            
+
             let rowStyle: Animated.AnimatedProps<ViewStyle> = {};
             if (typeof heightInfo === 'object' && 'flex' in heightInfo) {
                 rowStyle.flex = heightInfo.flex;
             } else {
-                rowStyle.width = heightInfo;
+                rowStyle.height = heightInfo;
             }
 
             let rowPlots: React.ReactNode[] = [];
@@ -109,7 +109,6 @@ const styles = StyleSheet.create({
         alignContent: 'stretch',
     },
     row: {
-        flex: 1,
         flexDirection: 'row',
         alignContent: 'stretch',
     },

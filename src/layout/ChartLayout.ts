@@ -56,7 +56,6 @@ export default class ChartLayout {
 
         this.plots = this._validatedPlotLayouts(props);
         let plotIndexRange = this._getPlotLayoutIndexRange(this.plots);
-        // console.debug('plotIndexRange: ' + JSON.stringify(plotIndexRange));
 
         this.rowHeights = this._validatedPlotSizeComponents(
             props?.rowHeights,
@@ -65,7 +64,6 @@ export default class ChartLayout {
                 count: plotIndexRange?.[1].y || 1,
             }
         );
-        // console.debug('rowHeights: ' + JSON.stringify(this.rowHeights));
         
         this.columnWidths = this._validatedPlotSizeComponents(
             props?.columnWidths,
@@ -74,7 +72,6 @@ export default class ChartLayout {
                 count: plotIndexRange?.[1].x || 1,
             }
         );
-        // console.debug('columnWidths: ' + JSON.stringify(this.columnWidths));
     }
 
     didChangeContainerSize() {
