@@ -1,13 +1,11 @@
-import Decimal from 'decimal.js';
 import { IPoint } from 'evergrid';
-import debounce from 'lodash.debounce';
 import React from 'react';
 import {
     Animated,
     View,
 } from 'react-native';
 import Svg, {
-    Ellipse,
+    Circle,
     Path,
 } from 'react-native-svg';
 import { ILineDataStyle } from '../data/LineDataSource';
@@ -30,62 +28,8 @@ export interface ChartLineProps extends ILineDataStyle {
     scale: Animated.ValueXY;
 }
 
-interface ScaledPointValues extends Pick<
-    IDataPointStyle, 
-    'pointInnerRadius'
-    | 'pointOuterRadius'
-> {}
-
-interface ScaledValues extends ScaledPointValues, Pick<
-    ILineDataStyle, 
-    'strokeWidth'
-    | 'strokeDashArray'
-> {
-    pointStyles?: (ScaledPointValues | undefined)[];
-}
-
-const scaleToView = (value: number | undefined, scale: number): number => {
-    return value && new Decimal(value / (scale || 1)).toNumber() || 0;
-};
-
-const scalePointStyle = (values: ScaledPointValues, scale: number): ScaledPointValues => {
-    return {
-        pointInnerRadius: scaleToView(values.pointInnerRadius, scale),
-        pointOuterRadius: scaleToView(values.pointOuterRadius, scale),
-    };
-};
-
-const scaleValues = (values: ScaledValues, scale: number): ScaledValues => {
-    return {
-        ...scalePointStyle(values, scale),
-        strokeWidth: scaleToView(values.strokeWidth, scale),
-        strokeDashArray: values.strokeDashArray?.map(x => scaleToView(x, scale)),
-        pointStyles: values.pointStyles?.map(style => style && scalePointStyle(style, scale)),
-    };
-};
-
 const ChartLine = React.memo((props: ChartLineProps) => {
-    const propsToScale: ScaledValues = {
-        strokeWidth: props.strokeWidth || 0,
-        strokeDashArray: props.strokeDashArray,
-        pointInnerRadius: props.pointInnerRadius || 0,
-        pointOuterRadius: props.pointOuterRadius || 0,
-        pointStyles: props.pointStyles,
-    };
-    // const sizePct = `${((1 + props.overlap) * 100)}%`;
-    // const marginPct = `${(-props.overlap * 100)}%`;
     const pointOuterColor = props.pointOuterColor || props.strokeColor;
-
-    const [scale, setScale] = React.useState<IPoint>(() => ({
-        // @ts-ignore: _value is private
-        x: Math.abs(props.scale.x._value || 0),
-        // @ts-ignore: _value is private
-        y: Math.abs(props.scale.y._value || 0),
-    }));
-    const combinedScale = Math.min(Math.abs(scale.x), Math.abs(scale.y));
-    const xScaledValues = scaleValues(propsToScale, Math.abs(scale.x));
-    const yScaledValues = scaleValues(propsToScale, Math.abs(scale.y));
-    const scaledValues = scaleValues(propsToScale, combinedScale);
 
     const viewOverlap = Math.max(
         (props.strokeWidth || 0) / 2,
@@ -93,91 +37,66 @@ const ChartLine = React.memo((props: ChartLineProps) => {
         ...Object.values(props.pointStyles || {})
             .map(s => s?.pointOuterRadius || 0),
     );
-    const xContentOverlap = viewOverlap / scale.x;
-    const yContentOverlap = viewOverlap / scale.y;
 
     const rectWithOverlap = [
-        props.rect[0] - xContentOverlap,
-        props.rect[1] - yContentOverlap,
-        props.rect[2] + xContentOverlap * 2,
-        props.rect[3] + yContentOverlap * 2,
+        props.rect[0] - viewOverlap,
+        props.rect[1] - viewOverlap,
+        props.rect[2] + viewOverlap * 2,
+        props.rect[3] + viewOverlap * 2,
     ];
+    
     const viewBox = rectWithOverlap.map(String).join(' ');
-
-    const xOverlap = xContentOverlap / props.rect[2];
-    const yOverlap = yContentOverlap / props.rect[3];
-
-    React.useEffect(() => {
-        let mounted = true;
-        let updater = debounce((scale: IPoint) => {
-            if (!mounted) {
-                return;
-            }
-            setScale({
-                x: Math.abs(scale.x),
-                y: Math.abs(scale.y),
-            });
-        }, 50);
-        let sub = props.scale.addListener(updater);
-        return () => {
-            mounted = false;
-            props.scale.removeListener(sub);
-        };
-    }, [props.scale]);
 
     // console.debug('rendering path: ' + props.path);
     return (
         <View style={{
-            width: `${(1 + xOverlap * 2) * 100}%`,
-            height: `${(1 + yOverlap * 2) * 100}%`,
-            marginHorizontal: `${-xOverlap * 100}%`,
-            marginVertical: `${-yOverlap * 100}%`,
+            flex: 1,
+            marginHorizontal: -viewOverlap,
+            marginVertical: -viewOverlap,
             // backgroundColor: 'rgba(200, 210, 130, 0.1)',
         }}>
             <Svg
-                width="100%"
-                height="100%"
-                preserveAspectRatio="none" 
+                width='100%'
+                height='100%'
+                preserveAspectRatio="none"
                 viewBox={viewBox}
             >
-                {props.strokeColor && scaledValues.strokeWidth! > 0 && (
+                {props.strokeColor && props.strokeWidth! > 0 && (
                     <Path
                         d={props.path}
                         fill='none'
                         strokeLinecap='round'
-                        strokeWidth={scaledValues.strokeWidth}
+                        strokeWidth={props.strokeWidth}
                         stroke={props.strokeColor}
                         strokeDasharray={(
-                            scaledValues.strokeDashArray && scaledValues.strokeDashArray.length !== 0
-                                ? scaledValues.strokeDashArray.map(String).join(',')
+                            props.strokeDashArray && props.strokeDashArray.length !== 0
+                                ? props.strokeDashArray.map(String).join(',')
                                 : ''
                         )}
                     />
                 )}
-                {(scaledValues.pointStyles || pointOuterColor && scaledValues.pointOuterRadius! > 0) && props.points.map((p, i) => (
-                    <Ellipse
+                {(props.pointStyles || pointOuterColor && props.pointOuterRadius! > 0) && props.points.map((p, i) => (
+                    <Circle
                         key={`o${i}`}
                         cx={p.x}
                         cy={p.y}
-                        rx={xScaledValues.pointStyles?.[i]?.pointOuterRadius || xScaledValues.pointOuterRadius}
-                        ry={yScaledValues.pointStyles?.[i]?.pointOuterRadius || yScaledValues.pointOuterRadius}
+                        r={props.pointStyles?.[i]?.pointOuterRadius || props.pointOuterRadius}
                         fill={props.pointStyles?.[i]?.pointOuterColor || pointOuterColor}
                     />
                 ))}
-                {(scaledValues.pointStyles || props.pointInnerColor && scaledValues.pointInnerRadius! > 0) && props.points.map((p, i) => (
-                    <Ellipse
+                {(props.pointStyles || props.pointInnerColor && props.pointInnerRadius! > 0) && props.points.map((p, i) => (
+                    <Circle
                         key={`i${i}`}
                         cx={p.x}
                         cy={p.y}
-                        rx={xScaledValues.pointStyles?.[i]?.pointInnerRadius || xScaledValues.pointInnerRadius}
-                        ry={yScaledValues.pointStyles?.[i]?.pointInnerRadius || yScaledValues.pointInnerRadius}
+                        r={props.pointStyles?.[i]?.pointInnerRadius || props.pointInnerRadius}
                         fill={props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor}
                     />
                 ))}
-                {/* <Circle cx={props.rect[0]} cy={props.rect[1]} r={scaledValues.strokeWidth! * 2} fill='red' />
-                <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1]} r={scaledValues.strokeWidth! * 2} fill='red' />
-                <Circle cx={props.rect[0]} cy={props.rect[1] + props.rect[3]} r={scaledValues.strokeWidth! * 2} fill='red' />
-                <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1] + props.rect[3]} r={scaledValues.strokeWidth! * 2} fill='red' /> */}
+                {/* <Circle cx={props.rect[0]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />
+                <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />
+                <Circle cx={props.rect[0]} cy={props.rect[1] + props.rect[3]} r={props.strokeWidth! * 2} fill='red' />
+                <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1] + props.rect[3]} r={props.strokeWidth! * 2} fill='red' /> */}
             </Svg>
         </View>
     );

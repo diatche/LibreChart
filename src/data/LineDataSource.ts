@@ -69,24 +69,31 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
      */
     getContainerCanvasRect(index: IPoint): number[] {
         let range = this.getContainerLocationRange(index);
+        let scale = this.layout?.getScale() || { x: 1, y: 1};
+        for (let i = 0; i < 2; i++) {
+            let p = range[i];
+            p.x *= scale.x;
+            p.y *= scale.y;
+        }
+
         let xLen = range[1].x - range[0].x;
         let yLen = range[1].y - range[0].y;
-        let rect = [
+
+        if (xLen < 0) {
+            range[0].x += xLen;
+            xLen = -xLen;
+        }
+        if (yLen < 0) {
+            range[0].y += yLen;
+            yLen = -yLen;
+        }
+
+        return [
             range[0].x,
             range[0].y,
             xLen,
             yLen,
         ];
-
-        let scale = this.layout.getScale();
-        if (scale.x < 0) {
-            rect[0] = -xLen - rect[0];
-        }
-        if (scale.y < 0) {
-            rect[1] = -yLen - rect[1];
-        }
-        
-        return rect;
     }
 
     /**
@@ -99,27 +106,6 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
             return [];
         }
         let rect = this.getContainerLocationRange(index);
-
-        // let scale = this.layout.getScale();
-        // let xScaleSign = scale.x >= 0 ? 1 : -1;
-        // let yScaleSign = scale.y >= 0 ? 1 : -1;
-
-        // let points: ILinePoint[] = this.data.map((item, i) => {
-        //     let p = this.getItemLocation(item);
-        //     let clipped = p.x >= rect[0].x && p.x < rect[1].x && p.y >= rect[0].y && p.y < rect[1].y;
-
-        //     if (xScaleSign < 0 || yScaleSign < 0) {
-        //         p.x *= xScaleSign;
-        //         p.y *= yScaleSign;
-        //     }
-
-        //     return {
-        //         x: p.x,
-        //         y: p.y,
-        //         dataIndex: i,
-        //         clipped,
-        //     };
-        // });
 
         let points: ILinePoint[] = [];
         let p0 = this.getItemLocation(this.data[0]);
@@ -158,15 +144,11 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
 
         const pointsLen = points.length;
         if (pointsLen !== 0) {
-            let scale = this.layout.getScale();
-            let xScaleSign = scale.x >= 0 ? 1 : -1;
-            let yScaleSign = scale.y >= 0 ? 1 : -1;
-            if (xScaleSign < 0 || yScaleSign < 0) {
-                for (let i = 0; i < pointsLen; i++) {
-                    let p = points[i];
-                    p.x *= xScaleSign;
-                    p.y *= yScaleSign;
-                }
+            let scale = this.layout?.getScale() || { x: 1, y: 1 };
+            for (let i = 0; i < pointsLen; i++) {
+                let p = points[i];
+                p.x *= scale.x;
+                p.y *= scale.y;
             }
         }
 
