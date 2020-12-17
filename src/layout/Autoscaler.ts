@@ -153,8 +153,18 @@ export default class Autoscaler<T = any, D = any> {
             });
         } else {
             // Avoid frequent updates
-            this._debouncedUpdate();
+            this.scheduleUpdate();
         }
+    }
+
+    scheduleUpdate() {
+        if (this._scheduledUpdate) {
+            return;
+        }
+
+        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
+            this._debouncedUpdate()
+        ));
     }
 
     cancelUpdate() {
@@ -167,14 +177,10 @@ export default class Autoscaler<T = any, D = any> {
     
     private _scheduledUpdate?: Cancelable;
 
-    private _debouncedUpdate = debounce(() => {
-        if (this._scheduledUpdate) {
-            return;
-        }
-        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
-            this.update()
-        ));
-    }, Autoscaler.updateDebounceInterval);
+    private _debouncedUpdate = debounce(
+        () => this.update(),
+        Autoscaler.updateDebounceInterval,
+    );
 
     update(options?: { animationOptions?: IAnimationBaseOptions }) {
         this.cancelUpdate();
