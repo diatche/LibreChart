@@ -12,8 +12,9 @@ import { Cancelable } from "../types";
 export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
 
 export interface AutoscalerOptions {
-    paddingAbs?: number | [number, number];
-    paddingRel?: number | [number, number];
+    contentPaddingAbs?: number | [number, number];
+    contentPaddingRel?: number | [number, number];
+    viewPaddingAbs?: number | [number, number];
     min?: number;
     max?: number;
     anchor?: number;
@@ -25,12 +26,14 @@ export interface AutoscalerOptions {
 }
 
 export default class Autoscaler<T = any, D = any> {
-    static defaultPaddingAbs = 0;
-    static defaultPaddingRel = 0.2;
-    static updateDebounceInterval = 300;
+    static defaultContentPaddingAbs = 0;
+    static defaultContentPaddingRel = 0.2;
+    static defaultViewPaddingAbs = 0;
+    static updateDebounceInterval = 1000;
 
-    readonly paddingAbs: [number, number];
-    readonly paddingRel: [number, number];
+    readonly contentPaddingAbs: [number, number];
+    readonly contentPaddingRel: [number, number];
+    readonly viewPaddingAbs: [number, number];
     readonly min: number | undefined;
     readonly max: number | undefined;
     readonly anchor: number | undefined;
@@ -38,14 +41,22 @@ export default class Autoscaler<T = any, D = any> {
     animationOptions: IAnimationBaseOptions;
 
     private _dataSources?: DataSource[];
-    private _min: number;
-    private _max: number;
+    private _min = 0;
+    private _max = 0;
     private _scaleLayoutWeakRef = weakref<ScaleLayout<T, D>>();
     private _containerSize?: IPoint;
+    private _updating = false;
 
     constructor(options: AutoscalerOptions = {}) {
-        this.paddingAbs = this._validatePadding(options.paddingAbs || Autoscaler.defaultPaddingAbs);
-        this.paddingRel = this._validatePadding(options.paddingRel || Autoscaler.defaultPaddingRel);
+        this.contentPaddingAbs = this._validatePadding(
+            options.contentPaddingAbs || Autoscaler.defaultContentPaddingAbs
+        );
+        this.contentPaddingRel = this._validatePadding(
+            options.contentPaddingRel || Autoscaler.defaultContentPaddingRel
+        );
+        this.viewPaddingAbs = this._validatePadding(
+            options.viewPaddingAbs || Autoscaler.defaultViewPaddingAbs
+        );
         this.min = options.min;
         this.max = options.max;
         this.anchor = options.anchor;
@@ -64,9 +75,6 @@ export default class Autoscaler<T = any, D = any> {
         }
 
         this.animationOptions = options.animationOptions || { animated: true };
-
-        this._min = 0;
-        this._max = 0;
 
         if (options?.dataSources) {
             this.dataSources = options.dataSources;
@@ -158,13 +166,14 @@ export default class Autoscaler<T = any, D = any> {
     }
 
     scheduleUpdate() {
-        if (this._scheduledUpdate) {
+        if (this._updating || this._scheduledUpdate) {
             return;
         }
 
-        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
-            this._debouncedUpdate()
-        ));
+        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => {
+            this._scheduledUpdate = undefined;
+            this._debouncedUpdate();
+        });
     }
 
     cancelUpdate() {
@@ -178,7 +187,14 @@ export default class Autoscaler<T = any, D = any> {
     private _scheduledUpdate?: Cancelable;
 
     private _debouncedUpdate = debounce(
-        () => this.update(),
+        () => {
+            if (this._updating || this._scheduledUpdate) {
+                return;
+            }
+            this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
+                this.update()
+            ));
+        },
         Autoscaler.updateDebounceInterval,
     );
 
@@ -202,6 +218,9 @@ export default class Autoscaler<T = any, D = any> {
         this._min = min;
         this._max = max;
 
+        let {
+            onEnd,
+        } = options?.animationOptions || {};
         if (max > min) {
             // Scroll and scale to range
             let pMin: Partial<IPoint> = {};
@@ -213,10 +232,15 @@ export default class Autoscaler<T = any, D = any> {
                 pMin.y = min;
                 pMax.y = max;
             }
+            this._updating = true;
             this.scaleLayout.plot.scrollTo({
                 range: [pMin, pMax],
                 ...this.animationOptions,
                 ...options?.animationOptions,
+                onEnd: (...args) => {
+                    this._updating = false;
+                    onEnd?.(...args);
+                }
             });
         } else if (typeof this.anchor !== 'undefined') {
             // Scroll to location.
@@ -233,10 +257,15 @@ export default class Autoscaler<T = any, D = any> {
             } else {
                 p.y = -min;
             }
+            this._updating = true;
             this.scaleLayout.plot.scrollTo({
                 offset: p,
                 ...this.animationOptions,
                 ...options?.animationOptions,
+                onEnd: (...args) => {
+                    this._updating = false;
+                    onEnd?.(...args);
+                }
             });
         }
     }
@@ -279,13 +308,13 @@ export default class Autoscaler<T = any, D = any> {
 
         if (locDiff > 0) {
             // Apply relative padding
-            min -= this.paddingRel[0] * locDiff;
-            max += this.paddingRel[1] * locDiff;
+            min -= this.contentPaddingRel[0] * locDiff;
+            max += this.contentPaddingRel[1] * locDiff;
         }
 
         // Apply absolute padding
-        min -= this.paddingAbs[0];
-        max += this.paddingAbs[1];
+        min -= this.contentPaddingAbs[0];
+        max += this.contentPaddingAbs[1];
 
         // Apply limits
         if (typeof this.min !== 'undefined' && min < this.min) {
@@ -303,6 +332,13 @@ export default class Autoscaler<T = any, D = any> {
             if (maxLoc < anchor && max > anchor) {
                 max = anchor;
             }
+        }
+
+        if (this.viewPaddingAbs[0] || this.viewPaddingAbs[1]) {
+            let layout = this.scaleLayout;
+            let scale = Math.abs(layout.plot.scale[layout.isHorizontal ? 'x' : 'y']);
+            min -= this.viewPaddingAbs[0] / scale;
+            max += this.viewPaddingAbs[1] / scale;
         }
 
         return [min, max];
