@@ -206,7 +206,7 @@ export default class Autoscaler<T = any, D = any> {
             return;
         }
 
-        let limits = this._getLimits();
+        let limits = this._getLimits(this._containerSize);
         if (!limits) {
             return;
         }
@@ -270,7 +270,7 @@ export default class Autoscaler<T = any, D = any> {
         }
     }
 
-    private _getLimits(): [number, number] | undefined {
+    private _getLimits(containerSize: IPoint): [number, number] | undefined {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
         let minLoc = hasAnchor ? anchor : NaN;
@@ -335,10 +335,16 @@ export default class Autoscaler<T = any, D = any> {
         }
 
         if (this.viewPaddingAbs[0] || this.viewPaddingAbs[1]) {
-            let layout = this.scaleLayout;
-            let scale = Math.abs(layout.plot.scale[layout.isHorizontal ? 'x' : 'y']);
-            min -= this.viewPaddingAbs[0] / scale;
-            max += this.viewPaddingAbs[1] / scale;
+            // Convert view padding to target scale
+            let contentLen = max - min;
+            if (contentLen > 0) {
+                let viewLen = containerSize[this.scaleLayout.isHorizontal ? 'x' : 'y'];
+                viewLen -= this.viewPaddingAbs[0];
+                viewLen -= this.viewPaddingAbs[1];
+                let scale = viewLen / contentLen;
+                min -= this.viewPaddingAbs[0] / scale;
+                max += this.viewPaddingAbs[1] / scale;
+            }
         }
 
         return [min, max];
