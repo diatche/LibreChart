@@ -384,7 +384,7 @@ export default class Autoscaler<T = any, D = any> {
         return this._isContainerReady(this._containerSize);
     }
 
-    private _isContainerReady(size: IPoint | undefined) {
-        return size && size.x >= 1 && size.y >= 1;
+    private _isContainerReady(size: IPoint | undefined): size is IPoint {
+        return !!size ? size.x >= 1 && size.y >= 1 : false;
     }
 }
