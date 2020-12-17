@@ -107,7 +107,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
             padding: normalizeAnimatedValue(style.padding),
         };
 
-        this.autoscale = this._validatedAutoscaler(options?.autoscale);
+        this.autoscale = Autoscaler.parse(options?.autoscale);
     }
 
     get plot(): PlotLayout {
@@ -291,20 +291,5 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
     isInverted() {
         let scale = this.plot.scale;
         return (this.isHorizontal ? scale.x : scale.y) < 0;
-    }
-
-    private _validatedAutoscaler(input: AutoscalerInput | undefined): Autoscaler | undefined {
-        switch (typeof input) {
-            case 'undefined':
-                return undefined;
-            case 'boolean':
-                return input ? new Autoscaler() : undefined;
-            case 'object':
-                if (input instanceof Autoscaler) {
-                    return input;
-                }
-                break;
-        }
-        throw new Error('Invalid autoscaler');
     }
 }

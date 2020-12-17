@@ -59,6 +59,23 @@ export default class Autoscaler<T = any, D = any> {
         }
     }
 
+    static parse(input: AutoscalerInput | undefined): Autoscaler | undefined {
+        switch (typeof input) {
+            case 'undefined':
+                return undefined;
+            case 'boolean':
+                return input ? new Autoscaler() : undefined;
+            case 'object':
+                if (input instanceof Autoscaler) {
+                    return input;
+                } else {
+                    // Assume options
+                    return new Autoscaler(input);
+                }
+        }
+        throw new Error('Invalid autoscaler');
+    }
+
     get scaleLayout(): ScaleLayout<T, D> {
         return this._scaleLayoutWeakRef.getOrFail();
     }
