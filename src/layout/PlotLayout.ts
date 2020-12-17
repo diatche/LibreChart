@@ -7,6 +7,7 @@ import {
     EvergridLayoutCallbacks,
     EvergridLayoutProps,
     EvergridLayout,
+    IUpdateInfo,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -201,6 +202,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
     }
 
     didChangeLocation() {
+        super.didChangeLocation();
         this.xLayout?.autoscale?.setNeedsUpdate();
         this.yLayout?.autoscale?.setNeedsUpdate();
     }
@@ -229,6 +231,13 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         () => this.updatePlot(),
         kGridUpdateDebounceInterval,
     );
+
+    didUpdate(info: IUpdateInfo) {
+        super.didUpdate(info);
+        if (info.initial) {
+            this.updatePlot();
+        }
+    }
 
     updatePlot() {
         this.cancelPlotUpdate();

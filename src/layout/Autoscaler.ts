@@ -32,7 +32,7 @@ export default class Autoscaler<T = any, D = any> {
     static defaultContentPaddingAbs = 0;
     static defaultContentPaddingRel = 0.2;
     static defaultViewPaddingAbs = 0;
-    static updateDebounceInterval = 1000;
+    static updateDebounceInterval = 500;
 
     readonly contentPaddingAbs: [number, number];
     readonly contentPaddingRel: [number, number];
@@ -77,7 +77,12 @@ export default class Autoscaler<T = any, D = any> {
             }
         }
 
-        this.animationOptions = options.animationOptions || { animated: true };
+        this.animationOptions = options.animationOptions || {
+            animated: true,
+            timing: {
+                duration: 500,
+            },
+        };
 
         if (options?.dataSources) {
             this.dataSources = options.dataSources;
