@@ -48,7 +48,6 @@ export default class Autoscaler<T = any, D = any> {
     private _max = 0;
     private _scaleLayoutWeakRef = weakref<ScaleLayout<T, D>>();
     private _containerSize?: IPoint;
-    private _updating = false;
 
     constructor(options: AutoscalerOptions = {}) {
         this.contentPaddingAbs = this._validatePadding(
@@ -174,7 +173,7 @@ export default class Autoscaler<T = any, D = any> {
     }
 
     scheduleUpdate() {
-        if (this._updating || this._scheduledUpdate) {
+        if (this._scheduledUpdate) {
             return;
         }
 
@@ -196,7 +195,7 @@ export default class Autoscaler<T = any, D = any> {
 
     private _debouncedUpdate = debounce(
         () => {
-            if (this._updating || this._scheduledUpdate) {
+            if (this._scheduledUpdate) {
                 return;
             }
             this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
@@ -226,17 +225,9 @@ export default class Autoscaler<T = any, D = any> {
         this._min = min;
         this._max = max;
 
-        let {
-            onEnd,
-        } = options?.animationOptions || {};
-
         let baseOptions: IAnimationBaseOptions = {
             ...this.animationOptions,
             ...options?.animationOptions,
-            onEnd: (...args) => {
-                this._updating = false;
-                onEnd?.(...args);
-            },
         };
 
         if (max > min) {
@@ -250,7 +241,6 @@ export default class Autoscaler<T = any, D = any> {
                 pMin.y = min;
                 pMax.y = max;
             }
-            this._updating = true;
             this.scaleLayout.plot.scrollTo({
                 ...baseOptions,
                 range: [pMin, pMax],
@@ -270,7 +260,6 @@ export default class Autoscaler<T = any, D = any> {
             } else {
                 p.y = -min;
             }
-            this._updating = true;
             this.scaleLayout.plot.scrollTo({
                 ...baseOptions,
                 offset: p,
