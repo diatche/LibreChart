@@ -11,6 +11,9 @@ import { Cancelable } from "../types";
 
 export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
 
+// TODO: add scale step
+// TODO: fix using plot anchor
+
 export interface AutoscalerOptions {
     contentPaddingAbs?: number | [number, number];
     contentPaddingRel?: number | [number, number];
@@ -221,6 +224,16 @@ export default class Autoscaler<T = any, D = any> {
         let {
             onEnd,
         } = options?.animationOptions || {};
+
+        let baseOptions: IAnimationBaseOptions = {
+            ...this.animationOptions,
+            ...options?.animationOptions,
+            onEnd: (...args) => {
+                this._updating = false;
+                onEnd?.(...args);
+            },
+        };
+
         if (max > min) {
             // Scroll and scale to range
             let pMin: Partial<IPoint> = {};
@@ -234,13 +247,8 @@ export default class Autoscaler<T = any, D = any> {
             }
             this._updating = true;
             this.scaleLayout.plot.scrollTo({
+                ...baseOptions,
                 range: [pMin, pMax],
-                ...this.animationOptions,
-                ...options?.animationOptions,
-                onEnd: (...args) => {
-                    this._updating = false;
-                    onEnd?.(...args);
-                }
             });
         } else if (typeof this.anchor !== 'undefined') {
             // Scroll to location.
@@ -259,13 +267,8 @@ export default class Autoscaler<T = any, D = any> {
             }
             this._updating = true;
             this.scaleLayout.plot.scrollTo({
+                ...baseOptions,
                 offset: p,
-                ...this.animationOptions,
-                ...options?.animationOptions,
-                onEnd: (...args) => {
-                    this._updating = false;
-                    onEnd?.(...args);
-                }
             });
         }
     }
