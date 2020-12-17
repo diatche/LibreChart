@@ -49,6 +49,20 @@ export default class Autoscaler<T = any, D = any> {
         this.min = options.min;
         this.max = options.max;
         this.anchor = options.anchor;
+
+        if (typeof this.min !== 'undefined' && typeof this.max !== 'undefined' && this.max < this.min) {
+            throw new Error('Invalid autoscale range');
+        }
+
+        if (typeof this.anchor !== 'undefined') {
+            if (typeof this.min !== 'undefined' && this.anchor < this.min) {
+                console.warn(`Autoscale anchor (${this.anchor}) is below min value (${this.min})`);
+            }
+            if (typeof this.max !== 'undefined' && this.anchor > this.max) {
+                console.warn(`Autoscale anchor (${this.anchor}) is above max value (${this.max})`);
+            }
+        }
+
         this.animationOptions = options.animationOptions || { animated: true };
 
         this._min = 0;
@@ -198,8 +212,15 @@ export default class Autoscaler<T = any, D = any> {
                 ...this.animationOptions,
                 ...options?.animationOptions,
             });
-        } else {
-            // Scroll to location
+        } else if (typeof this.anchor !== 'undefined') {
+            // Scroll to location.
+
+            // Why do we not scroll when there is an achor?
+            // Because if we have one point, which must be
+            // the same as the anchor. Scrolling to the anchor
+            // may place it at the center of the viewport
+            // (if the anchor of the plot is at 0.5).
+
             let p: Partial<IPoint> = {};
             if (this.scaleLayout.isHorizontal) {
                 p.x = -min;
@@ -217,8 +238,8 @@ export default class Autoscaler<T = any, D = any> {
     private _getLimits(): [number, number] | undefined {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
-        let minLoc = this.anchor || 0;
-        let maxLoc = this.anchor || 0;
+        let minLoc = hasAnchor ? anchor : NaN;
+        let maxLoc = minLoc;
         let hasRange = false;
         let visibleRange = this.scaleLayout.plot.getVisibleLocationRange();
         // Extend visible range in cross axis
@@ -234,10 +255,10 @@ export default class Autoscaler<T = any, D = any> {
             if (!range) {
                 continue;
             }
-            if (!hasRange || range[0] < minLoc) {
+            if (isNaN(minLoc) || range[0] < minLoc) {
                 minLoc = range[0];
             }
-            if (!hasRange || range[1] > maxLoc) {
+            if (isNaN(maxLoc) || range[1] > maxLoc) {
                 maxLoc = range[1];
             }
             hasRange = true;
@@ -273,7 +294,7 @@ export default class Autoscaler<T = any, D = any> {
             if (minLoc >= anchor && min < anchor) {
                 min = anchor;
             }
-            if (maxLoc <= anchor && max > anchor) {
+            if (maxLoc < anchor && max > anchor) {
                 max = anchor;
             }
         }
