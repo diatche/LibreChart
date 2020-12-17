@@ -142,8 +142,14 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
     configurePlot(chart: ChartLayout) {
         this.chart = chart;
         
-        // this.refLayout = this._createRefLayout();
+        // The order of configuration is important here
 
+        for (let dataSource of this.dataSources) {
+            dataSource.configure(this);
+        }
+
+        // Layouts, if they have an autoscale, require data sources
+        // to be configured beforehand.
         this.xLayout.configure(this, { isHorizontal: true });
         this.yLayout.configure(this, { isHorizontal: false });
 
@@ -160,10 +166,6 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         });
 
         this.grid.configure(this);
-
-        for (let dataSource of this.dataSources) {
-            dataSource.configure(this);
-        }
 
         this.setLayoutSources(this.getLayoutSources());
         this.updatePlot();
@@ -187,17 +189,20 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
     didChangeViewportSize() {
         super.didChangeViewportSize();
         this.schedulePlotUpdate();
+        this.xLayout?.autoscale?.setNeedsUpdate();
+        this.yLayout?.autoscale?.setNeedsUpdate();
     }
 
     didChangeScale() {
         super.didChangeScale();
         this.schedulePlotUpdate();
+        this.xLayout?.autoscale?.setNeedsUpdate();
+        this.yLayout?.autoscale?.setNeedsUpdate();
     }
 
-    didEndInteraction() {
-        super.didEndInteraction();
-        this.xLayout.didEndInteraction();
-        this.yLayout.didEndInteraction();
+    didChangeLocation() {
+        this.xLayout?.autoscale?.setNeedsUpdate();
+        this.yLayout?.autoscale?.setNeedsUpdate();
     }
 
     schedulePlotUpdate() {

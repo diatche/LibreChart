@@ -141,10 +141,6 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
         this.autoscale?.unconfigure();
     }
 
-    didEndInteraction() {
-        this.autoscale?.didEndInteraction();
-    }
-
     update(): boolean {
         let axisLengthInfo = this._getLengthInfo();
         if (!axisLengthInfo) {

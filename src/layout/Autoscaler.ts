@@ -3,8 +3,11 @@ import {
     IPoint,
     weakref,
 } from "evergrid";
+import debounce from "lodash.debounce";
+import { InteractionManager } from "react-native";
 import DataSource from "../data/DataSource";
 import { ScaleLayout } from "../internal";
+import { Cancelable } from "../types";
 
 export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
 
@@ -24,6 +27,7 @@ export interface AutoscalerOptions {
 export default class Autoscaler<T = any, D = any> {
     static defaultPaddingAbs = 0;
     static defaultPaddingRel = 0.2;
+    static updateDebounceInterval = 300;
 
     readonly paddingAbs: [number, number];
     readonly paddingRel: [number, number];
@@ -37,6 +41,7 @@ export default class Autoscaler<T = any, D = any> {
     private _min: number;
     private _max: number;
     private _scaleLayoutWeakRef = weakref<ScaleLayout<T, D>>();
+    private _containerSize?: IPoint;
 
     constructor(options: AutoscalerOptions = {}) {
         this.paddingAbs = this._validatePadding(options.paddingAbs || Autoscaler.defaultPaddingAbs);
@@ -65,18 +70,22 @@ export default class Autoscaler<T = any, D = any> {
         this._scaleLayoutWeakRef.set(scaleLayout);
     }
 
+    private _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
+        return this._scaleLayoutWeakRef.get();
+    }
+
     configure(scaleLayout: ScaleLayout<T, D>) {
         this.scaleLayout = scaleLayout;
 
         if (!this._dataSources) {
             this.dataSources = scaleLayout.plot.dataSources;
         }
+
+        this.setNeedsUpdate();
     }
 
-    unconfigure() {}
-
-    didEndInteraction() {
-        this._updateIfNeeded();
+    unconfigure() {
+        this.cancelUpdate();
     }
 
     get dataSources(): DataSource[] {
@@ -103,7 +112,47 @@ export default class Autoscaler<T = any, D = any> {
         // TODO: implement when data source mutability is added
     }
 
-    private _updateIfNeeded() {
+    setNeedsUpdate() {
+        if (!this._wasContainerReady()) {
+            // Update immediately
+            this.update({
+                animationOptions: {
+                    animated: false,
+                },
+            });
+        } else {
+            // Avoid frequent updates
+            this._debouncedUpdate();
+        }
+    }
+
+    cancelUpdate() {
+        if (this._scheduledUpdate) {
+            this._scheduledUpdate.cancel();
+            this._scheduledUpdate = undefined;
+        }
+        this._debouncedUpdate.cancel();
+    }
+    
+    private _scheduledUpdate?: Cancelable;
+
+    private _debouncedUpdate = debounce(() => {
+        if (this._scheduledUpdate) {
+            return;
+        }
+        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
+            this.update()
+        ));
+    }, Autoscaler.updateDebounceInterval);
+
+    update(options?: { animationOptions?: IAnimationBaseOptions }) {
+        this.cancelUpdate();
+
+        this._containerSize = this._maybeScaleLayout()?.plot.containerSize;
+        if (!this._isContainerReady(this._containerSize)) {
+            return;
+        }
+
         let limits = this._getLimits();
         if (!limits) {
             return;
@@ -112,7 +161,7 @@ export default class Autoscaler<T = any, D = any> {
         if (min === this._min && max === this._max) {
             return;
         }
-        console.debug(`Autoscaling min: ${min}, max: ${max}`);
+        // console.debug(`Autoscaling min: ${min}, max: ${max}`);
         this._min = min;
         this._max = max;
 
@@ -130,6 +179,7 @@ export default class Autoscaler<T = any, D = any> {
             this.scaleLayout.plot.scrollTo({
                 range: [pMin, pMax],
                 ...this.animationOptions,
+                ...options?.animationOptions,
             });
         } else {
             // Scroll to location
@@ -142,6 +192,7 @@ export default class Autoscaler<T = any, D = any> {
             this.scaleLayout.plot.scrollTo({
                 offset: p,
                 ...this.animationOptions,
+                ...options?.animationOptions,
             });
         }
     }
@@ -241,5 +292,13 @@ export default class Autoscaler<T = any, D = any> {
                 break;
         }
         throw new Error('Invalid padding');
+    }
+
+    private _wasContainerReady() {
+        return this._isContainerReady(this._containerSize);
+    }
+
+    private _isContainerReady(size: IPoint | undefined) {
+        return size && size.x >= 1 && size.y >= 1;
     }
 }
