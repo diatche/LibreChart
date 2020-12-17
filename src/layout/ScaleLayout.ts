@@ -16,6 +16,7 @@ import {
 } from "./axis/axisTypes";
 import { kAxisStyleLightDefaults } from "./axis/axisConst";
 import { Observable } from "../utils/observable";
+import Autoscaler, { AutoscalerInput } from "./Autoscaler";
 
 const k0 = new Decimal(0);
 
@@ -25,6 +26,7 @@ export interface IScaleLayoutOptions<T = any, D = T> {
      * Be default, linear ticks are used.
      */
     scale?: Scale<T, D>;
+    autoscale?: AutoscalerInput<T, D>;
     style?: IAxisStyleInput;
     isHorizontal?: boolean;
 }
@@ -64,8 +66,9 @@ interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
     readonly negHalfMajorInterval$: Animated.Value;
 }
 
-export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProps<T, D> {
+export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayoutProps<T, D>, 'autoscale'> {
     scale: Scale<T, D>;
+    readonly autoscale?: Autoscaler<T, D>;
     /** If true, then the layout is detached from the standard grid. */
     custom = false;
     readonly style: IAxisStyle;
@@ -103,6 +106,8 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
             ...style,
             padding: normalizeAnimatedValue(style.padding),
         };
+
+        this.autoscale = this._validatedAutoscaler(options?.autoscale);
     }
 
     get plot(): PlotLayout {
@@ -128,10 +133,16 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
         }
         this.isHorizontal = config.isHorizontal;
         this.custom = (plot.index.x !== 0 || plot.index.y !== 0);
+
+        this.autoscale?.configure(this);
     }
 
     unconfigure() {
+        this.autoscale?.unconfigure();
+    }
 
+    didEndInteraction() {
+        this.autoscale?.didEndInteraction();
     }
 
     update(): boolean {
@@ -284,5 +295,20 @@ export default class ScaleLayout<T = Decimal, D = T> implements IScaleLayoutProp
     isInverted() {
         let scale = this.plot.scale;
         return (this.isHorizontal ? scale.x : scale.y) < 0;
+    }
+
+    private _validatedAutoscaler(input: AutoscalerInput | undefined): Autoscaler | undefined {
+        switch (typeof input) {
+            case 'undefined':
+                return undefined;
+            case 'boolean':
+                return input ? new Autoscaler() : undefined;
+            case 'object':
+                if (input instanceof Autoscaler) {
+                    return input;
+                }
+                break;
+        }
+        throw new Error('Invalid autoscaler');
     }
 }

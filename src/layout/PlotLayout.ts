@@ -194,6 +194,12 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         this.schedulePlotUpdate();
     }
 
+    didEndInteraction() {
+        super.didEndInteraction();
+        this.xLayout.didEndInteraction();
+        this.yLayout.didEndInteraction();
+    }
+
     schedulePlotUpdate() {
         if (this._scheduledPlotUpdate) {
             return;
