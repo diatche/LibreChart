@@ -1,13 +1,17 @@
 import Decimal from "decimal.js";
 import {
-    GridLayoutSourceProps,
+    GridLayoutSourceProps, IPoint,
 } from "evergrid";
 import { ColorValue, TextStyle } from "react-native";
 
-export interface IDataPoint<X, Y> {
+export interface IDataItem<X, Y> {
     x: X,
     y: Y,
     style?: IDataPointStyle;
+}
+
+export interface IDataPoint extends IPoint {
+    dataIndex: number;
 }
 
 export interface IDataPointStyle {

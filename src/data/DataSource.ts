@@ -7,9 +7,11 @@ import {
     LayoutSource,
     LayoutSourceProps,
     weakref,
+    zeroPoint,
 } from 'evergrid';
 import {
     ChartDataType,
+    IDataItem,
     IDataPoint,
     IDecimalPoint,
 } from '../types';
@@ -21,7 +23,7 @@ export interface DataSourceProps<
     X = any,
     Y = any,
 > {
-    data?: IDataPoint<X, Y>[];
+    data?: IDataItem<X, Y>[];
 }
 
 export interface DataSourceInput<
@@ -34,6 +36,10 @@ export interface DataSourceInput<
     layout?: LayoutProps;
 }
 
+export interface IItemsInLocationRangeOptions {
+    partial?: boolean;
+}
+
 export default abstract class DataSource<
     X = any,
     Y = any,
@@ -42,7 +48,7 @@ export default abstract class DataSource<
     Layout extends LayoutSource<Index, LayoutProps> = LayoutSource<Index, LayoutProps>,
 > implements DataSourceProps<X, Y> {
     id: string;
-    data: IDataPoint<X, Y>[];
+    data: IDataItem<X, Y>[];
     layout?: Layout;
     layoutProps?: LayoutProps;
 
@@ -112,16 +118,52 @@ export default abstract class DataSource<
         return item.reuseID === this.itemReuseID;
     }
 
-    getItemsInLocationRange(pointRange: [IPoint, IPoint]): IDataPoint<X, Y>[] {
-        let items: IDataPoint<X, Y>[] = [];
-        const c = this.data.length;
-        for (let i = 0; i < c; i++) {
-            const p = this.getItemLocation(this.data[i]);
-            if (isPointInRange(p, pointRange)) {
-                items.push(this.data[i]);
+    getDataBoundingRectInRange(pointRange: [IPoint, IPoint]): [IPoint, IPoint] | undefined {
+        // Get data range
+        let points = this.getDataPointsInRange(
+            pointRange,
+            { partial: true },
+        );
+        if (points.length === 0) {
+            return undefined;
+        }
+        let min = zeroPoint();
+        let max = zeroPoint();
+
+        min = { ...points[0] };
+        max = { ...min };
+        for (let v of points) {
+            if (v.x < min.x) {
+                min.x = v.x;
+            }
+            if (v.x > max.x) {
+                max.x = v.x;
+            }
+            if (v.y < min.y) {
+                min.y = v.y;
+            }
+            if (v.y > max.y) {
+                max.y = v.y;
             }
         }
-        return items;
+
+        return [min, max];
+    }
+
+    getDataPointsInRange(
+        pointRange: [IPoint, IPoint],
+        options?: IItemsInLocationRangeOptions,
+    ): IDataPoint[] {
+        let points: IDataPoint[] = [];
+        const c = this.data.length;
+        for (let i = 0; i < c; i++) {
+            let p = this.getItemLocation(this.data[i]) as IDataPoint;
+            p.dataIndex = i;
+            if (isPointInRange(p, pointRange)) {
+                points.push(p);
+            }
+        }
+        return points;
     }
 
     getItemsIndexesInLocationRange(pointRange: [IPoint, IPoint]): number[] {
@@ -142,7 +184,7 @@ export default abstract class DataSource<
         };
     }
 
-    getItemDecimalLocation(point: IDataPoint<X, Y>): IDecimalPoint {
+    getItemDecimalLocation(point: IDataItem<X, Y>): IDecimalPoint {
         let plot = this.plot;
         return {
             x: plot.xLayout.scale.locationOfValue(point.x),
@@ -150,7 +192,7 @@ export default abstract class DataSource<
         };
     }
 
-    getItemLocation(point: IDataPoint<X, Y>): IPoint {
+    getItemLocation(point: IDataItem<X, Y>): IPoint {
         let d = this.getItemDecimalLocation(point);
         return { x: d.x.toNumber(), y: d.y.toNumber() };
     }

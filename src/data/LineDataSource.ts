@@ -2,10 +2,16 @@ import {
     GridLayoutSource,
     GridLayoutSourceProps,
     IPoint,
-    zeroPoint,
 } from 'evergrid';
-import DataSource, { DataSourceInput } from './DataSource';
-import { ChartDataType, IDataPointStyle } from '../types';
+import DataSource, {
+    DataSourceInput,
+    IItemsInLocationRangeOptions,
+} from './DataSource';
+import {
+    ChartDataType,
+    IDataPoint,
+    IDataPointStyle,
+} from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 import {
     LinePath,
@@ -13,8 +19,7 @@ import {
     CanvasUtil,
 } from '../utils/canvas';
 
-export interface ILinePoint extends IPoint {
-    dataIndex: number;
+export interface ILinePoint extends IDataPoint {
     clipped: boolean;
 }
 
@@ -48,6 +53,56 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
 
     get itemReuseID(): string {
         return this.id + '_path';
+    }
+
+    getDataPointsInRange(
+        pointRange: [IPoint, IPoint],
+        options?: IItemsInLocationRangeOptions,
+    ): ILinePoint[] {
+        if (!options?.partial) {
+            return super.getDataPointsInRange(pointRange, options).map(p => {
+                let lp = p as ILinePoint;
+                return lp;
+            });
+        }
+        // Add clipped lines
+        const c = this.data.length;
+        let points: ILinePoint[] = [];
+        let p0 = this.getItemLocation(this.data[0]);
+        let iAdded = -1;
+        for (let i = 1; i < c; i++) {
+            let p = this.getItemLocation(this.data[i]);
+            let line = VectorUtil.cohenSutherlandLineClip(
+                p0.x, p0.y,
+                p.x, p.y,
+                pointRange[0].x, pointRange[0].y,
+                pointRange[1].x, pointRange[1].y
+            );
+            if (line) {
+                let isPoint = line[0] === line[2] && line[1] === line[3];
+                if (!isPoint) {
+                    if (iAdded !== i - 1) {
+                        points.push({
+                            x: line[0],
+                            y: line[1],
+                            dataIndex: i - 1,
+                            clipped: !VectorUtil.isPointInClosedRange(p0, pointRange),
+                        });
+                        iAdded = i - 1;
+                    }
+                    points.push({
+                        x: line[2],
+                        y: line[3],
+                        dataIndex: i,
+                        clipped: !VectorUtil.isPointInClosedRange(p, pointRange),
+                    });
+                    iAdded = i;
+                }
+            }
+            p0 = p;
+        }
+
+        return points;
     }
 
     getContainerLocationRange(index: IPoint): [IPoint, IPoint] {
@@ -108,42 +163,7 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
             return [];
         }
         let rect = this.getContainerLocationRange(index);
-
-        let points: ILinePoint[] = [];
-        let p0 = this.getItemLocation(this.data[0]);
-        let iAdded = -1;
-        for (let i = 1; i < c; i++) {
-            let p = this.getItemLocation(this.data[i]);
-            let line = VectorUtil.cohenSutherlandLineClip(
-                p0.x, p0.y,
-                p.x, p.y,
-                rect[0].x, rect[0].y,
-                rect[1].x, rect[1].y
-            );
-            if (line) {
-                let isPoint = line[0] === line[2] && line[1] === line[3];
-                if (!isPoint) {
-                    if (iAdded !== i - 1) {
-                        points.push({
-                            x: line[0],
-                            y: line[1],
-                            dataIndex: i - 1,
-                            clipped: !VectorUtil.isPointInClosedRange(p0, rect),
-                        });
-                        iAdded = i - 1;
-                    }
-                    points.push({
-                        x: line[2],
-                        y: line[3],
-                        dataIndex: i,
-                        clipped: !VectorUtil.isPointInClosedRange(p, rect),
-                    });
-                    iAdded = i;
-                }
-            }
-            p0 = p;
-        }
-
+        let points = this.getDataPointsInRange(rect, { partial: true });
         const pointsLen = points.length;
         if (pointsLen !== 0) {
             let scale = this.layout?.getScale() || { x: 1, y: 1 };

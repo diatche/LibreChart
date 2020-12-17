@@ -1,4 +1,8 @@
-import { IAnimationBaseOptions, IPoint, weakref } from "evergrid";
+import {
+    IAnimationBaseOptions,
+    IPoint,
+    weakref,
+} from "evergrid";
 import DataSource from "../data/DataSource";
 import { ScaleLayout } from "../internal";
 
@@ -214,30 +218,12 @@ export default class Autoscaler<T = any, D = any> {
         visibleRange: [IPoint, IPoint],
     ): [number, number] | undefined {
         // Get data range
-        let dataPoints = dataSource.getItemsInLocationRange(visibleRange);
-        if (dataPoints.length === 0) {
+        let rect = dataSource.getDataBoundingRectInRange(visibleRange);
+        if (!rect) {
             return undefined;
         }
         let axis: keyof IPoint = this.scaleLayout.isHorizontal ? 'x' : 'y';
-        // TODO: keep Decimal precision?
-        let values = dataPoints.map(p => this.scaleLayout.scale.locationOfValue(p[axis]).toNumber());
-        let min = 0;
-        let max = 0;
-
-        min = values[0];
-        max = min;
-        for (let v of values) {
-            if (v < min) {
-                min = v;
-            }
-            if (v > max) {
-                max = v;
-            }
-        }
-
-        // console.debug('data points: ' + JSON.stringify(dataPoints));
-        console.debug('values: ' + JSON.stringify(values));
-        return [min, max];
+        return [rect[0][axis], rect[1][axis]];
     }
 
     private _validatePadding(
