@@ -1,3 +1,6 @@
+export { default as Autoscaler } from './layout/Autoscaler';
+export * from './layout/Autoscaler';
+
 export { default as ScaleLayout } from './layout/ScaleLayout';
 export * from './layout/ScaleLayout';
 

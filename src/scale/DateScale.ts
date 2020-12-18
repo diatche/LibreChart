@@ -144,7 +144,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
     
         let maxCount: Decimal | undefined;
         if (constraints.maxCount) {
-            maxCount = constraints.maxCount;
+            maxCount = new Decimal(constraints.maxCount);
             if (maxCount.eq(0)) {
                 return this.emptyScale();
             }
