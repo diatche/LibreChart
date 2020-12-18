@@ -81,7 +81,7 @@ export default class LinearScale extends Scale<Decimal> {
         }
     
         if (constraints.maxCount) {
-            let maxCount = constraints.maxCount;
+            let maxCount = new Decimal(constraints.maxCount);
             if (maxCount.eq(0)) {
                 return this.emptyScale();
             }
@@ -101,7 +101,7 @@ export default class LinearScale extends Scale<Decimal> {
         let radix = k10;
         let radixLog10 = k1;
         if (constraints.radix) {
-            radix = constraints.radix;
+            radix = new Decimal(constraints.radix);
             if (!radix.eq(k10)) {
                 radixLog10 = Decimal.log10(radix);
             }

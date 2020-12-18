@@ -5,9 +5,13 @@ import {
 } from "evergrid";
 import debounce from "lodash.debounce";
 import { InteractionManager } from "react-native";
+import Scale, { 
+    ITickScaleConstraints,
+} from "../scale/Scale";
 import DataSource from "../data/DataSource";
 import { ScaleLayout } from "../internal";
 import { Cancelable } from "../types";
+import Decimal from "decimal.js";
 
 export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
 
@@ -22,31 +26,98 @@ export namespace Hysteresis {
 
     export const none: AutoscalerHysteresisFunction = () => null;
 
-    export const linear = (
+    export const step = (
         size: number,
         options: {
             origin?: number;
         } = {},
     ): AutoscalerHysteresisFunction => {
+        if (size <= 0) {
+            throw new Error('Invalid step');
+        }
         let { origin = 0 } = options;
         return (a, b) => [
-            Math.floor((a - origin) / size) * size,
-            Math.ceil((b - origin) / size) * size,
+            Math.floor((a - origin) / size) * size + origin,
+            Math.ceil((b - origin) / size) * size + origin,
         ];
     };
 
-    // export const log10: AutoscalerHysteresisFunction = (a, b, a0, b0) => {
-        
-    //     let l0 = Math.log10(v0);
-    //     let l1 = Math.log10(v1);
-    //     let logDiff = l1 - l0;
-    //     if (logDiff > 0.5) {
-    //         return Math.pow(10, Math.ceil(l1));
-    //     } else if (logDiff < -0.5) {
-    //         return Math.pow(10, Math.floor(l1));
-    //     } else {
-    //         return v0;
+    export function withScale<T = any, D = any>(
+        scale: Scale<T, D>
+    ): AutoscalerHysteresisFunction {
+        let constraints: ITickScaleConstraints<D> = {
+            expand: true,
+        };
+        return (a, b) => {
+            let ad = new Decimal(a);
+            let bd = new Decimal(b);
+            scale.updateTickScale(
+                scale.valueAtLocation(ad),
+                scale.valueAtLocation(bd),
+                constraints,
+            );
+            let span = scale.spanLocationRange(ad, bd);
+            return [span[0].toNumber(), span[1].toNumber()];
+        };
+    };
+
+    // export const log10 = (
+    //     options: {
+    //         step?: number;
+    //         origin?: number;
+    //     } = {},
+    // ): AutoscalerHysteresisFunction => {
+    //     let {
+    //         step = 1,
+    //         origin = 0,
+    //     } = options;
+    //     if (step <= 0) {
+    //         throw new Error('Invalid stepCoef');
     //     }
+    //     return (a, b) => {
+    //         if (a === b) {
+    //             // Zero range
+    //             return null;
+    //         }
+    //         a -= origin;
+    //         b -= origin;
+    //         if (a > 0 && b < 0 || a < 0 && b > 0) {
+    //             // Different sign
+    //             return null;
+    //         }
+    //         let isNeg = a < 0;
+    //         let sign = 1;
+    //         let floor = Math.floor;
+    //         let ceil = Math.ceil;
+    //         if (isNeg) {
+    //             sign = -1;
+    //             a = -a;
+    //             b = -b;
+    //             floor = Math.ceil;
+    //             ceil = Math.floor;
+    //         }
+
+    //         let al = Math.log10(a);
+    //         if (step === 1) {
+    //             al = floor(al);
+    //         } else {
+    //             let al0 = floor(al);
+    //             al = floor((al - al0) / step) * step + al0;
+    //         }
+            
+    //         let bl = Math.log10(b);
+    //         if (step === 1 || !isFinite(bl)) {
+    //             bl = ceil(bl);
+    //         } else {
+    //             let bl0 = floor(bl);
+    //             bl = ceil((bl - bl0) / step) * step + bl0;
+    //         }
+
+    //         return [
+    //             Math.pow(base, al) * sign + origin,
+    //             Math.pow(base, bl) * sign + origin,
+    //         ];
+    //     };
     // };
 }
 
@@ -77,8 +148,8 @@ export default class Autoscaler<T = any, D = any> {
     readonly min: number | undefined;
     readonly max: number | undefined;
     readonly anchor: number | undefined;
-    readonly hysteresis?: AutoscalerHysteresisFunction;
 
+    hysteresis?: AutoscalerHysteresisFunction;
     animationOptions: IAnimationBaseOptions;
 
     private _dataSources?: DataSource[];
@@ -371,10 +442,22 @@ export default class Autoscaler<T = any, D = any> {
         }
 
         if (this.hysteresis) {
-            let res = this.hysteresis(min, max, this.min, this.max);
-            if (res) {
-                min = res[0];
-                max = res[1];
+            try {
+                let res = this.hysteresis(min, max, this.min, this.max);
+                if (res) {
+                    if (
+                        typeof res[0] !== 'number' || typeof res[1] !== 'number' ||
+                        isNaN(res[0]) || isNaN(res[1]) ||
+                        !isFinite(res[0]) || !isFinite(res[1])
+                    ) {
+                        console.warn(`Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`);
+                    } else {
+                        min = res[0];
+                        max = res[1];
+                    }
+                }
+            } catch (error) {
+                console.error(`Uncaught error in hysteresis function: ${error?.message || error}`);
             }
         }
 

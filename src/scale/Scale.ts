@@ -34,7 +34,7 @@ export interface ITickScaleConstraints<D> {
      * Maximum number of intervals to divide
      * the interval into.
      **/
-    maxCount?: Decimal;
+    maxCount?: Decimal.Value;
 
     /**
      * If `true`, expands the interval enough
@@ -60,7 +60,7 @@ export interface ITickScaleConstraints<D> {
      * - When used with months (use a radix of 12).
      * - When used with other number systems. 
      */
-    radix?: Decimal;
+    radix?: Decimal.Value;
 
     /**
      * Factors to exclude when looking for optimal
