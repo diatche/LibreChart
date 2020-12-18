@@ -11,17 +11,54 @@ import { Cancelable } from "../types";
 
 export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
 
-// TODO: add scale step
-// TODO: fix using plot anchor
+export type AutoscalerHysteresisFunction = (
+    min: number,
+    max: number,
+    previousMin: number | undefined,
+    previousMax: number | undefined,
+) => [number, number] | null;
+
+export namespace Hysteresis {
+
+    export const none: AutoscalerHysteresisFunction = () => null;
+
+    export const linear = (
+        size: number,
+        options: {
+            origin?: number;
+        } = {},
+    ): AutoscalerHysteresisFunction => {
+        let { origin = 0 } = options;
+        return (a, b) => [
+            Math.floor((a - origin) / size) * size,
+            Math.ceil((b - origin) / size) * size,
+        ];
+    };
+
+    // export const log10: AutoscalerHysteresisFunction = (a, b, a0, b0) => {
+        
+    //     let l0 = Math.log10(v0);
+    //     let l1 = Math.log10(v1);
+    //     let logDiff = l1 - l0;
+    //     if (logDiff > 0.5) {
+    //         return Math.pow(10, Math.ceil(l1));
+    //     } else if (logDiff < -0.5) {
+    //         return Math.pow(10, Math.floor(l1));
+    //     } else {
+    //         return v0;
+    //     }
+    // };
+}
 
 export interface AutoscalerOptions {
+    dataSources?: DataSource[];
     contentPaddingAbs?: number | [number, number];
     contentPaddingRel?: number | [number, number];
     viewPaddingAbs?: number | [number, number];
     min?: number;
     max?: number;
     anchor?: number;
-    dataSources?: DataSource[];
+    hysteresis?: AutoscalerHysteresisFunction;
     /**
      * Animated by default.
      */
@@ -40,6 +77,7 @@ export default class Autoscaler<T = any, D = any> {
     readonly min: number | undefined;
     readonly max: number | undefined;
     readonly anchor: number | undefined;
+    readonly hysteresis?: AutoscalerHysteresisFunction;
 
     animationOptions: IAnimationBaseOptions;
 
@@ -62,6 +100,7 @@ export default class Autoscaler<T = any, D = any> {
         this.min = options.min;
         this.max = options.max;
         this.anchor = options.anchor;
+        this.hysteresis = options.hysteresis;
 
         if (typeof this.min !== 'undefined' && typeof this.max !== 'undefined' && this.max < this.min) {
             throw new Error('Invalid autoscale range');
@@ -328,6 +367,14 @@ export default class Autoscaler<T = any, D = any> {
             }
             if (maxLoc < anchor && max > anchor) {
                 max = anchor;
+            }
+        }
+
+        if (this.hysteresis) {
+            let res = this.hysteresis(min, max, this.min, this.max);
+            if (res) {
+                min = res[0];
+                max = res[1];
             }
         }
 
