@@ -8,6 +8,7 @@ import {
     EvergridLayoutProps,
     EvergridLayout,
     IUpdateInfo,
+    IInsets,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -22,7 +23,10 @@ import {
     IChartGridInput,
     ScaleLayout,
 } from "../internal";
-import { InteractionManager } from "react-native";
+import {
+    Animated,
+    InteractionManager,
+} from "react-native";
 import { Cancelable } from "../types";
 import debounce from "lodash.debounce";
 
@@ -311,14 +315,58 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         ].filter(s => !!s) as LayoutSource[];
     }
 
-    getLayoutSourceOptions(): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
+    getLayoutSourceOptions(
+        options: {
+            axis?: boolean;
+        } = {},
+    ): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
+        let insets: Partial<IInsets<Animated.Value>> = {};
+        // if (!options.axisBackground) {
+        //     if (this.axes.topAxis) {
+        //         if (!options.axis || options.axis === 'leftAxis' || options.axis === 'rightAxis') {
+        //             insets.top = this.axes.topAxis.layoutInfo.thickness$;
+        //         }
+        //     }
+        //     if (this.axes.bottomAxis) {
+        //         if (!options.axis || options.axis === 'leftAxis' || options.axis === 'rightAxis') {
+        //             insets.bottom = this.axes.bottomAxis.layoutInfo.thickness$;
+        //         }
+        //     }
+        //     if (this.axes.leftAxis) {
+        //         if (!options.axis || options.axis === 'topAxis' || options.axis === 'bottomAxis') {
+        //             insets.left = this.axes.leftAxis.layoutInfo.thickness$;
+        //         }
+        //     }
+        //     if (this.axes.rightAxis) {
+        //         if (!options.axis || options.axis === 'topAxis' || options.axis === 'bottomAxis') {
+        //             insets.right = this.axes.rightAxis.layoutInfo.thickness$;
+        //         }
+        //     }
+        // }
+
+        // if (!options.axis) {
+        //     if (this.axes.topAxis) {
+        //         insets.top = this.axes.topAxis.layoutInfo.thickness$;
+        //     }
+        //     if (this.axes.bottomAxis) {
+        //         insets.bottom = this.axes.bottomAxis.layoutInfo.thickness$;
+        //     }
+        //     if (this.axes.leftAxis) {
+        //         insets.left = this.axes.leftAxis.layoutInfo.thickness$;
+        //     }
+        //     if (this.axes.rightAxis) {
+        //         insets.right = this.axes.rightAxis.layoutInfo.thickness$;
+        //     }
+        // }
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
                 y: this.yLayout.layoutInfo.containerLength$,
             },
+            insets,
         };
     }
+
 
     private _validatedAxes(props: PlotLayoutOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);

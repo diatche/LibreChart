@@ -33,9 +33,7 @@ const ChartAxisBackground = React.memo((props: ChartAxisBackgroundProps) => {
             break;
     }
     
-    return (
-        <View style={[styles.container, containerStyle]} />
-    );
+    return <View style={[styles.container, containerStyle]} />;
 });
 
 const styles = StyleSheet.create({

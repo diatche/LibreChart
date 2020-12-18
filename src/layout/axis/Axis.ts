@@ -82,14 +82,14 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     layoutInfo: IAxisLayoutInfo;
 
     /**
-     * Contains axis labels.
+     * Contains axis ticks and labels.
      * 
      * Always renders when dequeuing a container.
      */
     contentLayout?: FlatLayoutSource;
 
     /**
-     * Contains background, axis line and ticks.
+     * Contains background, axis and line.
      * 
      * Nevers renders when dequeuing a container.
      */
@@ -234,29 +234,15 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     ): FlatLayoutSource | undefined {
         let options: IAxisLayoutSourceProps & FlatLayoutSourceProps = {
             ...defaults,
+            ...this.plot.getLayoutSourceOptions({
+                axis: true,
+            }),
             reuseID: kAxisContentReuseIDs[this.axisType],
             shouldRenderItem: (item, previous) => {
                 this.onContainerDequeue(previous.index, item.index);
                 return true;
             },
         };
-
-        switch (this.axisType) {
-            case 'bottomAxis':
-            case 'topAxis':
-                options.origin = {
-                    x: this.scaleLayout?.layoutInfo.negHalfMajorInterval$,
-                    y: 0,
-                };
-                break;
-            case 'leftAxis':
-            case 'rightAxis':
-                options.origin = {
-                    x: 0,
-                    y: this.scaleLayout?.layoutInfo.negHalfMajorInterval$,
-                };
-                break;
-        }
 
         return this._createLayoutSource(layoutInfo, options);
     }
@@ -267,6 +253,9 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     ): FlatLayoutSource | undefined {
         return this._createLayoutSource(layoutInfo, {
             ...defaults,
+            ...this.plot.getLayoutSourceOptions({
+                axis: true,
+            }),
             reuseID: kAxisBackgroundReuseIDs[this.axisType],
             shouldRenderItem: () => false,
             onVisibleRangeChange: r => {
@@ -280,10 +269,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
     ): FlatLayoutSource | undefined {
         let plot = this.plot;
-        let layoutPropsBase: FlatLayoutSourceProps = {
-            ...plot.getLayoutSourceOptions(),
-            ...defaults,
-        };
+        let layoutPropsBase = defaults;
         let thickness = Animated.add(
             this.style.padding,
             layoutInfo.thickness$,
