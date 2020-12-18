@@ -199,6 +199,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
+                labelOffset={scaleLayout.layoutInfo.negHalfMajorViewInterval$ || 0}
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness => axis?.onOptimalThicknessChange(
                     thickness,
@@ -216,7 +217,6 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             <ChartAxisBackground
                 {...axis.style}
                 axisType={axis.axisType}
-                majorCount={axis.scaleLayout?.layoutInfo.majorCount || 0}
             />
         );
     }
