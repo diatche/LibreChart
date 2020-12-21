@@ -64,6 +64,13 @@ interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
      * This is used to syncronize the grid with labels.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
+    /**
+     * This value equals negative half of major
+     * tick interval (in view coordinates).
+     * 
+     * This is used to syncronize the grid with labels.
+     **/
+    negHalfMajorViewInterval$?: Animated.AnimatedInterpolation;
 }
 
 export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayoutProps<T, D>, 'autoscale'> {
@@ -134,6 +141,12 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
         this.isHorizontal = config.isHorizontal;
         this.custom = (plot.index.x !== 0 || plot.index.y !== 0);
 
+        let negHalfMajorViewInterval = Animated.multiply(
+            this.layoutInfo.negHalfMajorInterval$,
+            this.plot.scale$[this.isHorizontal ? 'x' : 'y'],
+        );
+        this.layoutInfo.negHalfMajorViewInterval$ = negHalfMajorViewInterval;
+
         this.autoscale?.configure(this);
     }
 
@@ -165,7 +178,9 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
     }
 
     getVisibleLocationRange(): [number, number] {
-        let r = this.plot.getVisibleLocationRange();
+        let plot = this.plot;
+        let insets = plot.getAxisInsets();
+        let r = plot.getVisibleLocationRange({ insets });
         return this.isHorizontal
             ? [r[0].x, r[1].x]
             : [r[0].y, r[1].y];

@@ -8,6 +8,7 @@ import {
     EvergridLayoutProps,
     EvergridLayout,
     IUpdateInfo,
+    IInsets,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -22,7 +23,10 @@ import {
     IChartGridInput,
     ScaleLayout,
 } from "../internal";
-import { InteractionManager } from "react-native";
+import {
+    Animated,
+    InteractionManager,
+} from "react-native";
 import { Cancelable } from "../types";
 import debounce from "lodash.debounce";
 
@@ -311,14 +315,38 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         ].filter(s => !!s) as LayoutSource[];
     }
 
-    getLayoutSourceOptions(): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
+    getAxisInsets(): Partial<IInsets<number>> {
+        return {
+            top: this.axes.topAxis?.layoutInfo.thickness,
+            bottom: this.axes.bottomAxis?.layoutInfo.thickness,
+            left: this.axes.leftAxis?.layoutInfo.thickness,
+            right: this.axes.rightAxis?.layoutInfo.thickness,
+        };
+    }
+
+    getAxisInsets$(): Partial<IInsets<Animated.Value>> {
+        return {
+            top: this.axes.topAxis?.layoutInfo.thickness$,
+            bottom: this.axes.bottomAxis?.layoutInfo.thickness$,
+            left: this.axes.leftAxis?.layoutInfo.thickness$,
+            right: this.axes.rightAxis?.layoutInfo.thickness$,
+        };
+    }
+
+    getLayoutSourceOptions(
+        options: {
+            noInset?: boolean;
+        } = {},
+    ): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
                 y: this.yLayout.layoutInfo.containerLength$,
             },
+            insets: options.noInset ? undefined : this.getAxisInsets$(),
         };
     }
+
 
     private _validatedAxes(props: PlotLayoutOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);

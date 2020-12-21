@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+    Animated,
     LayoutChangeEvent,
     StyleSheet,
     Text,
@@ -12,16 +13,15 @@ import { ITickLabel } from '../types';
 import {
     AxisType,
     AxisTypeMapping,
-    IAxisContentStyle,
     IAxisOptions,
+    IAxisStyle,
 } from '../layout/axis/axisTypes';
 import { ITickLocation } from '../scale/Scale';
 
-export interface ChartAxisContentProps<T> extends ViewProps, Required<IAxisContentStyle> {
+export interface ChartAxisContentProps<T> extends ViewProps, Required<IAxisStyle> {
     axisType: AxisType;
     /** Tick locations in ascending order in content coordinates. */
     ticks: ITickLocation<T>[];
-    majorTickLength: number;
     /** Set to `true` if the axis scale is negative. */
     isInverted: boolean;
     /** Called on thickness layout change. */
@@ -30,6 +30,11 @@ export interface ChartAxisContentProps<T> extends ViewProps, Required<IAxisConte
     getTickLabel: Required<IAxisOptions<T>>['getTickLabel'];
     /** The maximum label length in the direction of the axis */
     labelLength: number;
+    /**
+     * The amount to offset labels so that they aligns with
+     * tick marks.
+     */
+    labelOffset: number | Animated.Value | Animated.AnimatedInterpolation;
 }
 
 interface ChartAxisContentState {}
@@ -86,44 +91,42 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
     }
 
     /**
+     * The tick container style.
+     * 
+     * Holds ticks.
+     */
+    getTickContainerStyle() {
+        // TODO: cache style until prop change
+        return [
+            styles.tickContainer,
+            axisStyles[this.props.axisType].tickContainer,
+        ];
+    }
+
+    /**
      * The label container style.
      * 
      * Holds inner label containers.
      */
     getLabelContainerStyle() {
         // TODO: cache style until prop change
-        let style: ViewStyle = {};
-        if (this.props.isInverted) {
-            // Reverse label order
-            switch (this.props.axisType) {
-                case 'topAxis':
-                case 'bottomAxis':
-                    style = {
-                        ...style,
-                        flexDirection: 'row-reverse',
-                    };
-                    break;
-                case 'leftAxis':
-                case 'rightAxis':
-                    style = {
-                        ...style,
-                        flexDirection: 'column-reverse',
-                    };
-                    break;
-            }
-        }
+        let style: Animated.AnimatedProps<ViewStyle> = {};
         switch (this.props.axisType) {
             case 'topAxis':
-                style.paddingBottom = this.props.majorTickLength;
-                break;
             case 'bottomAxis':
-                style.paddingTop = this.props.majorTickLength;
+                style.width = '100%';
+                style.marginLeft = this.props.labelOffset;
+                if (this.props.isInverted) {
+                    style.flexDirection = 'row-reverse';
+                }
                 break;
             case 'leftAxis':
-                style.paddingRight = this.props.majorTickLength;
-                break;
             case 'rightAxis':
-                style.paddingLeft = this.props.majorTickLength;
+                style.height = '100%';
+                style.marginTop = this.props.labelOffset;
+                if (this.props.isInverted) {
+                    style.flexDirection = 'column-reverse';
+                }
                 break;
         }
         return [
@@ -144,6 +147,34 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
             styles.labelInnerContainer,
             axisStyles[this.props.axisType].labelInnerContainer,
         ];
+    }
+
+    getTickStyle() {
+        // TODO: cache style until prop change
+        let style: ViewStyle = {
+            backgroundColor: this.props.majorTickColor,
+        };
+
+        switch (this.props.axisType) {
+            case 'topAxis':
+            case 'bottomAxis':
+                style = {
+                    ...style,
+                    width: this.props.majorTickThickness,
+                    height: this.props.majorTickLength,
+                };
+                break;
+            case 'leftAxis':
+            case 'rightAxis':
+                style = {
+                    ...style,
+                    width: this.props.majorTickLength,
+                    height: this.props.majorTickThickness,
+                };
+                break;
+        }
+
+        return style;
     }
 
     getLabelStyle() {
@@ -187,11 +218,16 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
 
     render() {
         let labelInnerContainerStyle = this.getLabelInnerContainerStyle();
+        let tickStyle = this.getTickStyle();
         let labelStyle = this.getLabelStyle();
         let labels = this.getTickLabels();
+
+        let ticks: React.ReactNode[] = [];
         let labelInnerContainers: React.ReactNode[] = [];
 
         for (let i = 0; i < labels.length; i++) {
+            ticks.push(<View key={i} style={tickStyle} />);
+
             labelInnerContainers.push((
                 <View
                     key={i}
@@ -210,9 +246,13 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
                     style={this.getInnerContainerStyle()}
                     onLayout={event => this.onInnerContainerLayout(event)}
                 >
-                    <View style={this.getLabelContainerStyle()}>
-                        {labelInnerContainers}
+                    <View style={this.getTickContainerStyle()}>
+                        {ticks}
+                        <View style={styles.placeholder} />
                     </View>
+                    <Animated.View style={this.getLabelContainerStyle()}>
+                        {labelInnerContainers}
+                    </Animated.View>
                 </View>
             </View>
         );
@@ -230,9 +270,16 @@ const styles = StyleSheet.create({
         // borderWidth: 2,
         // borderColor: 'rgba(100, 210, 230, 0.5)',
     },
+    tickContainer: {
+        justifyContent: 'space-between',
+        // margin: -2,
+        // borderWidth: 2,
+        // borderColor: 'rgba(150, 70, 230, 0.5)',
+    },
     labelContainer: {
         flex: 1,
         justifyContent: 'space-around',
+        // margin: -2,
         // borderWidth: 2,
         // borderColor: 'rgba(100, 110, 230, 0.5)',
     },
@@ -247,6 +294,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(200, 110, 130, 0.5)',
+    },
+    placeholder: {
+        width: 0,
+        height: 0,
     },
 });
 

@@ -1,5 +1,6 @@
 import {
     IAnimationBaseOptions,
+    IInsets,
     IPoint,
     weakref,
 } from "evergrid";
@@ -318,12 +319,17 @@ export default class Autoscaler<T = any, D = any> {
     update(options?: { animationOptions?: IAnimationBaseOptions }) {
         this.cancelUpdate();
 
-        this._containerSize = this._maybeScaleLayout()?.plot.containerSize;
+        let plot = this._maybeScaleLayout()?.plot;
+        if (!plot) {
+            return;
+        }
+        let insets = plot.getAxisInsets();
+        this._containerSize = plot.getContainerSize({ insets });
         if (!this._isContainerReady(this._containerSize)) {
             return;
         }
 
-        let limits = this._getLimits(this._containerSize);
+        let limits = this._getLimits(this._containerSize, insets);
         if (!limits) {
             return;
         }
@@ -377,13 +383,17 @@ export default class Autoscaler<T = any, D = any> {
         }
     }
 
-    private _getLimits(containerSize: IPoint): [number, number] | undefined {
+    private _getLimits(
+        containerSize: IPoint,
+        insets: Partial<IInsets<number>>,
+    ): [number, number] | undefined {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
         let minLoc = hasAnchor ? anchor : NaN;
         let maxLoc = minLoc;
         let hasRange = false;
-        let visibleRange = this.scaleLayout.plot.getVisibleLocationRange();
+        let plot = this.scaleLayout.plot;
+        let visibleRange = plot.getVisibleLocationRange({ insets });
         // Extend visible range in cross axis
         if (this.scaleLayout.isHorizontal) {
             visibleRange[0].x = -Infinity;
