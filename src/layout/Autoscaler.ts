@@ -323,12 +323,7 @@ export default class Autoscaler<T = any, D = any> {
         if (!plot) {
             return;
         }
-        let insets: Partial<IInsets<number>> = {
-            top: plot.axes.topAxis?.layoutInfo.thickness,
-            bottom: plot.axes.bottomAxis?.layoutInfo.thickness,
-            left: plot.axes.leftAxis?.layoutInfo.thickness,
-            right: plot.axes.rightAxis?.layoutInfo.thickness,
-        };
+        let insets = plot.getAxisInsets();
         this._containerSize = plot.getContainerSize({ insets });
         if (!this._isContainerReady(this._containerSize)) {
             return;

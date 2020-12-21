@@ -234,9 +234,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     ): FlatLayoutSource | undefined {
         let options: IAxisLayoutSourceProps & FlatLayoutSourceProps = {
             ...defaults,
-            ...this.plot.getLayoutSourceOptions({
-                axis: true,
-            }),
+            ...this.plot.getLayoutSourceOptions(),
             reuseID: kAxisContentReuseIDs[this.axisType],
             shouldRenderItem: (item, previous) => {
                 this.onContainerDequeue(previous.index, item.index);
@@ -254,7 +252,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         return this._createLayoutSource(layoutInfo, {
             ...defaults,
             ...this.plot.getLayoutSourceOptions({
-                axis: true,
+                noInset: true,
             }),
             reuseID: kAxisBackgroundReuseIDs[this.axisType],
             shouldRenderItem: () => false,

@@ -178,7 +178,9 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
     }
 
     getVisibleLocationRange(): [number, number] {
-        let r = this.plot.getVisibleLocationRange();
+        let plot = this.plot;
+        let insets = plot.getAxisInsets();
+        let r = plot.getVisibleLocationRange({ insets });
         return this.isHorizontal
             ? [r[0].x, r[1].x]
             : [r[0].y, r[1].y];

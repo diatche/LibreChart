@@ -315,55 +315,35 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         ].filter(s => !!s) as LayoutSource[];
     }
 
+    getAxisInsets(): Partial<IInsets<number>> {
+        return {
+            top: this.axes.topAxis?.layoutInfo.thickness,
+            bottom: this.axes.bottomAxis?.layoutInfo.thickness,
+            left: this.axes.leftAxis?.layoutInfo.thickness,
+            right: this.axes.rightAxis?.layoutInfo.thickness,
+        };
+    }
+
+    getAxisInsets$(): Partial<IInsets<Animated.Value>> {
+        return {
+            top: this.axes.topAxis?.layoutInfo.thickness$,
+            bottom: this.axes.bottomAxis?.layoutInfo.thickness$,
+            left: this.axes.leftAxis?.layoutInfo.thickness$,
+            right: this.axes.rightAxis?.layoutInfo.thickness$,
+        };
+    }
+
     getLayoutSourceOptions(
         options: {
-            axis?: boolean;
+            noInset?: boolean;
         } = {},
     ): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
-        let insets: Partial<IInsets<Animated.Value>> = {};
-        // if (!options.axisBackground) {
-        //     if (this.axes.topAxis) {
-        //         if (!options.axis || options.axis === 'leftAxis' || options.axis === 'rightAxis') {
-        //             insets.top = this.axes.topAxis.layoutInfo.thickness$;
-        //         }
-        //     }
-        //     if (this.axes.bottomAxis) {
-        //         if (!options.axis || options.axis === 'leftAxis' || options.axis === 'rightAxis') {
-        //             insets.bottom = this.axes.bottomAxis.layoutInfo.thickness$;
-        //         }
-        //     }
-        //     if (this.axes.leftAxis) {
-        //         if (!options.axis || options.axis === 'topAxis' || options.axis === 'bottomAxis') {
-        //             insets.left = this.axes.leftAxis.layoutInfo.thickness$;
-        //         }
-        //     }
-        //     if (this.axes.rightAxis) {
-        //         if (!options.axis || options.axis === 'topAxis' || options.axis === 'bottomAxis') {
-        //             insets.right = this.axes.rightAxis.layoutInfo.thickness$;
-        //         }
-        //     }
-        // }
-
-        // if (!options.axis) {
-        //     if (this.axes.topAxis) {
-        //         insets.top = this.axes.topAxis.layoutInfo.thickness$;
-        //     }
-        //     if (this.axes.bottomAxis) {
-        //         insets.bottom = this.axes.bottomAxis.layoutInfo.thickness$;
-        //     }
-        //     if (this.axes.leftAxis) {
-        //         insets.left = this.axes.leftAxis.layoutInfo.thickness$;
-        //     }
-        //     if (this.axes.rightAxis) {
-        //         insets.right = this.axes.rightAxis.layoutInfo.thickness$;
-        //     }
-        // }
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
                 y: this.yLayout.layoutInfo.containerLength$,
             },
-            insets,
+            insets: options.noInset ? undefined : this.getAxisInsets$(),
         };
     }
 
