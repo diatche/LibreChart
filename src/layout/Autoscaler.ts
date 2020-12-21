@@ -289,29 +289,30 @@ export default class Autoscaler<T = any, D = any> {
         }
 
         this._scheduledUpdate = InteractionManager.runAfterInteractions(() => {
-            this._scheduledUpdate = undefined;
             this._debouncedUpdate();
         });
     }
 
     cancelUpdate() {
+        this._cancelUpdateAfterInteractions();
+        this._debouncedUpdate.cancel();
+    }
+
+    private _cancelUpdateAfterInteractions() {
         if (this._scheduledUpdate) {
             this._scheduledUpdate.cancel();
             this._scheduledUpdate = undefined;
         }
-        this._debouncedUpdate.cancel();
     }
     
     private _scheduledUpdate?: Cancelable;
 
     private _debouncedUpdate = debounce(
         () => {
-            if (this._scheduledUpdate) {
-                return;
-            }
-            this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
-                this.update()
-            ));
+            this._cancelUpdateAfterInteractions();
+            this._scheduledUpdate = InteractionManager.runAfterInteractions(() => {
+                this.update();
+            });
         },
         Autoscaler.updateDebounceInterval,
     );
@@ -344,6 +345,15 @@ export default class Autoscaler<T = any, D = any> {
         let baseOptions: IAnimationBaseOptions = {
             ...this.animationOptions,
             ...options?.animationOptions,
+            onEnd: info => {
+                if (!info.finished) {
+                    // Reschedule update
+                    this._min = 0;
+                    this._max = 0;
+                    this.setNeedsUpdate();
+                }
+                options?.animationOptions?.onEnd?.(info);
+            },
         };
 
         if (max > min) {
