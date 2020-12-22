@@ -9,8 +9,10 @@ import DataSource, {
 } from './DataSource';
 import {
     ChartDataType,
+    IDataItem,
     IDataPoint,
-    IDataPointStyle,
+    IPointStyle,
+    IStrokeStyle,
 } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 import {
@@ -23,26 +25,20 @@ export interface ILinePoint extends IDataPoint {
     clipped: boolean;
 }
 
-export interface ILineDataStyle extends IDataPointStyle {
+export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
     curve?: PathCurve;
-
-    /** Stroke width in view coordinates. */
-    strokeWidth?: number;
-    strokeColor?: string | number;
-    /** Stroke dash array in view coordinates. */
-    strokeDashArray?: number[];
 }
 
 export interface LineDataSourceInput {
     style?: ILineDataStyle;
 }
 
-export default class LineDataSource<X = any, Y = any> extends DataSource<
-    X, Y, IPoint, GridLayoutSourceProps, GridLayoutSource
+export default class LineDataSource<T = any> extends DataSource<
+    T, IPoint, GridLayoutSourceProps, GridLayoutSource
 > {
     style: ILineDataStyle;
 
-    constructor(input: LineDataSourceInput & DataSourceInput<X, Y, IPoint, GridLayoutSourceProps>) {
+    constructor(input: LineDataSourceInput & DataSourceInput<T, IPoint, GridLayoutSourceProps>) {
         super(input);
         this.style = { ...input.style };
     }
@@ -68,10 +64,10 @@ export default class LineDataSource<X = any, Y = any> extends DataSource<
         // Add clipped lines
         const c = this.data.length;
         let points: ILinePoint[] = [];
-        let p0 = this.getItemLocation(this.data[0]);
+        let p0 = this.getItemPoint(this.transform(this.data[0]));
         let iAdded = -1;
         for (let i = 1; i < c; i++) {
-            let p = this.getItemLocation(this.data[i]);
+            let p = this.getItemPoint(this.transform(this.data[i]));
             let line = VectorUtil.cohenSutherlandLineClip(
                 p0.x, p0.y,
                 p.x, p.y,

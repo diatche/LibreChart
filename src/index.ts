@@ -29,6 +29,9 @@ export * from './data/LineDataSource';
 export { default as PointDataSource } from './data/PointDataSource';
 export * from './data/PointDataSource';
 
+export { default as RangeDataSource } from './data/RangeDataSource';
+export * from './data/RangeDataSource';
+
 import Chart from './components/Chart';
 export default Chart;
 

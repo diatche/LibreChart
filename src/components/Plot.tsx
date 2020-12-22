@@ -14,9 +14,11 @@ import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
 import ChartAxisBackground from './ChartAxisBackground';
 import LineDataSource from '../data/LineDataSource';
-import { IDataPointStyle } from '../types';
+import { IPointStyle } from '../types';
 import ChartLine from './ChartLine';
 import { axisTypeMap } from '../layout/axis/axisUtil';
+import RangeDataSource from '../data/RangeDataSource';
+import ChartRange from './ChartRange';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -113,6 +115,14 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                         context: dataSource as LineDataSource,
                     };
                     break;
+                case 'range':
+                    itemRenderMap[dataSource.layout.id] = {
+                        renderItem: (item, layoutSource, context) => (
+                            this.renderRange(item, context)
+                        ),
+                        context: dataSource as RangeDataSource,
+                    };
+                    break;
             }
         }
         this.itemRenderMap = itemRenderMap;
@@ -136,7 +146,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 
-    renderPath(item: IItem<IPoint>, dataSource: LineDataSource) {
+    renderPath(item: IItem<IPoint>, dataSource: LineDataSource): React.ReactNode {
         if (!dataSource.layout) {
             return null;
         }
@@ -161,7 +171,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 pointsToDraw = pointsToDraw.slice(0, -1);
             }
         }
-        let pointStyles: (IDataPointStyle | undefined)[] | undefined = pointsToDraw.map(p => dataSource.data[p.dataIndex].style);
+        let pointStyles: (IPointStyle | undefined)[] | undefined = pointsToDraw.map(p => dataSource.data[p.dataIndex].style);
         if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
             pointStyles = undefined;
         }
@@ -180,7 +190,12 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 
-    renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis) {
+    renderRange(item: IItem<number>, dataSource: RangeDataSource): React.ReactNode {
+        let dataItem = dataSource.transform(dataSource.data[item.index]);
+        return <ChartRange {...dataSource.style} {...dataItem.style} />
+    }
+
+    renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis): React.ReactNode {
         if (axis.hidden) {
             return null;
         }
@@ -209,7 +224,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 
-    renderAxisBackground({ reuseID }: IItem<any>, axis: Axis) {
+    renderAxisBackground({ reuseID }: IItem<any>, axis: Axis): React.ReactNode {
         if (axis.hidden) {
             return null;
         }
@@ -221,7 +236,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 
-    renderGrid(plot: PlotLayout) {
+    renderGrid(plot: PlotLayout): React.ReactNode {
         if (plot.grid.hidden) {
             return null;
         }

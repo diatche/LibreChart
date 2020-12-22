@@ -165,4 +165,27 @@ export namespace VectorUtil {
     export const isPointInClosedRange = (p: IPoint, r: [IPoint, IPoint]): boolean => {
         return p.x >= r[0].x && p.x <= r[1].x && p.y >= r[0].y && p.y <= r[1].y;
     };
+
+    /**
+     * Returns true if the specified point `p` is inside the
+     * specified range `r`.
+     * 
+     * The range lower bounds are inclusive and upper bounds
+     * are inclusive.
+     * 
+     * @param p {IPoint} The point. 
+     * @param r {[IPoint, IPoint]} The point range.
+     */
+    export const rectsIntersect = (
+        x1: number,
+        y1: number,
+        w1: number,
+        h1: number,
+        x2: number,
+        y2: number,
+        w2: number,
+        h2: number,
+    ): boolean => {
+        return x2 < x1 + w1 && x1 < x2 + w2 && y2 < y1 + h1 && y1 < y2 + h2;
+    };
 }

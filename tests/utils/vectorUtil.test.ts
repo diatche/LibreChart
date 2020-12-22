@@ -65,4 +65,106 @@ describe('VectorUtil', () => {
             expect(line).toEqual([2, 3, 2, 3]);
         });
     });
+
+    describe('rectsIntersect', () => {
+
+        it('should intersect on the left', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                1, 0, 2, 2,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                1, 0, 2, 2,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+
+        it('should not intersect on the left', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                2, 0, 2, 2,
+            )).toBeFalsy();
+            expect(VectorUtil.rectsIntersect(
+                2, 0, 2, 2,
+                0, 0, 2, 2,
+            )).toBeFalsy();
+        });
+
+        it('should intersect on the right', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -1, 0, 2, 2,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                -1, 0, 2, 2,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+
+        it('should not intersect on the right', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -2, 0, 2, 2,
+            )).toBeFalsy();
+            expect(VectorUtil.rectsIntersect(
+                -2, 0, 2, 2,
+                0, 0, 2, 2,
+            )).toBeFalsy();
+        });
+
+        it('should intersect from the top', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                0, 1, 2, 2,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                0, 1, 2, 2,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+
+        it('should not intersect from the top', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                0, 2, 2, 2,
+            )).toBeFalsy();
+            expect(VectorUtil.rectsIntersect(
+                0, 2, 2, 2,
+                0, 0, 2, 2,
+            )).toBeFalsy();
+        });
+
+        it('should intersect from the bottom', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                0, -1, 2, 2,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                0, -1, 2, 2,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+
+        it('should not intersect from the bottom', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                0, -2, 2, 2,
+            )).toBeFalsy();
+            expect(VectorUtil.rectsIntersect(
+                0, -2, 2, 2,
+                0, 0, 2, 2,
+            )).toBeFalsy();
+        });
+
+        it('should intersect from the middle', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                1, 1, 1, 1,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                1, 1, 1, 1,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+    });
 });

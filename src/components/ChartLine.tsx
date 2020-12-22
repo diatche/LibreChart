@@ -9,7 +9,7 @@ import Svg, {
     Path,
 } from 'react-native-svg';
 import { ILineDataStyle } from '../data/LineDataSource';
-import { IDataPointStyle } from '../types';
+import { IPointStyle } from '../types';
 
 export interface ChartLineProps extends ILineDataStyle {
     /**
@@ -22,7 +22,7 @@ export interface ChartLineProps extends ILineDataStyle {
     /** Point locations in canvas coordinates. */
     points: IPoint[];
     /** Point styles corresponding to points. */
-    pointStyles?: (IDataPointStyle | undefined)[];
+    pointStyles?: (IPointStyle | undefined)[];
     /** View scale. */
     scale: Animated.ValueXY;
 }
@@ -30,11 +30,26 @@ export interface ChartLineProps extends ILineDataStyle {
 const ChartLine = React.memo((props: ChartLineProps) => {
     const pointOuterColor = props.pointOuterColor || props.strokeColor;
 
+    if (typeof props.strokeWidth === 'object') {
+        throw new Error('Animated values no supported on ChartLine');
+    }
+    if (typeof props.pointOuterRadius === 'object') {
+        throw new Error('Animated values no supported on ChartLine');
+    }
+
     const viewOverlap = Math.max(
         (props.strokeWidth || 0) / 2,
         props.pointOuterRadius || 0,
         ...Object.values(props.pointStyles || {})
-            .map(s => s?.pointOuterRadius || 0),
+            .map(s => {
+                if (!s?.pointOuterRadius) {
+                    return 0;
+                }
+                if (typeof s.pointOuterRadius === 'object') {
+                    throw new Error('Animated values no supported on ChartLine');
+                }
+                return s.pointOuterRadius;
+            }),
     );
 
     const rectWithOverlap = [
@@ -66,7 +81,7 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         fill='none'
                         strokeLinecap='round'
                         strokeWidth={props.strokeWidth}
-                        stroke={props.strokeColor}
+                        stroke={props.strokeColor as string}
                         strokeDasharray={(
                             props.strokeDashArray && props.strokeDashArray.length !== 0
                                 ? props.strokeDashArray.map(String).join(',')
@@ -79,8 +94,8 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         key={`o${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={props.pointStyles?.[i]?.pointOuterRadius || props.pointOuterRadius}
-                        fill={props.pointStyles?.[i]?.pointOuterColor || pointOuterColor}
+                        r={(props.pointStyles?.[i]?.pointOuterRadius || props.pointOuterRadius) as number}
+                        fill={(props.pointStyles?.[i]?.pointOuterColor || pointOuterColor) as string}
                     />
                 ))}
                 {(props.pointStyles || props.pointInnerColor && props.pointInnerRadius! > 0) && props.points.map((p, i) => (
@@ -88,8 +103,8 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         key={`i${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={props.pointStyles?.[i]?.pointInnerRadius || props.pointInnerRadius}
-                        fill={props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor}
+                        r={(props.pointStyles?.[i]?.pointInnerRadius || props.pointInnerRadius) as number}
+                        fill={(props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor) as string}
                     />
                 ))}
                 {/* <Circle cx={props.rect[0]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />

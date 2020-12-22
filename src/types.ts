@@ -1,28 +1,53 @@
 import Decimal from "decimal.js";
 import {
+    AnimatedValueInput,
     GridLayoutSourceProps, IPoint,
 } from "evergrid";
-import { ColorValue, TextStyle } from "react-native";
+import {
+    Animated,
+    ColorValue,
+    TextStyle,
+} from "react-native";
 
-export interface IDataItem<X, Y> {
+export type AnimatedValueAny = number | Animated.Value | Animated.AnimatedInterpolation;
+
+export interface IDataLocation<X, Y> {
     x: X,
     y: Y,
-    style?: IDataPointStyle;
+}
+
+export interface IDataItem<X, Y, S> extends IDataLocation<X, Y> {
+    style?: S;
 }
 
 export interface IDataPoint extends IPoint {
     dataIndex: number;
 }
 
-export interface IDataPointStyle {
+export interface IPointStyle {
     /** Point inner radius in view coordinates. */
-    pointInnerRadius?: number;
+    pointInnerRadius?: AnimatedValueAny;
     /** Point outer radius in view coordinates. */
-    pointOuterRadius?: number;
+    pointOuterRadius?: AnimatedValueAny;
 
-    pointInnerColor?: string | number;
-    pointOuterColor?: string | number;
+    pointInnerColor?: ColorValue;
+    pointOuterColor?: ColorValue;
 }
+
+export interface IStrokeStyle {
+    /** Stroke width in view coordinates. */
+    strokeWidth?: AnimatedValueAny;
+    strokeColor?: ColorValue;
+    /** Stroke dash array in view coordinates. */
+    strokeDashArray?: number[];
+}
+
+export interface IFillStyle {
+    fillColor?: string;
+    cornerRadius?: AnimatedValueAny;
+}
+
+export interface IRectStyle extends IFillStyle, IStrokeStyle {}
 
 export interface ITickLabel {
     title: string;
@@ -46,6 +71,6 @@ export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
 
-export type ChartDataType = 'path' | 'point';
+export type ChartDataType = 'path' | 'point' | 'range';
 
 export type Cancelable = { cancel: () => void };

@@ -16,6 +16,7 @@ import {
 import {
     PlotLayout,
 } from "../internal";
+import { Observable } from "../utils/observable";
 
 export interface IChartGridInput {
 
@@ -49,8 +50,10 @@ export default class Grid {
     layout?: LayoutSource;
 
     private _plotWeakRef = weakref<PlotLayout>();
-    private _xScaleLayoutUpdates = 0;
-    private _yScaleLayoutUpdates = 0;
+    private _scaleLayoutUpdates?: {
+        x: Observable.IObserver,
+        y: Observable.IObserver,
+    };
 
     constructor(options?: IChartGridInput) {
         let {
@@ -89,21 +92,24 @@ export default class Grid {
             forceRender: true,
         };
         // FIXME: Do only one update if both x and y layouts change.
-        this._xScaleLayoutUpdates = this.vertical && plot.xLayout.updates.addObserver(
-            () => this.update(updateOptions)
-        ) || 0;
-        this._yScaleLayoutUpdates = this.horizontal && plot.yLayout.updates.addObserver(
-            () => this.update(updateOptions)
-        ) || 0;
+        this._scaleLayoutUpdates = {
+            x: plot.xLayout.updates.addObserver(
+                () => this.update(updateOptions)
+            ),
+            y: plot.yLayout.updates.addObserver(
+                () => this.update(updateOptions)
+            ),
+        };
     }
 
     unconfigure() {
         this.layout = undefined;
 
-        this.plot.xLayout.updates.removeObserver(this._xScaleLayoutUpdates);
-        this.plot.yLayout.updates.removeObserver(this._yScaleLayoutUpdates);
-        this._xScaleLayoutUpdates = 0;
-        this._yScaleLayoutUpdates = 0;
+        if (this._scaleLayoutUpdates) {
+            this._scaleLayoutUpdates.x.cancel();
+            this._scaleLayoutUpdates.y.cancel();
+            this._scaleLayoutUpdates = undefined;
+        }
     }
 
     update(updateOptions: IItemUpdateManyOptions) {
