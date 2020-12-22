@@ -198,21 +198,21 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
 
     didChangePlotSize() {
         this.schedulePlotUpdate();
-        this.xLayout?.autoscale?.setNeedsUpdate();
-        this.yLayout?.autoscale?.setNeedsUpdate();
+        this.xLayout?.controller?.setNeedsUpdate();
+        this.yLayout?.controller?.setNeedsUpdate();
     }
 
     didChangeScale() {
         super.didChangeScale();
         this.schedulePlotUpdate();
-        this.xLayout?.autoscale?.setNeedsUpdate();
-        this.yLayout?.autoscale?.setNeedsUpdate();
+        this.xLayout?.controller?.setNeedsUpdate();
+        this.yLayout?.controller?.setNeedsUpdate();
     }
 
     didChangeLocation() {
         super.didChangeLocation();
-        this.xLayout?.autoscale?.setNeedsUpdate();
-        this.yLayout?.autoscale?.setNeedsUpdate();
+        this.xLayout?.controller?.setNeedsUpdate();
+        this.yLayout?.controller?.setNeedsUpdate();
     }
 
     schedulePlotUpdate() {

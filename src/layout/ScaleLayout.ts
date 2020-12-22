@@ -16,7 +16,7 @@ import {
 } from "./axis/axisTypes";
 import { kAxisStyleLightDefaults } from "./axis/axisConst";
 import { Observable } from "../utils/observable";
-import Autoscaler, { AutoscalerInput } from "./Autoscaler";
+import ScaleController from "./ScaleController";
 
 const k0 = new Decimal(0);
 
@@ -26,12 +26,10 @@ export interface IScaleLayoutOptions<T = any, D = T> {
      * Be default, linear ticks are used.
      */
     scale?: Scale<T, D>;
-    autoscale?: AutoscalerInput<T, D>;
+    controller?: ScaleController<T, D>;
     style?: IAxisStyleInput;
     isHorizontal?: boolean;
 }
-
-export interface IScaleLayoutProps<T, D> extends Required<IScaleLayoutOptions<T, D>> {}
 
 interface IScaleLayoutLengthBaseInfo {
     /** Number of major axis intervals per axis container. */
@@ -73,9 +71,9 @@ interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
     negHalfMajorViewInterval$?: Animated.AnimatedInterpolation;
 }
 
-export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayoutProps<T, D>, 'autoscale'> {
+export default class ScaleLayout<T = Decimal, D = T> {
     scale: Scale<T, D>;
-    readonly autoscale?: Autoscaler<T, D>;
+    readonly controller?: ScaleController<T, D>;
     /** If true, then the layout is detached from the standard grid. */
     custom = false;
     readonly style: IAxisStyle;
@@ -114,7 +112,7 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
             padding: normalizeAnimatedValue(style.padding),
         };
 
-        this.autoscale = Autoscaler.parse(options?.autoscale);
+        this.controller = options?.controller;
     }
 
     get plot(): PlotLayout {
@@ -147,11 +145,11 @@ export default class ScaleLayout<T = Decimal, D = T> implements Omit<IScaleLayou
         );
         this.layoutInfo.negHalfMajorViewInterval$ = negHalfMajorViewInterval;
 
-        this.autoscale?.configure(this);
+        this.controller?.configure(this);
     }
 
     unconfigure() {
-        this.autoscale?.unconfigure();
+        this.controller?.unconfigure();
     }
 
     update(): boolean {

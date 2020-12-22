@@ -2,17 +2,13 @@ import {
     IAnimationBaseOptions,
     IInsets,
     IPoint,
-    weakref,
 } from "evergrid";
-import debounce from "lodash.debounce";
-import { InteractionManager } from "react-native";
 import Scale, { 
     ITickScaleConstraints,
 } from "../scale/Scale";
 import DataSource from "../data/DataSource";
-import { ScaleLayout } from "../internal";
-import { Cancelable } from "../types";
 import Decimal from "decimal.js";
+import ScaleController from "./ScaleController";
 
 export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
 
@@ -137,7 +133,7 @@ export interface AutoscalerOptions {
     animationOptions?: IAnimationBaseOptions;
 }
 
-export default class Autoscaler<T = any, D = any> {
+export default class Autoscaler<T = any, D = any> extends ScaleController<T, D> {
     static defaultContentPaddingAbs = 0;
     static defaultContentPaddingRel = 0.2;
     static defaultViewPaddingAbs = 0;
@@ -151,15 +147,12 @@ export default class Autoscaler<T = any, D = any> {
     readonly anchor: number | undefined;
 
     hysteresis?: AutoscalerHysteresisFunction;
-    animationOptions: IAnimationBaseOptions;
 
     private _dataSources?: DataSource[];
-    private _min = 0;
-    private _max = 0;
-    private _scaleLayoutWeakRef = weakref<ScaleLayout<T, D>>();
-    private _containerSize?: IPoint;
 
     constructor(options: AutoscalerOptions = {}) {
+        super();
+
         this.contentPaddingAbs = this._validatePadding(
             options.contentPaddingAbs || Autoscaler.defaultContentPaddingAbs
         );
@@ -216,33 +209,10 @@ export default class Autoscaler<T = any, D = any> {
         throw new Error('Invalid autoscaler');
     }
 
-    get scaleLayout(): ScaleLayout<T, D> {
-        return this._scaleLayoutWeakRef.getOrFail();
-    }
-
-    set scaleLayout(scaleLayout: ScaleLayout<T, D>) {
-        if (!scaleLayout || !(scaleLayout instanceof ScaleLayout)) {
-            throw new Error('Invalid scale layout');
-        }
-        this._scaleLayoutWeakRef.set(scaleLayout);
-    }
-
-    private get _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
-        return this._scaleLayoutWeakRef.get();
-    }
-
-    configure(scaleLayout: ScaleLayout<T, D>) {
-        this.scaleLayout = scaleLayout;
-
+    configureScaleController() {
         if (!this._dataSources) {
-            this.dataSources = scaleLayout.plot.dataSources;
+            this.dataSources = this.scaleLayout.plot.dataSources;
         }
-
-        this.setNeedsUpdate();
-    }
-
-    unconfigure() {
-        this.cancelUpdate();
     }
 
     get dataSources(): DataSource[] {
@@ -269,130 +239,7 @@ export default class Autoscaler<T = any, D = any> {
         // TODO: implement when data source mutability is added
     }
 
-    setNeedsUpdate() {
-        if (!this._wasContainerReady()) {
-            // Update immediately
-            this.update({
-                animationOptions: {
-                    animated: false,
-                },
-            });
-        } else {
-            // Avoid frequent updates
-            this.scheduleUpdate();
-        }
-    }
-
-    scheduleUpdate() {
-        this._debouncedUpdate();
-    }
-
-    cancelUpdate() {
-        if (this._interaction) {
-            this._interaction.cancel();
-            this._interaction = undefined;
-        }
-        this._debouncedUpdate.cancel();
-    }
-
-    private _interaction?: Cancelable;
-
-    private _debouncedUpdate = debounce(
-        () => {
-            let plot = this._maybeScaleLayout?.plot;
-            if (!plot) {
-                return;
-            }
-            if (plot.isInteracting) {
-                // Skip update during interaction
-                this._interaction = InteractionManager.runAfterInteractions(() => {
-                    this._interaction = undefined;
-                    this.scheduleUpdate();
-                });
-            } else {
-                this.update();
-            }
-        },
-        Autoscaler.updateDebounceInterval,
-    );
-
-    update(options?: { animationOptions?: IAnimationBaseOptions }) {
-        this.cancelUpdate();
-
-        let plot = this._maybeScaleLayout?.plot;
-        if (!plot) {
-            return;
-        }
-        let insets = plot.getAxisInsets();
-        this._containerSize = plot.getContainerSize({ insets });
-        if (!this._isContainerReady(this._containerSize)) {
-            return;
-        }
-
-        let limits = this._getLimits(this._containerSize, insets);
-        if (!limits) {
-            return;
-        }
-        let [min, max] = limits;
-        if (min === this._min && max === this._max) {
-            return;
-        }
-        // console.debug(`Autoscaling min: ${min}, max: ${max}`);
-        this._min = min;
-        this._max = max;
-
-        let baseOptions: IAnimationBaseOptions = {
-            ...this.animationOptions,
-            ...options?.animationOptions,
-            onEnd: info => {
-                if (!info.finished) {
-                    // Reschedule update
-                    this._min = 0;
-                    this._max = 0;
-                    this.setNeedsUpdate();
-                }
-                options?.animationOptions?.onEnd?.(info);
-            },
-        };
-
-        if (max > min) {
-            // Scroll and scale to range
-            let pMin: Partial<IPoint> = {};
-            let pMax: Partial<IPoint> = {};
-            if (this.scaleLayout.isHorizontal) {
-                pMin.x = min;
-                pMax.x = max;
-            } else {
-                pMin.y = min;
-                pMax.y = max;
-            }
-            this.scaleLayout.plot.scrollTo({
-                ...baseOptions,
-                range: [pMin, pMax],
-            });
-        } else if (typeof this.anchor !== 'undefined') {
-            // Scroll to location.
-
-            // Why do we not scroll when there is an achor?
-            // Because if we have one point, which must be
-            // the same as the anchor. Scrolling to the anchor
-            // may place it at the center of the viewport
-            // (if the anchor of the plot is at 0.5).
-
-            let p: Partial<IPoint> = {};
-            if (this.scaleLayout.isHorizontal) {
-                p.x = -min;
-            } else {
-                p.y = -min;
-            }
-            this.scaleLayout.plot.scrollTo({
-                ...baseOptions,
-                offset: p,
-            });
-        }
-    }
-
-    private _getLimits(
+    getLimits(
         containerSize: IPoint,
         insets: Partial<IInsets<number>>,
     ): [number, number] | undefined {
@@ -530,13 +377,5 @@ export default class Autoscaler<T = any, D = any> {
                 break;
         }
         throw new Error('Invalid padding');
-    }
-
-    private _wasContainerReady() {
-        return this._isContainerReady(this._containerSize);
-    }
-
-    private _isContainerReady(size: IPoint | undefined): size is IPoint {
-        return !!size ? size.x >= 1 && size.y >= 1 : false;
     }
 }

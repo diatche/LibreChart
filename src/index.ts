@@ -13,6 +13,9 @@ export * from './scale/LinearScale';
 export { default as DateScale } from './scale/DateScale';
 export * from './scale/DateScale';
 
+export { default as Autoscaler } from './layout/Autoscaler';
+export * from './layout/Autoscaler';
+
 export * from './layout/axis/axisTypes';
 export * from './layout/axis/axisConst';
 export * from './layout/axis/axisUtil';
