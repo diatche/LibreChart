@@ -227,7 +227,7 @@ export default class Autoscaler<T = any, D = any> {
         this._scaleLayoutWeakRef.set(scaleLayout);
     }
 
-    private _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
+    private get _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
         return this._scaleLayoutWeakRef.get();
     }
 
@@ -284,34 +284,34 @@ export default class Autoscaler<T = any, D = any> {
     }
 
     scheduleUpdate() {
-        if (this._scheduledUpdate) {
-            return;
-        }
-
-        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => {
-            this._scheduledUpdate = undefined;
-            this._debouncedUpdate();
-        });
+        this._debouncedUpdate();
     }
 
     cancelUpdate() {
-        if (this._scheduledUpdate) {
-            this._scheduledUpdate.cancel();
-            this._scheduledUpdate = undefined;
+        if (this._interaction) {
+            this._interaction.cancel();
+            this._interaction = undefined;
         }
         this._debouncedUpdate.cancel();
     }
-    
-    private _scheduledUpdate?: Cancelable;
+
+    private _interaction?: Cancelable;
 
     private _debouncedUpdate = debounce(
         () => {
-            if (this._scheduledUpdate) {
+            let plot = this._maybeScaleLayout?.plot;
+            if (!plot) {
                 return;
             }
-            this._scheduledUpdate = InteractionManager.runAfterInteractions(() => (
-                this.update()
-            ));
+            if (plot.isInteracting) {
+                // Skip update during interaction
+                this._interaction = InteractionManager.runAfterInteractions(() => {
+                    this._interaction = undefined;
+                    this.scheduleUpdate();
+                });
+            } else {
+                this.update();
+            }
         },
         Autoscaler.updateDebounceInterval,
     );
@@ -319,7 +319,7 @@ export default class Autoscaler<T = any, D = any> {
     update(options?: { animationOptions?: IAnimationBaseOptions }) {
         this.cancelUpdate();
 
-        let plot = this._maybeScaleLayout()?.plot;
+        let plot = this._maybeScaleLayout?.plot;
         if (!plot) {
             return;
         }
@@ -344,6 +344,15 @@ export default class Autoscaler<T = any, D = any> {
         let baseOptions: IAnimationBaseOptions = {
             ...this.animationOptions,
             ...options?.animationOptions,
+            onEnd: info => {
+                if (!info.finished) {
+                    // Reschedule update
+                    this._min = 0;
+                    this._max = 0;
+                    this.setNeedsUpdate();
+                }
+                options?.animationOptions?.onEnd?.(info);
+            },
         };
 
         if (max > min) {

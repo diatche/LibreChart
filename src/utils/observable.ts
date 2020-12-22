@@ -1,19 +1,23 @@
 
 export namespace Observable {
 
-    export interface IObservable<T> {
-        emit: (...args: any) => void;
-        addObserver: (observer: T) => number;
-        removeObserver: (id: number) => void;
+    export interface IObservable<T = any> {
+        emit: (...args: T[]) => void;
+        addObserver: (callback: (...args: T[]) => any) => IObserver;
+        removeObserver: (observer: IObserver) => void;
     }
 
-    export function create<T extends CallableFunction>(): IObservable<T> {
-        let observers: T[] = [];
+    export interface IObserver {
+        cancel: () => void;
+    }
+
+    export function create<T = any>(): IObservable<T> {
+        let observers: ((...args: T[]) => any)[] = [];
         let ids: number[] = [];
         let idCounter = 0;
 
         return {
-            emit: (...args: any) => {
+            emit: (...args: T[]) => {
                 for (let observer of observers) {
                     try {
                         observer(...args);
@@ -22,22 +26,23 @@ export namespace Observable {
                     }
                 }
             },
-            addObserver: observer => {
+            addObserver: callback => {
                 let id = (++idCounter);
                 ids.push(id);
-                observers.push(observer);
-                return id;
+                observers.push(callback);
+                return {
+                    cancel: () => {
+                        let i = ids.indexOf(id);
+                        if (i < 0) {
+                            return;
+                        }
+                        ids.splice(i, 1);
+                        observers.splice(i, 1);
+                    }
+                };
             },
-            removeObserver: id => {
-                if (!id || id <= 0) {
-                    return;
-                }
-                let i = ids.indexOf(id);
-                if (i < 0) {
-                    return;
-                }
-                ids.splice(i, 1);
-                observers.splice(i, 1);
+            removeObserver: observer => {
+                observer.cancel();
             },
         };
     };
