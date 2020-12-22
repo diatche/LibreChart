@@ -31,6 +31,7 @@ import {
 } from "./axisUtil";
 import { Cancelable } from "../../types";
 import ScaleLayout from "../ScaleLayout";
+import { Observable } from "../../utils/observable";
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -97,7 +98,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _plotWeakRef = weakref<PlotLayout>();
     private _scaleLayout?: ScaleLayout<T, DT>;
-    private _scaleLayoutUpdates = 0;
+    private _scaleLayoutUpdates?: Observable.IObserver;
 
     constructor(axisType: AxisType, options?: IAxisOptions<T>) {
         let {
@@ -216,7 +217,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             };
             this._scaleLayoutUpdates = this.scaleLayout?.updates.addObserver(
                 () => this.update(updateOptions)
-            ) || 0;
+            );
         }
     }
 
@@ -224,8 +225,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         this.contentLayout = undefined;
         this.backgroundLayout = undefined;
         
-        this.scaleLayout?.updates.removeObserver(this._scaleLayoutUpdates);
-        this._scaleLayoutUpdates = 0;
+        this._scaleLayoutUpdates?.cancel();
+        this._scaleLayoutUpdates = undefined;
     }
 
     private _createContentLayoutSource(
@@ -396,6 +397,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         }
 
         this._cleanThicknessInfo();
+
+        this.plot.didChangePlotSize();
     }
 
     private _cleanThicknessInfo() {

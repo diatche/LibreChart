@@ -193,6 +193,10 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
 
     didChangeViewportSize() {
         super.didChangeViewportSize();
+        this.didChangePlotSize();
+    }
+
+    didChangePlotSize() {
         this.schedulePlotUpdate();
         this.xLayout?.autoscale?.setNeedsUpdate();
         this.yLayout?.autoscale?.setNeedsUpdate();
