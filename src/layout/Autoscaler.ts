@@ -401,10 +401,11 @@ export default class Autoscaler<T = any, D = any> {
         let minLoc = hasAnchor ? anchor : NaN;
         let maxLoc = minLoc;
         let hasRange = false;
-        let plot = this.scaleLayout.plot;
+        let scaleLayout = this.scaleLayout;
+        let plot = scaleLayout.plot;
         let visibleRange = plot.getVisibleLocationRange({ insets });
         // Extend visible range in cross axis
-        if (this.scaleLayout.isHorizontal) {
+        if (scaleLayout.isHorizontal) {
             visibleRange[0].x = -Infinity;
             visibleRange[1].x = Infinity;
         } else {
@@ -484,7 +485,12 @@ export default class Autoscaler<T = any, D = any> {
             // Convert view padding to target scale
             let contentLen = max - min;
             if (contentLen > 0) {
-                let viewLen = containerSize[this.scaleLayout.isHorizontal ? 'x' : 'y'];
+                let viewLen = 0;
+                if (scaleLayout.isHorizontal) {
+                    viewLen = containerSize.x - (insets.left || 0) - (insets.right || 0);
+                } else {
+                    viewLen = containerSize.y - (insets.top || 0) - (insets.bottom || 0);
+                }
                 viewLen -= this.viewPaddingAbs[0];
                 viewLen -= this.viewPaddingAbs[1];
                 let scale = viewLen / contentLen;
