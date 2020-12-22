@@ -10,9 +10,9 @@ import DataSource from "../data/DataSource";
 import Decimal from "decimal.js";
 import ScaleController from "./ScaleController";
 
-export type AutoscalerInput<T = any, D = any> = Autoscaler<T, D> | AutoscalerOptions | boolean;
+export type AutoScaleControllerInput<T = any, D = any> = AutoScaleController<T, D> | AutoScaleControllerOptions | boolean;
 
-export type AutoscalerHysteresisFunction = (
+export type ScaleHysteresisFunction = (
     min: number,
     max: number,
     previousMin: number | undefined,
@@ -21,14 +21,14 @@ export type AutoscalerHysteresisFunction = (
 
 export namespace Hysteresis {
 
-    export const none: AutoscalerHysteresisFunction = () => null;
+    export const none: ScaleHysteresisFunction = () => null;
 
     export const step = (
         size: number,
         options: {
             origin?: number;
         } = {},
-    ): AutoscalerHysteresisFunction => {
+    ): ScaleHysteresisFunction => {
         if (size <= 0) {
             throw new Error('Invalid step');
         }
@@ -41,7 +41,7 @@ export namespace Hysteresis {
 
     export function withScale<T = any, D = any>(
         scale: Scale<T, D>
-    ): AutoscalerHysteresisFunction {
+    ): ScaleHysteresisFunction {
         let constraints: ITickScaleConstraints<D> = {
             expand: true,
         };
@@ -63,7 +63,7 @@ export namespace Hysteresis {
     //         step?: number;
     //         origin?: number;
     //     } = {},
-    // ): AutoscalerHysteresisFunction => {
+    // ): ScaleHysteresisFunction => {
     //     let {
     //         step = 1,
     //         origin = 0,
@@ -118,7 +118,7 @@ export namespace Hysteresis {
     // };
 }
 
-export interface AutoscalerOptions {
+export interface AutoScaleControllerOptions {
     dataSources?: DataSource[];
     contentPaddingAbs?: number | [number, number];
     contentPaddingRel?: number | [number, number];
@@ -126,14 +126,14 @@ export interface AutoscalerOptions {
     min?: number;
     max?: number;
     anchor?: number;
-    hysteresis?: AutoscalerHysteresisFunction;
+    hysteresis?: ScaleHysteresisFunction;
     /**
      * Animated by default.
      */
     animationOptions?: IAnimationBaseOptions;
 }
 
-export default class Autoscaler<T = any, D = any> extends ScaleController<T, D> {
+export default class AutoScaleController<T = any, D = any> extends ScaleController<T, D> {
     static defaultContentPaddingAbs = 0;
     static defaultContentPaddingRel = 0.2;
     static defaultViewPaddingAbs = 0;
@@ -146,21 +146,21 @@ export default class Autoscaler<T = any, D = any> extends ScaleController<T, D> 
     readonly max: number | undefined;
     readonly anchor: number | undefined;
 
-    hysteresis?: AutoscalerHysteresisFunction;
+    hysteresis?: ScaleHysteresisFunction;
 
     private _dataSources?: DataSource[];
 
-    constructor(options: AutoscalerOptions = {}) {
+    constructor(options: AutoScaleControllerOptions = {}) {
         super();
 
         this.contentPaddingAbs = this._validatePadding(
-            options.contentPaddingAbs || Autoscaler.defaultContentPaddingAbs
+            options.contentPaddingAbs || AutoScaleController.defaultContentPaddingAbs
         );
         this.contentPaddingRel = this._validatePadding(
-            options.contentPaddingRel || Autoscaler.defaultContentPaddingRel
+            options.contentPaddingRel || AutoScaleController.defaultContentPaddingRel
         );
         this.viewPaddingAbs = this._validatePadding(
-            options.viewPaddingAbs || Autoscaler.defaultViewPaddingAbs
+            options.viewPaddingAbs || AutoScaleController.defaultViewPaddingAbs
         );
         this.min = options.min;
         this.max = options.max;
@@ -192,18 +192,18 @@ export default class Autoscaler<T = any, D = any> extends ScaleController<T, D> 
         }
     }
 
-    static parse(input: AutoscalerInput | undefined): Autoscaler | undefined {
+    static parse(input: AutoScaleControllerInput | undefined): AutoScaleController | undefined {
         switch (typeof input) {
             case 'undefined':
                 return undefined;
             case 'boolean':
-                return input ? new Autoscaler() : undefined;
+                return input ? new AutoScaleController() : undefined;
             case 'object':
-                if (input instanceof Autoscaler) {
+                if (input instanceof AutoScaleController) {
                     return input;
                 } else {
                     // Assume options
-                    return new Autoscaler(input);
+                    return new AutoScaleController(input);
                 }
         }
         throw new Error('Invalid autoscaler');
