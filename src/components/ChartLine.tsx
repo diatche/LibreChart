@@ -10,7 +10,6 @@ import Svg, {
 } from 'react-native-svg';
 import { ILineDataStyle } from '../data/LineDataSource';
 import { IDataPointStyle } from '../types';
-import { isMatch } from '../utils/comp';
 
 export interface ChartLineProps extends ILineDataStyle {
     /**
@@ -100,7 +99,7 @@ const ChartLine = React.memo((props: ChartLineProps) => {
             </Svg>
         </View>
     );
-}, (prevProps, nextProps) => {
+}, /*(prevProps, nextProps) => {
     let prevKeys = Object.keys(prevProps) as (keyof ChartLineProps)[];
     let nextKeys = Object.keys(nextProps) as (keyof ChartLineProps)[];
     if (prevKeys.length !== nextKeys.length) {
@@ -141,6 +140,6 @@ const ChartLine = React.memo((props: ChartLineProps) => {
         }
     }
     return true;
-});
+}*/);
 
 export default ChartLine;
