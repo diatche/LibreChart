@@ -227,7 +227,7 @@ export default class Autoscaler<T = any, D = any> {
         this._scaleLayoutWeakRef.set(scaleLayout);
     }
 
-    private _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
+    private get _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
         return this._scaleLayoutWeakRef.get();
     }
 
@@ -284,35 +284,34 @@ export default class Autoscaler<T = any, D = any> {
     }
 
     scheduleUpdate() {
-        if (this._scheduledUpdate) {
-            return;
-        }
-
-        this._scheduledUpdate = InteractionManager.runAfterInteractions(() => {
-            this._debouncedUpdate();
-        });
+        this._debouncedUpdate();
     }
 
     cancelUpdate() {
-        this._cancelUpdateAfterInteractions();
+        if (this._interaction) {
+            this._interaction.cancel();
+            this._interaction = undefined;
+        }
         this._debouncedUpdate.cancel();
     }
 
-    private _cancelUpdateAfterInteractions() {
-        if (this._scheduledUpdate) {
-            this._scheduledUpdate.cancel();
-            this._scheduledUpdate = undefined;
-        }
-    }
-    
-    private _scheduledUpdate?: Cancelable;
+    private _interaction?: Cancelable;
 
     private _debouncedUpdate = debounce(
         () => {
-            this._cancelUpdateAfterInteractions();
-            this._scheduledUpdate = InteractionManager.runAfterInteractions(() => {
+            let plot = this._maybeScaleLayout?.plot;
+            if (!plot) {
+                return;
+            }
+            if (plot.isInteracting) {
+                // Skip update during interaction
+                this._interaction = InteractionManager.runAfterInteractions(() => {
+                    this._interaction = undefined;
+                    this.scheduleUpdate();
+                });
+            } else {
                 this.update();
-            });
+            }
         },
         Autoscaler.updateDebounceInterval,
     );
@@ -320,7 +319,7 @@ export default class Autoscaler<T = any, D = any> {
     update(options?: { animationOptions?: IAnimationBaseOptions }) {
         this.cancelUpdate();
 
-        let plot = this._maybeScaleLayout()?.plot;
+        let plot = this._maybeScaleLayout?.plot;
         if (!plot) {
             return;
         }
