@@ -44,10 +44,15 @@ export interface IStrokeStyle {
 
 export interface IFillStyle {
     fillColor?: string;
-    cornerRadius?: AnimatedValueAny;
 }
 
-export interface IRectStyle extends IFillStyle, IStrokeStyle {}
+export interface IRectStyle extends IFillStyle, IStrokeStyle {
+    cornerRadius?: AnimatedValueAny;
+    topLeftCornerRadius?: AnimatedValueAny;
+    topRightCornerRadius?: AnimatedValueAny;
+    bottomRightCornerRadius?: AnimatedValueAny;
+    bottomLeftCornerRadius?: AnimatedValueAny;
+}
 
 export interface ITickLabel {
     title: string;
@@ -71,6 +76,6 @@ export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
 
-export type ChartDataType = 'path' | 'point' | 'rect';
+export type ChartDataType = 'path' | 'point' | 'bar' | 'rect';
 
 export type Cancelable = { cancel: () => void };

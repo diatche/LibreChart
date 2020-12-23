@@ -98,7 +98,6 @@ export default class RectDataSource<
     createLayoutSource(props?: LayoutSourceProps<number>) {
         return new CustomLayoutSource({
             ...this.plot.getLayoutSourceOptions(),
-            itemSize: { x: 1, y: 1 },
             reuseID: this.itemReuseID,
             ...props,
             getItemLayout: i => this.getItemLayout(i),

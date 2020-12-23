@@ -123,6 +123,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                         context: dataSource as RectDataSource,
                     };
                     break;
+                default:
+                    throw new Error(`Unsupported data source type: ${dataSource.type}`);
             }
         }
         this.itemRenderMap = itemRenderMap;
