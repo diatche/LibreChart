@@ -9,14 +9,48 @@ import { InteractionManager } from "react-native";
 import { ScaleLayout } from "../internal";
 import { Cancelable } from "../types";
 
+export interface ContentLimitOptions {
+    containerSize: IPoint;
+    insets: Partial<IInsets<number>>;
+}
+
+export interface ScaleControllerOptions {
+    viewPaddingAbs?: number | [number, number];
+
+    /**
+     * Animated by default.
+     */
+    animationOptions?: IAnimationBaseOptions;
+}
+
 export default abstract class ScaleController<T = any, D = any> {
+    static defaultViewPaddingAbs = 0;
     static updateDebounceInterval = 500;
     animationOptions?: IAnimationBaseOptions;
+
+    readonly viewPaddingAbs: [number, number];
 
     private _min = 0;
     private _max = 0;
     private _scaleLayoutWeakRef = weakref<ScaleLayout<T, D>>();
     private _containerSize?: IPoint;
+
+    constructor(options: ScaleControllerOptions) {
+        this.viewPaddingAbs = this.validatedPadding(
+            options.viewPaddingAbs || ScaleController.defaultViewPaddingAbs
+        );
+
+        this.animationOptions = options.animationOptions || {
+            animated: true,
+            timing: {
+                duration: 500,
+            },
+        };
+    }
+
+    abstract getContentLimits(
+        options: ContentLimitOptions,
+    ): [number, number] | undefined;
 
     get scaleLayout(): ScaleLayout<T, D> {
         return this._scaleLayoutWeakRef.getOrFail();
@@ -95,25 +129,45 @@ export default abstract class ScaleController<T = any, D = any> {
     update(options?: { animationOptions?: IAnimationBaseOptions }) {
         this.cancelUpdate();
 
-        let plot = this._maybeScaleLayout?.plot;
+        let scaleLayout = this._maybeScaleLayout;
+        if (!scaleLayout) {
+            return;
+        }
+        let plot = scaleLayout.plot;
         if (!plot) {
             return;
         }
         let insets = plot.getAxisInsets();
-        this._containerSize = plot.getContainerSize({ insets });
-        if (!this._isContainerReady(this._containerSize)) {
+        let containerSize = plot.getContainerSize({ insets });
+        if (!this._isContainerReady(containerSize)) {
             return;
         }
+        let containerChanged = !this._containerSize;
+        if (this._containerSize) {
+            if (scaleLayout.isHorizontal) {
+                containerChanged = this._containerSize.x !== containerSize.x;
+            } else {
+                containerChanged = this._containerSize.y !== containerSize.y;
+            }
+        }
 
-        let limits = this.getLimits(this._containerSize, insets);
+        let contentLimitOptions: ContentLimitOptions = {
+            containerSize,
+            insets,
+        };
+        let limits = this.getContentLimits(contentLimitOptions);
+        this._containerSize = containerSize;
         if (!limits) {
             return;
         }
-        let [min, max] = limits;
-        if (min === this._min && max === this._max) {
+        let [min, max] = this.addViewPadding(
+            limits[0],
+            limits[1],
+            contentLimitOptions,
+        );
+        if (!containerChanged && min === this._min && max === this._max) {
             return;
         }
-        // console.debug(`Autoscaling min: ${min}, max: ${max}`);
         this._min = min;
         this._max = max;
 
@@ -122,6 +176,7 @@ export default abstract class ScaleController<T = any, D = any> {
             ...options?.animationOptions,
             onEnd: info => {
                 if (!info.finished) {
+                    console.debug('Scaling interrupted');
                     // Reschedule update
                     this._min = 0;
                     this._max = 0;
@@ -145,6 +200,7 @@ export default abstract class ScaleController<T = any, D = any> {
             this.scaleLayout.plot.scrollTo({
                 ...baseOptions,
                 range: [pMin, pMax],
+                insets,
             });
         } else {
             // Scroll to location
@@ -161,10 +217,47 @@ export default abstract class ScaleController<T = any, D = any> {
         }
     }
 
-    abstract getLimits(
-        containerSize: IPoint,
-        insets: Partial<IInsets<number>>,
-    ): [number, number] | undefined;
+    addViewPadding(
+        contentMin: number,
+        contentMax: number,
+        options: ContentLimitOptions,
+    ): [number, number] {
+        if (this.viewPaddingAbs[0] || this.viewPaddingAbs[1]) {
+            // Convert view padding to target scale
+            let contentLen = contentMax - contentMin;
+            if (contentLen > 0) {
+                let viewLen = 0;
+                if (this.scaleLayout.isHorizontal) {
+                    viewLen = options.containerSize.x - (options.insets.left || 0) - (options.insets.right || 0);
+                } else {
+                    viewLen = options.containerSize.y - (options.insets.top || 0) - (options.insets.bottom || 0);
+                }
+                viewLen -= this.viewPaddingAbs[0];
+                viewLen -= this.viewPaddingAbs[1];
+                let scale = viewLen / contentLen;
+                contentMin -= this.viewPaddingAbs[0] / scale;
+                contentMax += this.viewPaddingAbs[1] / scale;
+            }
+        }
+        return [contentMin, contentMax];
+    }
+
+    validatedPadding(
+        padding: number | [number, number] | undefined,
+    ): [number, number] {
+        switch (typeof padding) {
+            case 'undefined':
+                return [0, 0];
+            case 'number':
+                return [padding, padding];
+            case 'object':
+                if (typeof padding[0] === 'number' && typeof padding[1] === 'number') {
+                    return [padding[0], padding[1]];
+                }
+                break;
+        }
+        throw new Error('Invalid padding');
+    }
 
     private _wasContainerReady() {
         return this._isContainerReady(this._containerSize);

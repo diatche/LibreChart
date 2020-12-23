@@ -1,6 +1,5 @@
 import {
     IAnimationBaseOptions,
-    IInsets,
     IPoint,
 } from "evergrid";
 import Scale, { 
@@ -8,9 +7,10 @@ import Scale, {
 } from "../scale/Scale";
 import DataSource from "../data/DataSource";
 import Decimal from "decimal.js";
-import ScaleController from "./ScaleController";
-
-export type AutoScaleControllerInput<T = any, D = any> = AutoScaleController<T, D> | AutoScaleControllerOptions | boolean;
+import ScaleController, {
+    ContentLimitOptions,
+    ScaleControllerOptions,
+} from "./ScaleController";
 
 export type ScaleHysteresisFunction = (
     min: number,
@@ -118,30 +118,22 @@ export namespace Hysteresis {
     // };
 }
 
-export interface AutoScaleControllerOptions {
+export interface AutoScaleOptions extends ScaleControllerOptions {
     dataSources?: DataSource[];
     contentPaddingAbs?: number | [number, number];
     contentPaddingRel?: number | [number, number];
-    viewPaddingAbs?: number | [number, number];
     min?: number;
     max?: number;
     anchor?: number;
     hysteresis?: ScaleHysteresisFunction;
-    /**
-     * Animated by default.
-     */
-    animationOptions?: IAnimationBaseOptions;
 }
 
 export default class AutoScaleController<T = any, D = any> extends ScaleController<T, D> {
     static defaultContentPaddingAbs = 0;
     static defaultContentPaddingRel = 0.2;
-    static defaultViewPaddingAbs = 0;
-    static updateDebounceInterval = 500;
 
     readonly contentPaddingAbs: [number, number];
     readonly contentPaddingRel: [number, number];
-    readonly viewPaddingAbs: [number, number];
     readonly min: number | undefined;
     readonly max: number | undefined;
     readonly anchor: number | undefined;
@@ -150,17 +142,14 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
 
     private _dataSources?: DataSource[];
 
-    constructor(options: AutoScaleControllerOptions = {}) {
-        super();
+    constructor(options: AutoScaleOptions = {}) {
+        super(options);
 
-        this.contentPaddingAbs = this._validatePadding(
+        this.contentPaddingAbs = this.validatedPadding(
             options.contentPaddingAbs || AutoScaleController.defaultContentPaddingAbs
         );
-        this.contentPaddingRel = this._validatePadding(
+        this.contentPaddingRel = this.validatedPadding(
             options.contentPaddingRel || AutoScaleController.defaultContentPaddingRel
-        );
-        this.viewPaddingAbs = this._validatePadding(
-            options.viewPaddingAbs || AutoScaleController.defaultViewPaddingAbs
         );
         this.min = options.min;
         this.max = options.max;
@@ -180,33 +169,9 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
             }
         }
 
-        this.animationOptions = options.animationOptions || {
-            animated: true,
-            timing: {
-                duration: 500,
-            },
-        };
-
         if (options?.dataSources) {
             this.dataSources = options.dataSources;
         }
-    }
-
-    static parse(input: AutoScaleControllerInput | undefined): AutoScaleController | undefined {
-        switch (typeof input) {
-            case 'undefined':
-                return undefined;
-            case 'boolean':
-                return input ? new AutoScaleController() : undefined;
-            case 'object':
-                if (input instanceof AutoScaleController) {
-                    return input;
-                } else {
-                    // Assume options
-                    return new AutoScaleController(input);
-                }
-        }
-        throw new Error('Invalid autoscaler');
     }
 
     configureScaleController() {
@@ -239,9 +204,8 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
         // TODO: implement when data source mutability is added
     }
 
-    getLimits(
-        containerSize: IPoint,
-        insets: Partial<IInsets<number>>,
+    getContentLimits(
+        options: ContentLimitOptions,
     ): [number, number] | undefined {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
@@ -250,7 +214,7 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
         let hasRange = false;
         let scaleLayout = this.scaleLayout;
         let plot = scaleLayout.plot;
-        let visibleRange = plot.getVisibleLocationRange({ insets });
+        let visibleRange = plot.getVisibleLocationRange(options);
         // Extend visible range in cross axis
         if (scaleLayout.isHorizontal) {
             visibleRange[0].x = -Infinity;
@@ -328,24 +292,6 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
             }
         }
 
-        if (this.viewPaddingAbs[0] || this.viewPaddingAbs[1]) {
-            // Convert view padding to target scale
-            let contentLen = max - min;
-            if (contentLen > 0) {
-                let viewLen = 0;
-                if (scaleLayout.isHorizontal) {
-                    viewLen = containerSize.x - (insets.left || 0) - (insets.right || 0);
-                } else {
-                    viewLen = containerSize.y - (insets.top || 0) - (insets.bottom || 0);
-                }
-                viewLen -= this.viewPaddingAbs[0];
-                viewLen -= this.viewPaddingAbs[1];
-                let scale = viewLen / contentLen;
-                min -= this.viewPaddingAbs[0] / scale;
-                max += this.viewPaddingAbs[1] / scale;
-            }
-        }
-
         return [min, max];
     }
 
@@ -360,22 +306,5 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
         }
         let axis: keyof IPoint = this.scaleLayout.isHorizontal ? 'x' : 'y';
         return [rect[0][axis], rect[1][axis]];
-    }
-
-    private _validatePadding(
-        padding: number | [number, number] | undefined,
-    ): [number, number] {
-        switch (typeof padding) {
-            case 'undefined':
-                return [0, 0];
-            case 'number':
-                return [padding, padding];
-            case 'object':
-                if (typeof padding[0] === 'number' && typeof padding[1] === 'number') {
-                    return [padding[0], padding[1]];
-                }
-                break;
-        }
-        throw new Error('Invalid padding');
     }
 }

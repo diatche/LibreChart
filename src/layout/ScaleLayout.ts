@@ -16,7 +16,7 @@ import {
 } from "./axis/axisTypes";
 import { kAxisStyleLightDefaults } from "./axis/axisConst";
 import { Observable } from "../utils/observable";
-import ScaleController from "./ScaleController";
+import ScaleController from "../scaleControllers/ScaleController";
 
 const k0 = new Decimal(0);
 
