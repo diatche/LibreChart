@@ -13,8 +13,8 @@ export * from './scale/LinearScale';
 export { default as DateScale } from './scale/DateScale';
 export * from './scale/DateScale';
 
-export { default as AutoScaleController } from './layout/AutoScaleController';
-export * from './layout/AutoScaleController';
+export { default as AutoScaleController } from './scaleControllers/AutoScaleController';
+export * from './scaleControllers/AutoScaleController';
 
 export * from './layout/axis/axisTypes';
 export * from './layout/axis/axisConst';

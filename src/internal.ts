@@ -1,5 +1,5 @@
-export { default as ScaleController } from './layout/ScaleController';
-export * from './layout/ScaleController';
+export { default as ScaleController } from './scaleControllers/ScaleController';
+export * from './scaleControllers/ScaleController';
 
 export { default as ScaleLayout } from './layout/ScaleLayout';
 export * from './layout/ScaleLayout';
