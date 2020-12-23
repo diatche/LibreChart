@@ -65,7 +65,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     maxStepFractionDenominator = kMaxStepFractionDenominator;
 
-    constructor(options?: IDateScaleOptions & IScaleOptions<Moment, Duration>) {
+    constructor(options: IDateScaleOptions & IScaleOptions<Moment, Duration> = {}) {
         super(options);
 
         let {

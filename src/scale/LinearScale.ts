@@ -21,7 +21,7 @@ export default class LinearScale extends Scale<Decimal> {
 
     tickScale: ITickScale<Decimal>;
 
-    constructor(options?: IScaleOptions<Decimal>) {
+    constructor(options: IScaleOptions<Decimal> = {}) {
         super(options);
 
         this.tickScale = {

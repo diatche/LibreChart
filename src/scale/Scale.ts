@@ -106,9 +106,9 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
 
     private _minorTickDepth = 0;
 
-    constructor(options?: IScaleOptions<T, D>) {
-        this.minorTickDepth = options?.minorTickDepth || 0;
-        this.constraints = { ...options?.constraints };
+    constructor(options: IScaleOptions<T, D>) {
+        this.minorTickDepth = options.minorTickDepth || 0;
+        this.constraints = { ...options.constraints };
         this.minorTickScales = [];
     }
 
