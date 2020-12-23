@@ -7,9 +7,9 @@ import {
     IStrokeStyle,
 } from '../types';
 
-export interface ChartRangeProps extends IFillStyle, IStrokeStyle {}
+export interface ChartRectProps extends IFillStyle, IStrokeStyle {}
 
-const ChartRange = React.memo((props: ChartRangeProps) => {
+const ChartRect = React.memo((props: ChartRectProps) => {
     return <Animated.View style={{
         flex: 1,
         backgroundColor: props.fillColor,
@@ -19,4 +19,4 @@ const ChartRange = React.memo((props: ChartRangeProps) => {
     }} />;
 });
 
-export default ChartRange;
+export default ChartRect;

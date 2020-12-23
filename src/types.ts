@@ -71,6 +71,6 @@ export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
 export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
 
-export type ChartDataType = 'path' | 'point' | 'range';
+export type ChartDataType = 'path' | 'point' | 'rect';
 
 export type Cancelable = { cancel: () => void };
