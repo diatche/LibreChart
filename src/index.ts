@@ -13,6 +13,9 @@ export * from './scale/LinearScale';
 export { default as DateScale } from './scale/DateScale';
 export * from './scale/DateScale';
 
+export { default as FixedScaleController } from './scaleControllers/FixedScaleController';
+export * from './scaleControllers/FixedScaleController';
+
 export { default as AutoScaleController } from './scaleControllers/AutoScaleController';
 export * from './scaleControllers/AutoScaleController';
 
