@@ -17,8 +17,8 @@ import LineDataSource from '../data/LineDataSource';
 import { IPointStyle } from '../types';
 import ChartLine from './ChartLine';
 import { axisTypeMap } from '../layout/axis/axisUtil';
-import RangeDataSource from '../data/RangeDataSource';
-import ChartRange from './ChartRange';
+import RectDataSource from '../data/RectDataSource';
+import ChartRect from './ChartRect';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -115,14 +115,16 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                         context: dataSource as LineDataSource,
                     };
                     break;
-                case 'range':
+                case 'rect':
                     itemRenderMap[dataSource.layout.id] = {
                         renderItem: (item, layoutSource, context) => (
-                            this.renderRange(item, context)
+                            this.renderRect(item, context)
                         ),
-                        context: dataSource as RangeDataSource,
+                        context: dataSource as RectDataSource,
                     };
                     break;
+                default:
+                    throw new Error(`Unsupported data source type: ${dataSource.type}`);
             }
         }
         this.itemRenderMap = itemRenderMap;
@@ -190,9 +192,9 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 
-    renderRange(item: IItem<number>, dataSource: RangeDataSource): React.ReactNode {
+    renderRect(item: IItem<number>, dataSource: RectDataSource): React.ReactNode {
         let dataItem = dataSource.transform(dataSource.data[item.index]);
-        return <ChartRange {...dataSource.style} {...dataItem.style} />
+        return <ChartRect {...dataSource.style} {...dataItem.style} />
     }
 
     renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis): React.ReactNode {

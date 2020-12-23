@@ -5,7 +5,7 @@ import {
     LayoutSourceProps,
 } from 'evergrid';
 import DataSource from './DataSource';
-import { ChartDataType, IDataItem } from '../types';
+import { ChartDataType } from '../types';
 
 const kDefaultPointViewDiameter = 8;
 const kDefaultPointViewSize = {

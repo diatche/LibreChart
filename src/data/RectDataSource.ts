@@ -15,7 +15,7 @@ import {
 } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 
-export interface IRangeDataItem<X, Y> extends IDataItem<X, Y, IRectStyle> {
+export interface IRectDataItem<X, Y> extends IDataItem<X, Y, IRectStyle> {
     x: X,
     y: Y,
     x2: X,
@@ -23,17 +23,15 @@ export interface IRangeDataItem<X, Y> extends IDataItem<X, Y, IRectStyle> {
     style?: IRectStyle;
 }
 
-export interface RangeDataSourceInput<T, X = any, Y = any> {
-    transform: (item: T) => IRangeDataItem<X, Y>;
+export interface RectDataSourceInput<T, X = any, Y = any> {
+    transform: (item: T) => IRectDataItem<X, Y>;
     style?: IRectStyle;
 }
 
-export default class RangeDataSource<
+export default class RectDataSource<
     T = any,
     X = any,
     Y = any,
-    DX = any,
-    DY = any,
 > extends DataSource<
     T,
     number,
@@ -41,26 +39,26 @@ export default class RangeDataSource<
     CustomLayoutSource,
     X,
     Y,
-    DX,
-    DY,
+    any,
+    any,
     IRectStyle,
-    IRangeDataItem<X, Y>
+    IRectDataItem<X, Y>
 > {
     style: IRectStyle;
 
     constructor(
-        input: RangeDataSourceInput<T, X, Y> & DataSourceInput<T, number, CustomLayoutSourceProps, X, Y, IRectStyle, IRangeDataItem<X, Y>>
+        input: RectDataSourceInput<T, X, Y> & DataSourceInput<T, number, CustomLayoutSourceProps, X, Y, IRectStyle, IRectDataItem<X, Y>>
     ) {
         super(input);
         this.style = { ...input.style };
     }
 
     get type(): ChartDataType {
-        return 'range';
+        return 'rect';
     }
 
     get itemReuseID(): string {
-        return this.id + '_range';
+        return this.id + '_rect';
     }
 
     getItemLayout(index: number): IItemCustomLayout {
@@ -100,7 +98,6 @@ export default class RangeDataSource<
     createLayoutSource(props?: LayoutSourceProps<number>) {
         return new CustomLayoutSource({
             ...this.plot.getLayoutSourceOptions(),
-            itemSize: { x: 1, y: 1 },
             reuseID: this.itemReuseID,
             ...props,
             getItemLayout: i => this.getItemLayout(i),
