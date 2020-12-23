@@ -16,6 +16,11 @@ export interface ContentLimitOptions {
 
 export interface ScaleControllerOptions {
     viewPaddingAbs?: number | [number, number];
+
+    /**
+     * Animated by default.
+     */
+    animationOptions?: IAnimationBaseOptions;
 }
 
 export default abstract class ScaleController<T = any, D = any> {
@@ -34,6 +39,13 @@ export default abstract class ScaleController<T = any, D = any> {
         this.viewPaddingAbs = this.validatedPadding(
             options.viewPaddingAbs || ScaleController.defaultViewPaddingAbs
         );
+
+        this.animationOptions = options.animationOptions || {
+            animated: true,
+            timing: {
+                duration: 500,
+            },
+        };
     }
 
     abstract getContentLimits(

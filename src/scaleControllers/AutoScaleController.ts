@@ -126,16 +126,11 @@ export interface AutoScaleOptions extends ScaleControllerOptions {
     max?: number;
     anchor?: number;
     hysteresis?: ScaleHysteresisFunction;
-    /**
-     * Animated by default.
-     */
-    animationOptions?: IAnimationBaseOptions;
 }
 
 export default class AutoScaleController<T = any, D = any> extends ScaleController<T, D> {
     static defaultContentPaddingAbs = 0;
     static defaultContentPaddingRel = 0.2;
-    static updateDebounceInterval = 500;
 
     readonly contentPaddingAbs: [number, number];
     readonly contentPaddingRel: [number, number];
@@ -173,13 +168,6 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
                 console.warn(`Autoscale anchor (${this.anchor}) is above max value (${this.max})`);
             }
         }
-
-        this.animationOptions = options.animationOptions || {
-            animated: true,
-            timing: {
-                duration: 500,
-            },
-        };
 
         if (options?.dataSources) {
             this.dataSources = options.dataSources;
