@@ -122,6 +122,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
             controller = new FixedScaleController({
                 min: discreteScale.locationOfValue(minValue).toNumber(),
                 max: discreteScale.locationOfValue(maxValue).toNumber(),
+                viewPaddingRel: 0.1,
             });
         }
         this.controller = controller;

@@ -16,6 +16,7 @@ export interface ContentLimitOptions {
 
 export interface ScaleControllerOptions {
     viewPaddingAbs?: number | [number, number];
+    viewPaddingRel?: number | [number, number];
 
     /**
      * Animated by default.
@@ -25,10 +26,12 @@ export interface ScaleControllerOptions {
 
 export default abstract class ScaleController<T = any, D = any> {
     static defaultViewPaddingAbs = 0;
+    static defaultViewPaddingRel = 0;
     static updateDebounceInterval = 500;
     animationOptions?: IAnimationBaseOptions;
 
     readonly viewPaddingAbs: [number, number];
+    readonly viewPaddingRel: [number, number];
 
     private _min = 0;
     private _max = 0;
@@ -38,6 +41,9 @@ export default abstract class ScaleController<T = any, D = any> {
     constructor(options: ScaleControllerOptions) {
         this.viewPaddingAbs = this.validatedPadding(
             options.viewPaddingAbs || ScaleController.defaultViewPaddingAbs
+        );
+        this.viewPaddingRel = this.validatedPadding(
+            options.viewPaddingRel || ScaleController.defaultViewPaddingRel
         );
 
         this.animationOptions = options.animationOptions || {
@@ -145,9 +151,9 @@ export default abstract class ScaleController<T = any, D = any> {
         let containerChanged = !this._containerSize;
         if (this._containerSize) {
             if (scaleLayout.isHorizontal) {
-                containerChanged = this._containerSize.x !== containerSize.x;
+                containerChanged = Math.abs(this._containerSize.x - containerSize.x) >= 1;
             } else {
-                containerChanged = this._containerSize.y !== containerSize.y;
+                containerChanged = Math.abs(this._containerSize.y - containerSize.y) >= 1;
             }
         }
 
@@ -176,7 +182,6 @@ export default abstract class ScaleController<T = any, D = any> {
             ...options?.animationOptions,
             onEnd: info => {
                 if (!info.finished) {
-                    console.debug('Scaling interrupted');
                     // Reschedule update
                     this._min = 0;
                     this._max = 0;
@@ -186,6 +191,7 @@ export default abstract class ScaleController<T = any, D = any> {
             },
         };
 
+        // console.debug(`scaling to min: ${min} max: ${max}`);
         if (max > min) {
             // Scroll and scale to range
             let pMin: Partial<IPoint> = {};
@@ -222,6 +228,15 @@ export default abstract class ScaleController<T = any, D = any> {
         contentMax: number,
         options: ContentLimitOptions,
     ): [number, number] {
+        if (this.viewPaddingRel[0] || this.viewPaddingRel[1]) {
+            let diff = contentMax - contentMin;
+            if (diff > 0) {
+                // Apply relative padding
+                contentMin -= this.viewPaddingRel[0] * diff;
+                contentMax += this.viewPaddingRel[1] * diff;
+            }
+        }
+        
         if (this.viewPaddingAbs[0] || this.viewPaddingAbs[1]) {
             // Convert view padding to target scale
             let contentLen = contentMax - contentMin;
