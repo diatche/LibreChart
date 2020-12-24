@@ -1,16 +1,13 @@
 import {
-    IItem,
     IItemUpdateManyOptions,
     IPoint,
     isPointInRange,
     LayoutSource,
-    LayoutSourceProps,
     weakref,
     zeroPoint,
 } from 'evergrid';
 import {
     ChartDataType,
-    IDataItem,
     IDataLocation,
     IDataPoint,
     IDecimalPoint,
@@ -24,24 +21,17 @@ export interface DataSourceProps<
     T,
     X = any,
     Y = any,
-    S = any,
-    Item extends IDataItem<X, Y, S> = IDataItem<X, Y, S>,
 > {
     data?: T[];
-    transform: (item: T) => Item;
+    transform: (item: T, index: number) => IDataLocation<X, Y>;
 }
 
 export interface DataSourceInput<
     T,
-    Index = any,
-    LayoutProps extends LayoutSourceProps<Index> = LayoutSourceProps<Index>,
     X = any,
     Y = any,
-    S = any,
-    Item extends IDataItem<X, Y, S> = IDataItem<X, Y, S>,
-> extends DataSourceProps<T, X, Y, S, Item> {
+> extends DataSourceProps<T, X, Y> {
     noCopy?: boolean;
-    layout?: LayoutProps;
 }
 
 export interface IItemsInLocationRangeOptions {
@@ -50,52 +40,43 @@ export interface IItemsInLocationRangeOptions {
 
 export default abstract class DataSource<
     T = any,
-    Index = any,
-    LayoutProps extends LayoutSourceProps<Index> = LayoutSourceProps<Index>,
-    Layout extends LayoutSource<Index, LayoutProps> = LayoutSource<Index, LayoutProps>,
     X = any,
     Y = any,
-    DX = any,
-    DY = any,
-    S = any,
-    Item extends IDataItem<X, Y, S> = IDataItem<X, Y, S>,
-> implements DataSourceProps<T, X, Y, S, Item> {
+> implements DataSourceProps<T, X, Y> {
     id: string;
     data: T[];
-    transform: (item: T) => Item;
-    layout?: Layout;
-    layoutProps?: LayoutProps;
+    transform: (item: T, index: number) => IDataLocation<X, Y>;
+    layout?: LayoutSource;
 
-    private _plotWeakRef = weakref<PlotLayout<X, Y, DX, DY>>();
+    private _plotWeakRef = weakref<PlotLayout<X, Y>>();
     private _scaleLayoutUpdates?: {
         x: Observable.IObserver,
         y: Observable.IObserver,
     };
 
-    constructor(props: DataSourceInput<T, Index, LayoutProps, X, Y, S, Item>) {
+    constructor(input: DataSourceInput<T, X, Y>) {
         this.id = `${(++_idCounter)}`;
-        if (props.noCopy && !props.data) {
+        if (input.noCopy && !input.data) {
             throw new Error('Cannot use "noCopy" with null data.');
         }
-        this.data = props.noCopy ? props.data! : [...props.data!];
-        this.transform = props.transform;
-        this.layoutProps = props.layout;
+        this.data = input.noCopy ? input.data! : [...input.data!];
+        this.transform = input.transform;
     }
 
-    get plot(): PlotLayout<X, Y, DX, DY> {
+    get plot(): PlotLayout<X, Y> {
         return this._plotWeakRef.getOrFail();
     }
 
-    set plot(plot: PlotLayout<X, Y, DX, DY>) {
+    set plot(plot: PlotLayout<X, Y>) {
         if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
         this._plotWeakRef.set(plot);
     }
 
-    configure(plot: PlotLayout<X, Y, DX, DY>) {
+    configure(plot: PlotLayout<X, Y>) {
         this.plot = plot;
-        this.layout = this.createLayoutSource(this.layoutProps);
+        this.layout = this.createLayoutSource();
 
         const updateOptions: IItemUpdateManyOptions = {
             visible: true,
@@ -131,12 +112,7 @@ export default abstract class DataSource<
 
     abstract get itemReuseID(): string;
 
-    abstract createLayoutSource(props?: LayoutProps): Layout;
-
-    ownsItem(item: IItem<any>): item is IItem<Index> {
-        // TODO: need to use different reuse ids for each data source
-        return item.reuseID === this.itemReuseID;
-    }
+    abstract createLayoutSource(): LayoutSource;
 
     getDataBoundingRectInRange(pointRange: [IPoint, IPoint]): [IPoint, IPoint] | undefined {
         // Get data range
@@ -177,7 +153,7 @@ export default abstract class DataSource<
         let points: IDataPoint[] = [];
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
-            let p = this.getItemPoint(this.transform(this.data[i])) as IDataPoint;
+            let p = this.getItemPoint(this.transform(this.data[i], i)) as IDataPoint;
             p.dataIndex = i;
             if (isPointInRange(p, pointRange)) {
                 points.push(p);
@@ -190,7 +166,7 @@ export default abstract class DataSource<
         let indexes: number[] = [];
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
-            const p = this.getItemPoint(this.transform(this.data[i]));
+            const p = this.getItemPoint(this.transform(this.data[i], i));
             if (isPointInRange(p, pointRange)) {
                 indexes.push(i);
             }

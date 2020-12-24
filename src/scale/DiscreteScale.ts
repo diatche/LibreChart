@@ -12,23 +12,26 @@ const k0 = new Decimal(0);
 const k1 = new Decimal(1);
 
 export interface IDiscreteScaleOptions<T> extends IScaleOptions<T, D> {
-    values: T[];
-    isValue: (value: any) => value is T;
+    values: Iterable<T>;
+    emptyValue: T;
+    isValue: (value: any) => boolean;
 }
 
-export default class DiscreteScale<T> extends Scale<T | undefined, D> {
+export default class DiscreteScale<T> extends Scale<T, D> {
     readonly values: T[];
-    private _isValue: (value: any) => value is T;
+    private _emptyValue: T;
+    private _isValue: (value: any) => boolean;
 
     tickScale: DiscreteScaleType<T>;
 
     constructor(options: IDiscreteScaleOptions<T>) {
         super(options);
 
-        this.values = options.values || [];
+        this.values = [...(options.values || [])];
         if (this.values.length === 0) {
             throw new Error('Discrete scale values must not be empty.');
         }
+        this._emptyValue = options.emptyValue;
         this._isValue = options.isValue;
 
         this.tickScale = {
@@ -43,11 +46,11 @@ export default class DiscreteScale<T> extends Scale<T | undefined, D> {
         }
     }
 
-    zeroValue(): T {
-        return this.values[0];
+    emptyValue(): T {
+        return this._emptyValue;
     }
 
-    zeroValueInterval(): number {
+    emptyValueInterval(): number {
         return 0;
     }
 
@@ -64,10 +67,10 @@ export default class DiscreteScale<T> extends Scale<T | undefined, D> {
         }
     }
 
-    addIntervalToValue(value: T, interval: D): T | undefined {
+    addIntervalToValue(value: T, interval: D): T {
         let i = this.values.indexOf(value);
         if (i < 0) {
-            throw new Error('Invalid value');
+            return this._emptyValue;
         }
         return this.values[i + interval];
     }
@@ -77,15 +80,22 @@ export default class DiscreteScale<T> extends Scale<T | undefined, D> {
     }
 
     locationOfValue(value: T): Decimal {
+        if (value === this._emptyValue) {
+            return this.emptyScale().origin.location;
+        }
         let i = this.values.indexOf(value);
         if (i < 0) {
-            throw new Error('Invalid value');
+            throw new Error(`Unable to get location of invalid value: ${value}`);
         }
         return new Decimal(i);
     }
 
-    valueAtLocation(location: Decimal): T | undefined {
-        return this.values[location.toNumber()];
+    valueAtLocation(location: Decimal): T {
+        let i = location.toNumber();
+        if (i < 0 || i >= this.values.length) {
+            return this._emptyValue;
+        }
+        return this.values[i];
     }
 
     isValue(value: any): value is T {
@@ -97,13 +107,22 @@ export default class DiscreteScale<T> extends Scale<T | undefined, D> {
     }
 
     compareValues(a: T, b: T): number {
+        if (a === b) {
+            return 0;
+        }
+        if (a === this._emptyValue) {
+            return -1;
+        }
+        if (b === this._emptyValue) {
+            return 1;
+        }
         let ai = this.values.indexOf(a);
         if (ai < 0) {
-            throw new Error('Invalid value');
+            throw new Error(`Unable to compare invalid value (left): ${a}`);
         }
         let bi = this.values.indexOf(b);
         if (bi < 0) {
-            throw new Error('Invalid value');
+            throw new Error(`Unable to compare invalid value (right): ${b}`);
         }
         return ai - bi;
     }

@@ -16,10 +16,6 @@ export interface IDataLocation<X, Y> {
     y: Y,
 }
 
-export interface IDataItem<X, Y, S> extends IDataLocation<X, Y> {
-    style?: S;
-}
-
 export interface IDataPoint extends IPoint {
     dataIndex: number;
 }

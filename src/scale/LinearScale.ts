@@ -36,8 +36,8 @@ export default class LinearScale extends Scale<Decimal> {
         }
     }
 
-    zeroValue() { return k0 };
-    zeroValueInterval() { return k0 };
+    emptyValue() { return k0 };
+    emptyValueInterval() { return k0 };
 
     getTickScale(
         start: Decimal,

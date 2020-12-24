@@ -42,7 +42,7 @@ export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends
     index?: IPoint;
     xLayout?: ScaleLayout<X, DX>;
     yLayout?: ScaleLayout<Y, DY>;
-    dataSources?: DataSource<X, Y>[];
+    dataSources?: DataSource<any, X, Y>[];
     grid?: IChartGridInput | Grid;
     axes?: AxisManyInput;
 }
@@ -51,7 +51,7 @@ export type PlotLayoutManyInput = (PlotLayout | PlotLayoutOptions)[];
 
 export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends EvergridLayout { 
     index: IPoint;
-    dataSources: DataSource<X, Y>[];
+    dataSources: DataSource<any, X, Y>[];
 
     readonly xLayout: ScaleLayout<X, DX>;
     readonly yLayout: ScaleLayout<Y, DY>;

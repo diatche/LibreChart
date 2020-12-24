@@ -1,6 +1,5 @@
 import {
     CustomLayoutSource,
-    CustomLayoutSourceProps,
     IItemCustomLayout,
     IPoint,
     LayoutSourceProps,
@@ -10,47 +9,32 @@ import DataSource, {
 } from './DataSource';
 import {
     ChartDataType,
-    IDataItem,
+    IDataLocation,
     IRectStyle,
 } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 
-export interface IRectDataItem<X, Y> extends IDataItem<X, Y, IRectStyle> {
-    x: X,
-    y: Y,
-    x2: X,
-    y2: Y,
-    style?: IRectStyle;
+export interface IDataRect<X, Y> extends IDataLocation<X, Y> {
+    x2: X;
+    y2: Y;
 }
 
-export interface RectDataSourceInput<T, X = any, Y = any> {
-    transform: (item: T) => IRectDataItem<X, Y>;
+export interface RectDataSourceInput<T, X = any, Y = any> extends DataSourceInput<T, X, Y> {
+    transform: (item: T, index: number) => IDataRect<X, Y>;
     style?: IRectStyle;
+    itemStyle?: (item: T, index: number) => IRectStyle;
 }
 
-export default class RectDataSource<
-    T = any,
-    X = any,
-    Y = any,
-> extends DataSource<
-    T,
-    number,
-    CustomLayoutSourceProps,
-    CustomLayoutSource,
-    X,
-    Y,
-    any,
-    any,
-    IRectStyle,
-    IRectDataItem<X, Y>
-> {
+export default class RectDataSource<T = any, X = any, Y = any> extends DataSource<T, X, Y> {
+    transform: (item: T, index: number) => IDataRect<X, Y>;
     style: IRectStyle;
+    itemStyle?: (item: T, index: number) => IRectStyle;
 
-    constructor(
-        input: RectDataSourceInput<T, X, Y> & DataSourceInput<T, number, CustomLayoutSourceProps, X, Y, IRectStyle, IRectDataItem<X, Y>>
-    ) {
+    constructor(input: RectDataSourceInput<T, X, Y>) {
         super(input);
+        this.transform = input.transform;
         this.style = { ...input.style };
+        this.itemStyle = input.itemStyle;
     }
 
     get type(): ChartDataType {
@@ -62,7 +46,7 @@ export default class RectDataSource<
     }
 
     getItemLayout(index: number): IItemCustomLayout {
-        let range = this.transform(this.data[index]);
+        let range = this.transform(this.data[index], index);
         let start = this.getItemPoint(range);
         let end = this.getItemPoint({ x: range.x2, y: range.y2 });
         return {

@@ -193,8 +193,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
     }
 
     renderRect(item: IItem<number>, dataSource: RectDataSource): React.ReactNode {
-        let dataItem = dataSource.transform(dataSource.data[item.index]);
-        return <ChartRect {...dataSource.style} {...dataItem.style} />
+        let dataItem = dataSource.data[item.index];
+        return <ChartRect {...dataSource.style} {...dataSource.itemStyle?.(dataItem, item.index)} />
     }
 
     renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis): React.ReactNode {

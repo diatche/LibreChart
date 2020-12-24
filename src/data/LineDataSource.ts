@@ -9,7 +9,6 @@ import DataSource, {
 } from './DataSource';
 import {
     ChartDataType,
-    IDataItem,
     IDataPoint,
     IPointStyle,
     IStrokeStyle,
@@ -29,16 +28,14 @@ export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
     curve?: PathCurve;
 }
 
-export interface LineDataSourceInput {
+export interface LineDataSourceInput<T> extends DataSourceInput<T> {
     style?: ILineDataStyle;
 }
 
-export default class LineDataSource<T = any> extends DataSource<
-    T, IPoint, GridLayoutSourceProps, GridLayoutSource
-> {
+export default class LineDataSource<T = any> extends DataSource<T> {
     style: ILineDataStyle;
 
-    constructor(input: LineDataSourceInput & DataSourceInput<T, IPoint, GridLayoutSourceProps>) {
+    constructor(input: LineDataSourceInput<T>) {
         super(input);
         this.style = { ...input.style };
     }
@@ -64,10 +61,10 @@ export default class LineDataSource<T = any> extends DataSource<
         // Add clipped lines
         const c = this.data.length;
         let points: ILinePoint[] = [];
-        let p0 = this.getItemPoint(this.transform(this.data[0]));
+        let p0 = this.getItemPoint(this.transform(this.data[0], 0));
         let iAdded = -1;
         for (let i = 1; i < c; i++) {
-            let p = this.getItemPoint(this.transform(this.data[i]));
+            let p = this.getItemPoint(this.transform(this.data[i], i));
             let line = VectorUtil.cohenSutherlandLineClip(
                 p0.x, p0.y,
                 p.x, p.y,

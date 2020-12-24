@@ -103,8 +103,8 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         }
     }
 
-    zeroValue() { return kZeroDate; };
-    zeroValueInterval() { return kZeroDuration };
+    emptyValue() { return kZeroDate; };
+    emptyValueInterval() { return kZeroDuration };
 
     getTickScale(
         startDate: Moment,

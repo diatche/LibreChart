@@ -1,6 +1,5 @@
 import {
     CustomLayoutSource,
-    CustomLayoutSourceProps,
     IItemCustomLayout,
     LayoutSourceProps,
 } from 'evergrid';
@@ -16,9 +15,7 @@ const kDefaultPointViewLayout = {
     size: kDefaultPointViewSize,
 };
 
-export default class PointDataSource<T = any> extends DataSource<
-    T, number, CustomLayoutSourceProps, CustomLayoutSource
-> {
+export default class PointDataSource<T = any> extends DataSource<T> {
     get type(): ChartDataType {
         return 'point';
     }
@@ -43,7 +40,7 @@ export default class PointDataSource<T = any> extends DataSource<
 
     getItemLayout(index: number): IItemCustomLayout {
         return {
-            offset: this.getItemPoint(this.transform(this.data[index])),
+            offset: this.getItemPoint(this.transform(this.data[index], index)),
         };
     }
 }
