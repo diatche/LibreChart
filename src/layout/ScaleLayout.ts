@@ -18,7 +18,7 @@ import { kAxisStyleLightDefaults } from "./axis/axisConst";
 import { Observable } from "../utils/observable";
 import ScaleController from "../scaleControllers/ScaleController";
 import DiscreteScale from "../scale/DiscreteScale";
-import FixedScaleController from "../scaleControllers/FixedScaleController";
+import AutoScaleController from "../scaleControllers/AutoScaleController";
 
 const k0 = new Decimal(0);
 
@@ -116,12 +116,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
         };
 
         if (!controller && scale instanceof DiscreteScale) {
-            let discreteScale: DiscreteScale<T> = scale;
-            let minValue = discreteScale.values[0];
-            let maxValue = discreteScale.values[discreteScale.values.length - 1];
-            controller = new FixedScaleController({
-                min: discreteScale.locationOfValue(minValue).toNumber(),
-                max: discreteScale.locationOfValue(maxValue).toNumber(),
+            controller = new AutoScaleController({
                 viewPaddingRel: 0.1,
             });
         }
@@ -171,7 +166,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
             // No changes
             return false;
         }
-        // console.debug('tickScale: ' + JSON.stringify(this.scale.tickScale, null, 2));
+        // console.debug(`axisLengthInfo ${this.isHorizontal ? 'H' : 'V'}: ` + JSON.stringify(axisLengthInfo, null, 2));
 
         Object.assign(this.layoutInfo, axisLengthInfo);
         
