@@ -166,5 +166,67 @@ describe('VectorUtil', () => {
                 0, 0, 2, 2,
             )).toBeTruthy();
         });
+
+        it('should intersect with y-infinite rect', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -10, -Infinity, 20, Infinity,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                -10, -Infinity, 20, Infinity,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -10, -10, 20, Infinity,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                -10, -10, 20, Infinity,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+
+        it('should not intersect with y-infinite rect', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -10, 10, 20, Infinity,
+            )).toBeFalsy();
+            expect(VectorUtil.rectsIntersect(
+                -10, 10, 20, Infinity,
+                0, 0, 2, 2,
+            )).toBeFalsy();
+        });
+
+        it('should intersect with x-infinite rect', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -Infinity, -10, Infinity, 20,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                -Infinity, -10, Infinity, 20,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                -10, -10, Infinity, 20,
+            )).toBeTruthy();
+            expect(VectorUtil.rectsIntersect(
+                -10, -10, Infinity, 20,
+                0, 0, 2, 2,
+            )).toBeTruthy();
+        });
+
+        it('should not intersect with x-infinite rect', () => {
+            expect(VectorUtil.rectsIntersect(
+                0, 0, 2, 2,
+                10, -10, Infinity, 20,
+            )).toBeFalsy();
+            expect(VectorUtil.rectsIntersect(
+                10, -10, Infinity, 20,
+                0, 0, 2, 2,
+            )).toBeFalsy();
+        });
     });
 });

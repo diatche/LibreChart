@@ -13,14 +13,10 @@ const k1 = new Decimal(1);
 
 export interface IDiscreteScaleOptions<T> extends IScaleOptions<T, D> {
     values: Iterable<T>;
-    emptyValue: T;
-    isValue: (value: any) => boolean;
 }
 
 export default class DiscreteScale<T> extends Scale<T, D> {
     readonly values: T[];
-    private _emptyValue: T;
-    private _isValue: (value: any) => boolean;
 
     tickScale: DiscreteScaleType<T>;
 
@@ -31,8 +27,6 @@ export default class DiscreteScale<T> extends Scale<T, D> {
         if (this.values.length === 0) {
             throw new Error('Discrete scale values must not be empty.');
         }
-        this._emptyValue = options.emptyValue;
-        this._isValue = options.isValue;
 
         this.tickScale = {
             origin: {
@@ -47,7 +41,7 @@ export default class DiscreteScale<T> extends Scale<T, D> {
     }
 
     emptyValue(): T {
-        return this._emptyValue;
+        return this.values[0];
     }
 
     emptyValueInterval(): number {
@@ -70,7 +64,7 @@ export default class DiscreteScale<T> extends Scale<T, D> {
     addIntervalToValue(value: T, interval: D): T {
         let i = this.values.indexOf(value);
         if (i < 0) {
-            return this._emptyValue;
+            return this.emptyValue();
         }
         return this.values[i + interval];
     }
@@ -80,7 +74,7 @@ export default class DiscreteScale<T> extends Scale<T, D> {
     }
 
     locationOfValue(value: T): Decimal {
-        if (value === this._emptyValue) {
+        if (value === this.emptyValue()) {
             return this.emptyScale().origin.location;
         }
         let i = this.values.indexOf(value);
@@ -92,14 +86,19 @@ export default class DiscreteScale<T> extends Scale<T, D> {
 
     valueAtLocation(location: Decimal): T {
         let i = location.toNumber();
-        if (i < 0 || i >= this.values.length) {
-            return this._emptyValue;
+        if (i < 0) {
+            i = 0;
+        } else if (i >= this.values.length) {
+            i = this.values.length - 1;
         }
+        // if (i < 0 || i >= this.values.length) {
+        //     return this.emptyValue();
+        // }
         return this.values[i];
     }
 
     isValue(value: any): value is T {
-        return this._isValue(value);
+        return this.values.indexOf(value) >= 0;
     }
 
     isInterval(interval: any): interval is D {
@@ -110,10 +109,10 @@ export default class DiscreteScale<T> extends Scale<T, D> {
         if (a === b) {
             return 0;
         }
-        if (a === this._emptyValue) {
+        if (a === this.emptyValue()) {
             return -1;
         }
-        if (b === this._emptyValue) {
+        if (b === this.emptyValue()) {
             return 1;
         }
         let ai = this.values.indexOf(a);

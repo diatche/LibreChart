@@ -186,6 +186,9 @@ export namespace VectorUtil {
         w2: number,
         h2: number,
     ): boolean => {
-        return x2 < x1 + w1 && x1 < x2 + w2 && y2 < y1 + h1 && y1 < y2 + h2;
+        return (isFinite(w1) ? x2 < x1 + w1 : w1 > 0)
+            && (isFinite(w2) ? x1 < x2 + w2 : w2 > 0)
+            && (isFinite(h1) ? y2 < y1 + h1 : h1 > 0)
+            && (isFinite(h2) ? y1 < y2 + h2 : h2 > 0);
     };
 }

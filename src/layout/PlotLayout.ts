@@ -31,6 +31,9 @@ import { Cancelable } from "../types";
 import debounce from "lodash.debounce";
 
 const kGridUpdateDebounceInterval = 100;
+const kDefaultUpdateInfo: IUpdateInfo = {
+    initial: false,
+};
 
 export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends EvergridLayoutCallbacks, Omit<EvergridLayoutProps, 'layoutSources'> {
     /**
@@ -173,7 +176,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         this.grid.configure(this);
 
         this.setLayoutSources(this.getLayoutSources());
-        this.updatePlot();
+        this.updatePlot({ initial: true });
     }
 
     unconfigurePlot() {
@@ -236,18 +239,18 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
     private _scheduledPlotUpdate?: Cancelable;
 
     private _debouncedPlotUpdate = debounce(
-        () => this.updatePlot(),
+        () => this.updatePlot(kDefaultUpdateInfo),
         kGridUpdateDebounceInterval,
     );
 
     didUpdate(info: IUpdateInfo) {
         super.didUpdate(info);
         if (info.initial) {
-            this.updatePlot();
+            this.updatePlot(info);
         }
     }
 
-    updatePlot() {
+    updatePlot(info: IUpdateInfo) {
         this.cancelPlotUpdate();
         
         this.xLayout.update();

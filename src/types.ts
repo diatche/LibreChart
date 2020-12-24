@@ -11,12 +11,19 @@ import {
 
 export type AnimatedValueAny = number | Animated.Value | Animated.AnimatedInterpolation;
 
-export interface IDataLocation<X, Y> {
-    x: X,
-    y: Y,
+export interface IDataSourceRect<X, Y> {
+    x: X;
+    y: Y;
+    x2?: X;
+    y2?: Y;
 }
 
-export interface IDataPoint extends IPoint {
+export interface IRect extends IPoint {
+    width: number;
+    height: number;
+}
+
+export interface IDataRect extends IPoint, IRect {
     dataIndex: number;
 }
 
@@ -43,11 +50,20 @@ export interface IFillStyle {
 }
 
 export interface IRectStyle extends IFillStyle, IStrokeStyle {
+
     cornerRadius?: AnimatedValueAny;
     topLeftCornerRadius?: AnimatedValueAny;
     topRightCornerRadius?: AnimatedValueAny;
     bottomRightCornerRadius?: AnimatedValueAny;
     bottomLeftCornerRadius?: AnimatedValueAny;
+
+    padding?: AnimatedValueAny;
+    paddingHorizontal?: AnimatedValueAny;
+    paddingVertical?: AnimatedValueAny;
+    paddingLeft?: AnimatedValueAny;
+    paddingRight?: AnimatedValueAny;
+    paddingTop?: AnimatedValueAny;
+    paddingBottom?: AnimatedValueAny;
 }
 
 export interface ITickLabel {

@@ -40,7 +40,7 @@ export default class PointDataSource<T = any> extends DataSource<T> {
 
     getItemLayout(index: number): IItemCustomLayout {
         return {
-            offset: this.getItemPoint(this.transform(this.data[index], index)),
+            offset: this.getItemRect(this.transform(this.data[index], index)),
         };
     }
 }

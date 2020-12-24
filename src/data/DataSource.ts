@@ -8,12 +8,13 @@ import {
 } from 'evergrid';
 import {
     ChartDataType,
-    IDataLocation,
-    IDataPoint,
-    IDecimalPoint,
+    IDataSourceRect,
+    IDataRect,
+    IRect,
 } from '../types';
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
+import { VectorUtil } from '../utils/vectorUtil';
 
 let _idCounter = 0;
 
@@ -23,7 +24,7 @@ export interface DataSourceProps<
     Y = any,
 > {
     data?: T[];
-    transform: (item: T, index: number) => IDataLocation<X, Y>;
+    transform: (item: T, index: number) => IDataSourceRect<X, Y>;
 }
 
 export interface DataSourceInput<
@@ -45,7 +46,7 @@ export default abstract class DataSource<
 > implements DataSourceProps<T, X, Y> {
     id: string;
     data: T[];
-    transform: (item: T, index: number) => IDataLocation<X, Y>;
+    transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     layout?: LayoutSource;
 
     private _plotWeakRef = weakref<PlotLayout<X, Y>>();
@@ -116,47 +117,65 @@ export default abstract class DataSource<
 
     getDataBoundingRectInRange(pointRange: [IPoint, IPoint]): [IPoint, IPoint] | undefined {
         // Get data range
-        let points = this.getDataPointsInRange(
+        let rects = this.getDataRectsInRange(
             pointRange,
             { partial: true },
         );
-        if (points.length === 0) {
+        if (rects.length === 0) {
             return undefined;
         }
         let min = zeroPoint();
         let max = zeroPoint();
 
-        min = { ...points[0] };
-        max = { ...min };
-        for (let v of points) {
-            if (v.x < min.x) {
-                min.x = v.x;
+        min = { ...rects[0] };
+        max = {
+            x: rects[0].x + rects[0].width,
+            y: rects[0].y + rects[0].height,
+        };
+        for (let r of rects) {
+            let x2 = r.x + r.width;
+            let y2 = r.y + r.height;
+            if (r.x < min.x) {
+                min.x = r.x;
             }
-            if (v.x > max.x) {
-                max.x = v.x;
+            if (x2 > max.x) {
+                max.x = x2;
             }
-            if (v.y < min.y) {
-                min.y = v.y;
+            if (r.y < min.y) {
+                min.y = r.y;
             }
-            if (v.y > max.y) {
-                max.y = v.y;
+            if (y2 > max.y) {
+                max.y = y2;
             }
         }
 
         return [min, max];
     }
 
-    getDataPointsInRange(
+    getDataRectsInRange(
         pointRange: [IPoint, IPoint],
         options?: IItemsInLocationRangeOptions,
-    ): IDataPoint[] {
-        let points: IDataPoint[] = [];
+    ): IDataRect[] {
+        let points: IDataRect[] = [];
+        let xLen = pointRange[1].x - pointRange[0].x;
+        let yLen = pointRange[1].y - pointRange[0].y;
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
-            let p = this.getItemPoint(this.transform(this.data[i], i)) as IDataPoint;
-            p.dataIndex = i;
-            if (isPointInRange(p, pointRange)) {
-                points.push(p);
+            let r = this.getItemRect(this.transform(this.data[i], i));
+            if (r.width === 0 && r.height === 0 ? isPointInRange(r, pointRange) : VectorUtil.rectsIntersect(
+                r.x,
+                r.y,
+                r.width,
+                r.height,
+                pointRange[0].x,
+                pointRange[0].y,
+                xLen,
+                yLen,
+            )) {
+                points.push({
+                    ...r,
+                    dataIndex: i,
+                });
             }
         }
         return points;
@@ -164,26 +183,45 @@ export default abstract class DataSource<
 
     getItemsIndexesInLocationRange(pointRange: [IPoint, IPoint]): number[] {
         let indexes: number[] = [];
+        let xLen = pointRange[1].x - pointRange[0].x;
+        let yLen = pointRange[1].y - pointRange[0].y;
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
-            const p = this.getItemPoint(this.transform(this.data[i], i));
-            if (isPointInRange(p, pointRange)) {
+            let r = this.getItemRect(this.transform(this.data[i], i));
+            if (r.width === 0 && r.height === 0 ? isPointInRange(r, pointRange) : VectorUtil.rectsIntersect(
+                r.x,
+                r.y,
+                r.width,
+                r.height,
+                pointRange[0].x,
+                pointRange[0].y,
+                xLen,
+                yLen,
+            )) {
                 indexes.push(i);
             }
         }
         return indexes;
     }
 
-    getItemDecimalPoint(item: IDataLocation<X, Y>): IDecimalPoint {
+    getItemRect(item: IDataSourceRect<X, Y>): IRect {
         let plot = this.plot;
-        return {
-            x: plot.xLayout.scale.locationOfValue(item.x),
-            y: plot.yLayout.scale.locationOfValue(item.y),
-        };
-    }
 
-    getItemPoint(item: IDataLocation<X, Y>): IPoint {
-        let d = this.getItemDecimalPoint(item);
-        return { x: d.x.toNumber(), y: d.y.toNumber() };
+        let x = plot.xLayout.scale.locationOfValue(item.x).toNumber();
+        let x2 = typeof item.x2 !== 'undefined'
+            ? plot.xLayout.scale.locationOfValue(item.x2).toNumber()
+            : x;
+        
+        let y = plot.yLayout.scale.locationOfValue(item.y).toNumber();
+        let y2 = typeof item.y2 !== 'undefined'
+            ? plot.yLayout.scale.locationOfValue(item.y2).toNumber()
+            : y;
+
+        return {
+            x,
+            y,
+            width: x2 - x,
+            height: y2 - y,
+        };
     }
 }

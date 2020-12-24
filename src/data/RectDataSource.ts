@@ -1,7 +1,6 @@
 import {
     CustomLayoutSource,
     IItemCustomLayout,
-    IPoint,
     LayoutSourceProps,
 } from 'evergrid';
 import DataSource, {
@@ -9,24 +8,18 @@ import DataSource, {
 } from './DataSource';
 import {
     ChartDataType,
-    IDataLocation,
+    IDataSourceRect,
     IRectStyle,
 } from '../types';
-import { VectorUtil } from '../utils/vectorUtil';
-
-export interface IDataRect<X, Y> extends IDataLocation<X, Y> {
-    x2: X;
-    y2: Y;
-}
 
 export interface RectDataSourceInput<T, X = any, Y = any> extends DataSourceInput<T, X, Y> {
-    transform: (item: T, index: number) => IDataRect<X, Y>;
+    transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     style?: IRectStyle;
     itemStyle?: (item: T, index: number) => IRectStyle;
 }
 
 export default class RectDataSource<T = any, X = any, Y = any> extends DataSource<T, X, Y> {
-    transform: (item: T, index: number) => IDataRect<X, Y>;
+    transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     style: IRectStyle;
     itemStyle?: (item: T, index: number) => IRectStyle;
 
@@ -46,37 +39,15 @@ export default class RectDataSource<T = any, X = any, Y = any> extends DataSourc
     }
 
     getItemLayout(index: number): IItemCustomLayout {
-        let range = this.transform(this.data[index], index);
-        let start = this.getItemPoint(range);
-        let end = this.getItemPoint({ x: range.x2, y: range.y2 });
+        let sourceRect = this.transform(this.data[index], index);
+        let r = this.getItemRect(sourceRect);
         return {
-            offset: start,
+            offset: r,
             size: {
-                x: end.x - start.x,
-                y: end.y - start.y,
+                x: r.width,
+                y: r.height,
             },
         };
-    }
-
-    getItemsIndexesInLocationRange(pointRange: [IPoint, IPoint]): number[] {
-        let indexes: number[] = [];
-        const c = this.data.length;
-        for (let i = 0; i < c; i++) {
-            let layout = this.getItemLayout(i);
-            if (VectorUtil.rectsIntersect(
-                layout.offset.x,
-                layout.offset.y,
-                layout.size?.x || 0,
-                layout.size?.y || 0,
-                pointRange[0].x,
-                pointRange[0].y,
-                pointRange[1].x - pointRange[0].x,
-                pointRange[1].y - pointRange[0].y,
-            )) {
-                indexes.push(i);
-            }
-        }
-        return indexes;
     }
 
     createLayoutSource(props?: LayoutSourceProps<number>) {
