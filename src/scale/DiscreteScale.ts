@@ -90,6 +90,8 @@ export default class DiscreteScale<T> extends Scale<T, D> {
             i = 0;
         } else if (i >= this.values.length) {
             i = this.values.length - 1;
+        } else {
+            i = Math.floor(i);
         }
         // if (i < 0 || i >= this.values.length) {
         //     return this.emptyValue();
