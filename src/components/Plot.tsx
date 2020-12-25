@@ -163,24 +163,13 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             return null;
         }
         let rect = dataSource.getContainerCanvasRect(item.index);
-        let pointsToDraw = points;
-        let pointsLen = pointsToDraw.length;
-        if (pointsLen !== 0) {
-            if (pointsToDraw[0].clipped && pointsToDraw[pointsLen - 1].clipped) {
-                pointsToDraw = pointsToDraw.slice(1, -1);
-            } else if (pointsToDraw[0].clipped) {
-                pointsToDraw = pointsToDraw.slice(1);
-            } else if (pointsToDraw[pointsLen - 1].clipped) {
-                pointsToDraw = pointsToDraw.slice(0, -1);
-            }
-        }
         let pointStyles: (ILineDataStyle | undefined)[] | undefined;
         if (dataSource.itemStyle) {
             let hasItemStyle = false;
-            pointStyles = pointsToDraw.map(p => {
+            pointStyles = points.map(p => {
                 let itemStyle = dataSource.itemStyle!(
                     dataSource.data[p.dataIndex],
-                    p.dataIndex
+                    p,
                 );
                 if (!hasItemStyle && itemStyle && Object.keys(itemStyle).length !== 0) {
                     hasItemStyle = true;
@@ -190,7 +179,6 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             if (!hasItemStyle) {
                 pointStyles = undefined;
             }
-            console.debug(`${JSON.stringify(item.index)} pointStyles: ` + JSON.stringify(pointStyles, null, 2));
         }
 
         // console.debug(`${JSON.stringify(item.index)} rect: ` + JSON.stringify(rect));
@@ -199,7 +187,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             <ChartLine
                 rect={rect}
                 path={path}
-                points={pointsToDraw}
+                points={points}
                 pointStyles={pointStyles}
                 scale={dataSource.layout.root.scale$}
                 {...dataSource.style}
