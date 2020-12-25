@@ -63,6 +63,8 @@ export interface IAxisStyle extends Required<IAxisStyleInput> {
 export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 
 export interface IAxisOptions<T = any> {
+    axisType?: AxisType;
+
     /**
      * Toggles axis visiblity.
      * Axis is visible by default.

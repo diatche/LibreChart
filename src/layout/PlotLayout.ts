@@ -47,7 +47,7 @@ export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends
     yLayout?: ScaleLayout<Y, DY>;
     dataSources?: DataSource<any, X, Y>[];
     grid?: IChartGridInput | Grid;
-    axes?: AxisManyInput;
+    axes?: AxisManyInput<X, Y, DX, DY>;
 }
 
 export type PlotLayoutManyInput = (PlotLayout | PlotLayoutOptions)[];

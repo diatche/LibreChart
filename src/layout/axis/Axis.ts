@@ -39,13 +39,20 @@ const kDefaultAxisThicknessStep = 10;
 
 export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
 
-export type AxisManyInput = (Axis | IAxisOptions)[] | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
+export type AxisManyInput<X = any, Y = any, DX = any, DY = any> = IAxes<X, Y, DX, DY> | IAxesOptionsMap<X, Y> | (Axis | IAxisOptions)[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
 export interface IAxes<X = any, Y = any, DX = any, DY = any> {
     topAxis?: Axis<X, DX>;
     bottomAxis?: Axis<X, DX>;
     leftAxis?: Axis<Y, DY>;
     rightAxis?: Axis<Y, DY>;
+}
+
+export interface IAxesOptionsMap<X = any, Y = any> {
+    topAxis?: IAxisOptions<X>;
+    bottomAxis?: IAxisOptions<X>;
+    leftAxis?: IAxisOptions<Y>;
+    rightAxis?: IAxisOptions<Y>;
 }
 
 interface IAxisLayoutInfo {
@@ -100,8 +107,9 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates?: Observable.IObserver;
 
-    constructor(axisType: AxisType, options?: IAxisOptions<T>) {
+    constructor(options: IAxisOptions<T> & { axisType: AxisType }) {
         let {
+            axisType,
             hidden = false,
             getTickLabel = (tick: ITickLocation<T>) => String(tick.value),
             layoutSourceDefaults = {},
@@ -172,7 +180,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 if (!axisOrOption.axisType) {
                     throw new Error('Axis is missing a type. Use an object with axis types as keys or use axis instances.');
                 }
-                axis = new Axis(axisOrOption.axisType, axisOrOption);
+                axis = new Axis(axisOrOption as IAxisOptions & { axisType: AxisType });
             }
             axes[axis.axisType] = axis;
         }

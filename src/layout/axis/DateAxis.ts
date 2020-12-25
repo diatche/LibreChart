@@ -16,7 +16,7 @@ import {
 export default class DateAxis extends Axis<Moment, Duration> {
     private _tickStyles?: DateUnitMapping<TextStyle>;
 
-    constructor(axisType: AxisType, options?: IAxisOptions<Moment>) {
+    constructor(options: IAxisOptions<Moment> & { axisType: AxisType }) {
         options = {
             getTickLabel: tick => {
                 let duration = this.scaleLayout?.scale.tickScale.interval.valueInterval;
@@ -33,7 +33,7 @@ export default class DateAxis extends Axis<Moment, Duration> {
             },
             ...options,
         };
-        super(axisType, options);
+        super(options);
     }
 
     willUpdateLayout() {
