@@ -30,12 +30,12 @@ export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
 
 export interface LineDataSourceInput<T> extends DataSourceInput<T> {
     style?: ILineDataStyle;
-    itemStyle?: (item: T, index: number) => ILineDataStyle;
+    itemStyle?: (item: T, index: number) => ILineDataStyle | undefined;
 }
 
 export default class LineDataSource<T = any> extends DataSource<T> {
     style: ILineDataStyle;
-    itemStyle?: (item: T, index: number) => ILineDataStyle;
+    itemStyle?: (item: T, index: number) => ILineDataStyle | undefined;
 
     constructor(input: LineDataSourceInput<T>) {
         super(input);

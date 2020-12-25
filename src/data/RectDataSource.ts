@@ -15,13 +15,13 @@ import {
 export interface RectDataSourceInput<T, X = any, Y = any> extends DataSourceInput<T, X, Y> {
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     style?: IRectStyle;
-    itemStyle?: (item: T, index: number) => IRectStyle;
+    itemStyle?: (item: T, index: number) => IRectStyle | undefined;
 }
 
 export default class RectDataSource<T = any, X = any, Y = any> extends DataSource<T, X, Y> {
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     style: IRectStyle;
-    itemStyle?: (item: T, index: number) => IRectStyle;
+    itemStyle?: (item: T, index: number) => IRectStyle | undefined;
 
     constructor(input: RectDataSourceInput<T, X, Y>) {
         super(input);

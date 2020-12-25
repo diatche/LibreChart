@@ -9,7 +9,6 @@ import Svg, {
     Path,
 } from 'react-native-svg';
 import { ILineDataStyle } from '../data/LineDataSource';
-import { IPointStyle } from '../types';
 
 export interface ChartLineProps extends ILineDataStyle {
     /**
@@ -22,13 +21,13 @@ export interface ChartLineProps extends ILineDataStyle {
     /** Point locations in canvas coordinates. */
     points: IPoint[];
     /** Point styles corresponding to points. */
-    pointStyles?: (IPointStyle | undefined)[];
+    pointStyles?: (ILineDataStyle | undefined)[];
     /** View scale. */
     scale: Animated.ValueXY;
 }
 
 const ChartLine = React.memo((props: ChartLineProps) => {
-    const pointOuterColor = props.pointOuterColor || props.strokeColor;
+    const lineOuterColor = props.pointOuterColor || props.strokeColor;
 
     if (typeof props.strokeWidth === 'object') {
         throw new Error('Animated values no supported on ChartLine');
@@ -89,24 +88,33 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         )}
                     />
                 )}
-                {(props.pointStyles || pointOuterColor && props.pointOuterRadius! > 0) && props.points.map((p, i) => (
-                    <Circle
-                        key={`o${i}`}
-                        cx={p.x}
-                        cy={p.y}
-                        r={(props.pointStyles?.[i]?.pointOuterRadius || props.pointOuterRadius) as number}
-                        fill={(props.pointStyles?.[i]?.pointOuterColor || pointOuterColor) as string}
-                    />
-                ))}
-                {(props.pointStyles || props.pointInnerColor && props.pointInnerRadius! > 0) && props.points.map((p, i) => (
-                    <Circle
-                        key={`i${i}`}
-                        cx={p.x}
-                        cy={p.y}
-                        r={(props.pointStyles?.[i]?.pointInnerRadius || props.pointInnerRadius) as number}
-                        fill={(props.pointStyles?.[i]?.pointInnerColor || props.pointInnerColor) as string}
-                    />
-                ))}
+                {((props.pointStyles || lineOuterColor) && props.pointOuterRadius) && props.points.map((p, i) => {
+                    let pointStyle = props.pointStyles?.[i];
+                    let pointOuterColor = pointStyle
+                        ? pointStyle.pointOuterColor || pointStyle.strokeColor
+                        : lineOuterColor;
+                    return (
+                        <Circle
+                            key={`o${i}`}
+                            cx={p.x}
+                            cy={p.y}
+                            r={(pointStyle?.pointOuterRadius || props.pointOuterRadius) as number}
+                            fill={pointOuterColor as string}
+                        />
+                    )
+                })}
+                {((props.pointStyles || props.pointInnerColor) && props.pointInnerRadius) && props.points.map((p, i) => {
+                    let pointStyle = props.pointStyles?.[i];
+                    return (
+                        <Circle
+                            key={`i${i}`}
+                            cx={p.x}
+                            cy={p.y}
+                            r={(pointStyle?.pointInnerRadius || props.pointInnerRadius) as number}
+                            fill={(pointStyle?.pointInnerColor || props.pointInnerColor) as string}
+                        />
+                    )
+                })}
                 {/* <Circle cx={props.rect[0]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />
                 <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />
                 <Circle cx={props.rect[0]} cy={props.rect[1] + props.rect[3]} r={props.strokeWidth! * 2} fill='red' />

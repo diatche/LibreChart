@@ -13,8 +13,9 @@ import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
 import ChartAxisBackground from './ChartAxisBackground';
-import LineDataSource from '../data/LineDataSource';
-import { IPointStyle } from '../types';
+import LineDataSource, {
+    ILineDataStyle,
+} from '../data/LineDataSource';
 import ChartLine from './ChartLine';
 import { axisTypeMap } from '../layout/axis/axisUtil';
 import RectDataSource from '../data/RectDataSource';
@@ -173,12 +174,23 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 pointsToDraw = pointsToDraw.slice(0, -1);
             }
         }
-        let pointStyles: (IPointStyle | undefined)[] | undefined;
+        let pointStyles: (ILineDataStyle | undefined)[] | undefined;
         if (dataSource.itemStyle) {
-            pointStyles = pointsToDraw.map(p => dataSource.itemStyle!(dataSource.data[p.dataIndex], p.dataIndex));
-            if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
+            let hasItemStyle = false;
+            pointStyles = pointsToDraw.map(p => {
+                let itemStyle = dataSource.itemStyle!(
+                    dataSource.data[p.dataIndex],
+                    p.dataIndex
+                );
+                if (!hasItemStyle && itemStyle && Object.keys(itemStyle).length !== 0) {
+                    hasItemStyle = true;
+                }
+                return itemStyle;
+            });
+            if (!hasItemStyle) {
                 pointStyles = undefined;
             }
+            console.debug(`${JSON.stringify(item.index)} pointStyles: ` + JSON.stringify(pointStyles, null, 2));
         }
 
         // console.debug(`${JSON.stringify(item.index)} rect: ` + JSON.stringify(rect));
