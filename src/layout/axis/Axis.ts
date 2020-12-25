@@ -252,9 +252,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     ): FlatLayoutSource | undefined {
         return this._createLayoutSource(layoutInfo, {
             ...defaults,
-            ...this.plot.getLayoutSourceOptions({
-                noInset: true,
-            }),
+            ...this.plot.getLayoutSourceOptions(),
             reuseID: kAxisBackgroundReuseIDs[this.axisType],
             shouldRenderItem: () => false,
             onVisibleRangeChange: r => {
@@ -267,7 +265,6 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         layoutInfo: IAxisLayoutInfo,
         defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
     ): FlatLayoutSource | undefined {
-        let plot = this.plot;
         let layoutPropsBase = defaults;
         let thickness = Animated.add(
             this.style.padding,
@@ -278,43 +275,37 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             case 'bottomAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    willUseItemViewLayout: (i, layout, source) => {
-                        layout.offset.y = Animated.subtract(
-                            plot.containerSize$.y,
-                            thickness,
-                        );
-                        layout.size.y = thickness;
+                    willUseItemViewLayout: itemViewLayout => {
+                        itemViewLayout.size.y = thickness;
                     },
+                    stickyEdge: 'bottom',
                     horizontal: true,
                 });
             case 'topAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    willUseItemViewLayout: (i, layout) => {
-                        layout.offset.y = new Animated.Value(0);
-                        layout.size.y = thickness;
+                    willUseItemViewLayout: itemViewLayout => {
+                        itemViewLayout.size.y = thickness;
                     },
+                    stickyEdge: 'top',
                     horizontal: true,
                 });
             case 'leftAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    willUseItemViewLayout: (i, layout) => {
-                        layout.offset.x = new Animated.Value(0);
-                        layout.size.x = thickness;
+                    willUseItemViewLayout: itemViewLayout => {
+                        itemViewLayout.size.x = thickness;
                     },
+                    stickyEdge: 'left',
                     horizontal: false,
                 });
             case 'rightAxis':
                 return new FlatLayoutSource({
                     ...layoutPropsBase,
-                    willUseItemViewLayout: (i, layout, source) => {
-                        layout.offset.x = Animated.subtract(
-                            plot.containerSize$.x,
-                            thickness,
-                        );
-                        layout.size.x = thickness;
+                    willUseItemViewLayout: itemViewLayout => {
+                        itemViewLayout.size.x = thickness;
                     },
+                    stickyEdge: 'right',
                     horizontal: false,
                 });
         }
@@ -390,15 +381,15 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                     toValue: thickness,
                     duration,
                     useNativeDriver: false,
-                }).start();
+                }).start(() => {
+                    this.plot.didChangePlotSize();
+                });
             } else {
                 this.layoutInfo.thickness$.setValue(thickness);
             }
         }
 
         this._cleanThicknessInfo();
-
-        this.plot.didChangePlotSize();
     }
 
     private _cleanThicknessInfo() {

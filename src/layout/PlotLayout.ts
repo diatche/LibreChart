@@ -340,20 +340,14 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         };
     }
 
-    getLayoutSourceOptions(
-        options: {
-            noInset?: boolean;
-        } = {},
-    ): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
+    getLayoutSourceOptions(): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
                 y: this.yLayout.layoutInfo.containerLength$,
             },
-            insets: options.noInset ? undefined : this.getAxisInsets$(),
         };
     }
-
 
     private _validatedAxes(props: PlotLayoutOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);
