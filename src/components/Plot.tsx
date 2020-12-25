@@ -13,8 +13,9 @@ import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
 import ChartAxisBackground from './ChartAxisBackground';
-import LineDataSource from '../data/LineDataSource';
-import { IPointStyle } from '../types';
+import LineDataSource, {
+    ILineDataStyle,
+} from '../data/LineDataSource';
 import ChartLine from './ChartLine';
 import { axisTypeMap } from '../layout/axis/axisUtil';
 import RectDataSource from '../data/RectDataSource';
@@ -162,21 +163,20 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             return null;
         }
         let rect = dataSource.getContainerCanvasRect(item.index);
-        let pointsToDraw = points;
-        let pointsLen = pointsToDraw.length;
-        if (pointsLen !== 0) {
-            if (pointsToDraw[0].clipped && pointsToDraw[pointsLen - 1].clipped) {
-                pointsToDraw = pointsToDraw.slice(1, -1);
-            } else if (pointsToDraw[0].clipped) {
-                pointsToDraw = pointsToDraw.slice(1);
-            } else if (pointsToDraw[pointsLen - 1].clipped) {
-                pointsToDraw = pointsToDraw.slice(0, -1);
-            }
-        }
-        let pointStyles: (IPointStyle | undefined)[] | undefined;
+        let pointStyles: (ILineDataStyle | undefined)[] | undefined;
         if (dataSource.itemStyle) {
-            pointStyles = pointsToDraw.map(p => dataSource.itemStyle!(dataSource.data[p.dataIndex], p.dataIndex));
-            if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
+            let hasItemStyle = false;
+            pointStyles = points.map(p => {
+                let itemStyle = dataSource.itemStyle!(
+                    dataSource.data[p.dataIndex],
+                    p,
+                );
+                if (!hasItemStyle && itemStyle && Object.keys(itemStyle).length !== 0) {
+                    hasItemStyle = true;
+                }
+                return itemStyle;
+            });
+            if (!hasItemStyle) {
                 pointStyles = undefined;
             }
         }
@@ -187,7 +187,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             <ChartLine
                 rect={rect}
                 path={path}
-                points={pointsToDraw}
+                points={points}
                 pointStyles={pointStyles}
                 scale={dataSource.layout.root.scale$}
                 {...dataSource.style}

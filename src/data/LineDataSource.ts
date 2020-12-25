@@ -22,6 +22,7 @@ import {
 
 export interface ILinePoint extends IDataRect {
     clipped: boolean;
+    originalPoint: IPoint;
 }
 
 export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
@@ -30,12 +31,12 @@ export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
 
 export interface LineDataSourceInput<T> extends DataSourceInput<T> {
     style?: ILineDataStyle;
-    itemStyle?: (item: T, index: number) => ILineDataStyle;
+    itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
 }
 
 export default class LineDataSource<T = any> extends DataSource<T> {
     style: ILineDataStyle;
-    itemStyle?: (item: T, index: number) => ILineDataStyle;
+    itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
 
     constructor(input: LineDataSourceInput<T>) {
         super(input);
@@ -64,13 +65,13 @@ export default class LineDataSource<T = any> extends DataSource<T> {
         // Add clipped lines
         const c = this.data.length;
         let points: ILinePoint[] = [];
-        let p0 = this.getItemRect(this.transform(this.data[0], 0));
+        let r0 = this.getItemRect(this.transform(this.data[0], 0));
         let iAdded = -1;
         for (let i = 1; i < c; i++) {
-            let p = this.getItemRect(this.transform(this.data[i], i));
+            let r = this.getItemRect(this.transform(this.data[i], i));
             let line = VectorUtil.cohenSutherlandLineClip(
-                p0.x, p0.y,
-                p.x, p.y,
+                r0.x, r0.y,
+                r.x, r.y,
                 pointRange[0].x, pointRange[0].y,
                 pointRange[1].x, pointRange[1].y
             );
@@ -84,7 +85,8 @@ export default class LineDataSource<T = any> extends DataSource<T> {
                             width: 0,
                             height: 0,
                             dataIndex: i - 1,
-                            clipped: !VectorUtil.isPointInClosedRange(p0, pointRange),
+                            clipped: !VectorUtil.isPointInClosedRange(r0, pointRange),
+                            originalPoint: r0,
                         });
                         iAdded = i - 1;
                     }
@@ -94,12 +96,13 @@ export default class LineDataSource<T = any> extends DataSource<T> {
                         width: 0,
                         height: 0,
                         dataIndex: i,
-                        clipped: !VectorUtil.isPointInClosedRange(p, pointRange),
+                        clipped: !VectorUtil.isPointInClosedRange(r, pointRange),
+                        originalPoint: r,
                     });
                     iAdded = i;
                 }
             }
-            p0 = p;
+            r0 = r;
         }
 
         return points;
@@ -163,18 +166,26 @@ export default class LineDataSource<T = any> extends DataSource<T> {
             return [];
         }
         let rect = this.getContainerLocationRange(index);
-        let points = this.getDataRectsInRange(rect, { partial: true });
-        const pointsLen = points.length;
+        let dataRects = this.getDataRectsInRange(rect, { partial: true });
+        const pointsLen = dataRects.length;
         if (pointsLen !== 0) {
             let scale = this.layout?.getScale() || { x: 1, y: 1 };
+            let absScale: IPoint = {
+                x: Math.abs(scale.x),
+                y: Math.abs(scale.y),
+            };
             for (let i = 0; i < pointsLen; i++) {
-                let p = points[i];
-                p.x *= scale.x;
-                p.y *= scale.y;
+                let r = dataRects[i];
+                r.x *= scale.x;
+                r.y *= scale.y;
+                r.width *= absScale.x;
+                r.height *= absScale.y;
+                r.originalPoint.x *= scale.x;
+                r.originalPoint.y *= scale.y;
             }
         }
 
-        return points;
+        return dataRects;
     }
 
     getCanvasLinePath(): LinePath {
