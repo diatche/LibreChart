@@ -106,9 +106,9 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
 
     private _minorTickDepth = 0;
 
-    constructor(options?: IScaleOptions<T, D>) {
-        this.minorTickDepth = options?.minorTickDepth || 0;
-        this.constraints = { ...options?.constraints };
+    constructor(options: IScaleOptions<T, D>) {
+        this.minorTickDepth = options.minorTickDepth || 0;
+        this.constraints = { ...options.constraints };
         this.minorTickScales = [];
     }
 
@@ -130,7 +130,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * This value must be available before the
      * constructor is called.
      **/
-    abstract zeroValue(): T;
+    abstract emptyValue(): T;
 
     /**
      * A zero value interval. Used to create an empty scale.
@@ -138,16 +138,16 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * This value must be available before the
      * constructor is called.
      **/
-    abstract zeroValueInterval(): D;
+    abstract emptyValueInterval(): D;
 
     emptyScale(): ITickScale<T, D> {
         return {
            origin: {
-               value: this.zeroValue(),
+               value: this.emptyValue(),
                location: k0,
            },
            interval: {
-               valueInterval: this.zeroValueInterval(),
+               valueInterval: this.emptyValueInterval(),
                locationInterval: k0,
            },
         };

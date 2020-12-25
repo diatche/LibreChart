@@ -17,6 +17,8 @@ import {
 import { kAxisStyleLightDefaults } from "./axis/axisConst";
 import { Observable } from "../utils/observable";
 import ScaleController from "../scaleControllers/ScaleController";
+import DiscreteScale from "../scale/DiscreteScale";
+import AutoScaleController from "../scaleControllers/AutoScaleController";
 
 const k0 = new Decimal(0);
 
@@ -89,6 +91,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
             isHorizontal = false,
             scale = new LinearScale(),
             style = {},
+            controller,
         } = options || {};
 
         this._isHorizontalStrict = typeof options?.isHorizontal !== 'undefined';
@@ -112,7 +115,12 @@ export default class ScaleLayout<T = Decimal, D = T> {
             padding: normalizeAnimatedValue(style.padding),
         };
 
-        this.controller = options?.controller;
+        if (!controller && scale instanceof DiscreteScale) {
+            controller = new AutoScaleController({
+                viewPaddingRel: 0.1,
+            });
+        }
+        this.controller = controller;
     }
 
     get plot(): PlotLayout {
@@ -153,12 +161,12 @@ export default class ScaleLayout<T = Decimal, D = T> {
     }
 
     update(): boolean {
-        let axisLengthInfo = this._getLengthInfo();
+        let axisLengthInfo = this._getNewLengthInfo();
         if (!axisLengthInfo) {
             // No changes
             return false;
         }
-        // console.debug('tickScale: ' + JSON.stringify(this.scale.tickScale, null, 2));
+        // console.debug(`axisLengthInfo ${this.isHorizontal ? 'H' : 'V'}: ` + JSON.stringify(axisLengthInfo, null, 2));
 
         Object.assign(this.layoutInfo, axisLengthInfo);
         
@@ -184,7 +192,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
             : [r[0].y, r[1].y];
     }
 
-    private _getLengthInfo(): IScaleLayoutLengthBaseInfo | undefined {
+    private _getNewLengthInfo(): IScaleLayoutLengthBaseInfo | undefined {
         let viewScaleVector = this.plot.scale;
         let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
         let visibleRange = this.getVisibleLocationRange();
@@ -226,7 +234,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
                 }],
             }
         );
-        if (!scaleUpdated) {
+        if (!scaleUpdated && this.layoutInfo.majorCount !== 0) {
             return undefined;
         }
         

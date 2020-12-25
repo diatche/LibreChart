@@ -147,12 +147,10 @@ export default class Grid {
             return new FlatLayoutSource({
                 ...commonProps,
                 getItemViewLayout: () => ({
-                    offset: { y: 0 },
                     size: { y: '100%' }
                 }),
                 horizontal: true,
                 stickyEdge: 'bottom',
-                itemOrigin: { x: 0, y: 1 },
             });
         } else if (horizontal) {
             // Grid lines are horizontal,
@@ -160,12 +158,10 @@ export default class Grid {
             return new FlatLayoutSource({
                 ...commonProps,
                 getItemViewLayout: () => ({
-                    offset: { x: 0 },
                     size: { x: '100%' }
                 }),
                 horizontal: false,
                 stickyEdge: 'left',
-                itemOrigin: { x: 0, y: 0 },
             });
         }
 

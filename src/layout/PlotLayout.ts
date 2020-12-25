@@ -31,6 +31,9 @@ import { Cancelable } from "../types";
 import debounce from "lodash.debounce";
 
 const kGridUpdateDebounceInterval = 100;
+const kDefaultUpdateInfo: IUpdateInfo = {
+    initial: false,
+};
 
 export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends EvergridLayoutCallbacks, Omit<EvergridLayoutProps, 'layoutSources'> {
     /**
@@ -42,16 +45,16 @@ export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends
     index?: IPoint;
     xLayout?: ScaleLayout<X, DX>;
     yLayout?: ScaleLayout<Y, DY>;
-    dataSources?: DataSource<X, Y>[];
+    dataSources?: DataSource<any, X, Y>[];
     grid?: IChartGridInput | Grid;
-    axes?: AxisManyInput;
+    axes?: AxisManyInput<X, Y, DX, DY>;
 }
 
 export type PlotLayoutManyInput = (PlotLayout | PlotLayoutOptions)[];
 
 export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends EvergridLayout { 
     index: IPoint;
-    dataSources: DataSource<X, Y>[];
+    dataSources: DataSource<any, X, Y>[];
 
     readonly xLayout: ScaleLayout<X, DX>;
     readonly yLayout: ScaleLayout<Y, DY>;
@@ -173,7 +176,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         this.grid.configure(this);
 
         this.setLayoutSources(this.getLayoutSources());
-        this.updatePlot();
+        this.updatePlot({ initial: true });
     }
 
     unconfigurePlot() {
@@ -236,18 +239,18 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
     private _scheduledPlotUpdate?: Cancelable;
 
     private _debouncedPlotUpdate = debounce(
-        () => this.updatePlot(),
+        () => this.updatePlot(kDefaultUpdateInfo),
         kGridUpdateDebounceInterval,
     );
 
     didUpdate(info: IUpdateInfo) {
         super.didUpdate(info);
         if (info.initial) {
-            this.updatePlot();
+            this.updatePlot(info);
         }
     }
 
-    updatePlot() {
+    updatePlot(info: IUpdateInfo) {
         this.cancelPlotUpdate();
         
         this.xLayout.update();
@@ -337,20 +340,14 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         };
     }
 
-    getLayoutSourceOptions(
-        options: {
-            noInset?: boolean;
-        } = {},
-    ): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
+    getLayoutSourceOptions(): Omit<LayoutSourceProps<any>, 'shouldRenderItem'> {
         return {
             itemSize: {
                 x: this.xLayout.layoutInfo.containerLength$,
                 y: this.yLayout.layoutInfo.containerLength$,
             },
-            insets: options.noInset ? undefined : this.getAxisInsets$(),
         };
     }
-
 
     private _validatedAxes(props: PlotLayoutOptions | undefined): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);

@@ -14,11 +14,15 @@ const ChartRect = React.memo((props: ChartRectProps) => {
         backgroundColor: props.fillColor,
         borderWidth: props.strokeWidth,
         borderColor: props.strokeColor,
+        margin: -(props.strokeWidth || 0) / 2,
+
         borderRadius: props.cornerRadius,
         borderTopLeftRadius: props.topLeftCornerRadius,
         borderTopRightRadius: props.topRightCornerRadius,
         borderBottomRightRadius: props.bottomRightCornerRadius,
         borderBottomLeftRadius: props.bottomLeftCornerRadius,
+
+        ...props,
     }} />;
 });
 

@@ -65,7 +65,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     maxStepFractionDenominator = kMaxStepFractionDenominator;
 
-    constructor(options?: IDateScaleOptions & IScaleOptions<Moment, Duration>) {
+    constructor(options: IDateScaleOptions & IScaleOptions<Moment, Duration> = {}) {
         super(options);
 
         let {
@@ -103,8 +103,8 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         }
     }
 
-    zeroValue() { return kZeroDate; };
-    zeroValueInterval() { return kZeroDuration };
+    emptyValue() { return kZeroDate; };
+    emptyValueInterval() { return kZeroDuration };
 
     getTickScale(
         startDate: Moment,

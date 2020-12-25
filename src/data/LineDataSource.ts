@@ -9,8 +9,7 @@ import DataSource, {
 } from './DataSource';
 import {
     ChartDataType,
-    IDataItem,
-    IDataPoint,
+    IDataRect,
     IPointStyle,
     IStrokeStyle,
 } from '../types';
@@ -21,7 +20,7 @@ import {
     CanvasUtil,
 } from '../utils/canvas';
 
-export interface ILinePoint extends IDataPoint {
+export interface ILinePoint extends IDataRect {
     clipped: boolean;
 }
 
@@ -29,18 +28,19 @@ export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
     curve?: PathCurve;
 }
 
-export interface LineDataSourceInput {
+export interface LineDataSourceInput<T> extends DataSourceInput<T> {
     style?: ILineDataStyle;
+    itemStyle?: (item: T, index: number) => ILineDataStyle;
 }
 
-export default class LineDataSource<T = any> extends DataSource<
-    T, IPoint, GridLayoutSourceProps, GridLayoutSource
-> {
+export default class LineDataSource<T = any> extends DataSource<T> {
     style: ILineDataStyle;
+    itemStyle?: (item: T, index: number) => ILineDataStyle;
 
-    constructor(input: LineDataSourceInput & DataSourceInput<T, IPoint, GridLayoutSourceProps>) {
+    constructor(input: LineDataSourceInput<T>) {
         super(input);
         this.style = { ...input.style };
+        this.itemStyle = input.itemStyle;
     }
 
     get type(): ChartDataType {
@@ -51,12 +51,12 @@ export default class LineDataSource<T = any> extends DataSource<
         return this.id + '_path';
     }
 
-    getDataPointsInRange(
+    getDataRectsInRange(
         pointRange: [IPoint, IPoint],
         options?: IItemsInLocationRangeOptions,
     ): ILinePoint[] {
         if (!options?.partial) {
-            return super.getDataPointsInRange(pointRange, options).map(p => {
+            return super.getDataRectsInRange(pointRange, options).map(p => {
                 let lp = p as ILinePoint;
                 return lp;
             });
@@ -64,10 +64,10 @@ export default class LineDataSource<T = any> extends DataSource<
         // Add clipped lines
         const c = this.data.length;
         let points: ILinePoint[] = [];
-        let p0 = this.getItemPoint(this.transform(this.data[0]));
+        let p0 = this.getItemRect(this.transform(this.data[0], 0));
         let iAdded = -1;
         for (let i = 1; i < c; i++) {
-            let p = this.getItemPoint(this.transform(this.data[i]));
+            let p = this.getItemRect(this.transform(this.data[i], i));
             let line = VectorUtil.cohenSutherlandLineClip(
                 p0.x, p0.y,
                 p.x, p.y,
@@ -81,6 +81,8 @@ export default class LineDataSource<T = any> extends DataSource<
                         points.push({
                             x: line[0],
                             y: line[1],
+                            width: 0,
+                            height: 0,
                             dataIndex: i - 1,
                             clipped: !VectorUtil.isPointInClosedRange(p0, pointRange),
                         });
@@ -89,6 +91,8 @@ export default class LineDataSource<T = any> extends DataSource<
                     points.push({
                         x: line[2],
                         y: line[3],
+                        width: 0,
+                        height: 0,
                         dataIndex: i,
                         clipped: !VectorUtil.isPointInClosedRange(p, pointRange),
                     });
@@ -159,7 +163,7 @@ export default class LineDataSource<T = any> extends DataSource<
             return [];
         }
         let rect = this.getContainerLocationRange(index);
-        let points = this.getDataPointsInRange(rect, { partial: true });
+        let points = this.getDataRectsInRange(rect, { partial: true });
         const pointsLen = points.length;
         if (pointsLen !== 0) {
             let scale = this.layout?.getScale() || { x: 1, y: 1 };

@@ -173,9 +173,12 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 pointsToDraw = pointsToDraw.slice(0, -1);
             }
         }
-        let pointStyles: (IPointStyle | undefined)[] | undefined = pointsToDraw.map(p => dataSource.data[p.dataIndex].style);
-        if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
-            pointStyles = undefined;
+        let pointStyles: (IPointStyle | undefined)[] | undefined;
+        if (dataSource.itemStyle) {
+            pointStyles = pointsToDraw.map(p => dataSource.itemStyle!(dataSource.data[p.dataIndex], p.dataIndex));
+            if (!pointStyles.find(s => s && Object.keys(s).length !== 0)) {
+                pointStyles = undefined;
+            }
         }
 
         // console.debug(`${JSON.stringify(item.index)} rect: ` + JSON.stringify(rect));
@@ -193,8 +196,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
     }
 
     renderRect(item: IItem<number>, dataSource: RectDataSource): React.ReactNode {
-        let dataItem = dataSource.transform(dataSource.data[item.index]);
-        return <ChartRect {...dataSource.style} {...dataItem.style} />
+        let dataItem = dataSource.data[item.index];
+        return <ChartRect {...dataSource.style} {...dataSource.itemStyle?.(dataItem, item.index)} />
     }
 
     renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis): React.ReactNode {
