@@ -15,6 +15,9 @@ const kDefaultPointViewLayout = {
     size: kDefaultPointViewSize,
 };
 
+/**
+ * OUTDATED
+ */
 export default class PointDataSource<T = any> extends DataSource<T> {
     get type(): ChartDataType {
         return 'point';

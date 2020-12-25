@@ -8,6 +8,9 @@ export interface ChartPointProps {
     diameter: Animated.Animated;
 }
 
+/**
+ * OUTDATED
+ */
 const ChartPoint = React.memo(({ diameter }: ChartPointProps) => {
     return <Animated.View style={[styles.point, {
         borderRadius: Animated.divide(diameter, 2),
