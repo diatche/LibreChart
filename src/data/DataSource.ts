@@ -60,7 +60,13 @@ export default abstract class DataSource<
         if (input.noCopy && !input.data) {
             throw new Error('Cannot use "noCopy" with null data.');
         }
-        this.data = input.noCopy ? input.data! : [...input.data!];
+        if (input.data) {
+            this.data = input.noCopy
+                ? input.data
+                : [...input.data];
+        } else {
+            this.data = [];
+        }
         this.transform = input.transform;
     }
 
