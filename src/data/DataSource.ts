@@ -15,13 +15,14 @@ import {
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
 import { VectorUtil } from '../utils/vectorUtil';
+import Decimal from 'decimal.js';
 
 let _idCounter = 0;
 
 export interface DataSourceProps<
     T,
-    X = any,
-    Y = any,
+    X = Decimal,
+    Y = Decimal,
 > {
     data?: T[];
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
@@ -29,8 +30,8 @@ export interface DataSourceProps<
 
 export interface DataSourceInput<
     T,
-    X = any,
-    Y = any,
+    X = Decimal,
+    Y = Decimal,
 > extends DataSourceProps<T, X, Y> {
     noCopy?: boolean;
 }
@@ -41,8 +42,8 @@ export interface IItemsInLocationRangeOptions {
 
 export default abstract class DataSource<
     T = any,
-    X = any,
-    Y = any,
+    X = Decimal,
+    Y = Decimal,
 > implements DataSourceProps<T, X, Y> {
     id: string;
     data: T[];

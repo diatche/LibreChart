@@ -19,6 +19,7 @@ import {
     PathCurve,
     CanvasUtil,
 } from '../utils/canvas';
+import Decimal from 'decimal.js';
 
 export interface ILinePoint extends IDataRect {
     clipped: boolean;
@@ -29,16 +30,16 @@ export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
     curve?: PathCurve;
 }
 
-export interface LineDataSourceInput<T> extends DataSourceInput<T> {
+export interface LineDataSourceInput<T, X = Decimal, Y = Decimal> extends DataSourceInput<T, X, Y> {
     style?: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
 }
 
-export default class LineDataSource<T = any> extends DataSource<T> {
+export default class LineDataSource<T = any, X = Decimal, Y = Decimal> extends DataSource<T, X, Y> {
     style: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
 
-    constructor(input: LineDataSourceInput<T>) {
+    constructor(input: LineDataSourceInput<T, X, Y>) {
         super(input);
         this.style = { ...input.style };
         this.itemStyle = input.itemStyle;

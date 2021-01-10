@@ -11,14 +11,15 @@ import {
     IDataSourceRect,
     IRectStyle,
 } from '../types';
+import Decimal from 'decimal.js';
 
-export interface RectDataSourceInput<T, X = any, Y = any> extends DataSourceInput<T, X, Y> {
+export interface RectDataSourceInput<T, X = Decimal, Y = Decimal> extends DataSourceInput<T, X, Y> {
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     style?: IRectStyle;
     itemStyle?: (item: T, index: number) => IRectStyle | undefined;
 }
 
-export default class RectDataSource<T = any, X = any, Y = any> extends DataSource<T, X, Y> {
+export default class RectDataSource<T = any, X = Decimal, Y = Decimal> extends DataSource<T, X, Y> {
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     style: IRectStyle;
     itemStyle?: (item: T, index: number) => IRectStyle | undefined;
