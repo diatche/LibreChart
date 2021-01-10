@@ -56,6 +56,10 @@ export default class LineDataSource<T = any> extends DataSource<T> {
         pointRange: [IPoint, IPoint],
         options?: IItemsInLocationRangeOptions,
     ): ILinePoint[] {
+        const c = this.data.length;
+        if (c === 0) {
+            return [];
+        }
         if (!options?.partial) {
             return super.getDataRectsInRange(pointRange, options).map(p => {
                 let lp = p as ILinePoint;
@@ -63,7 +67,6 @@ export default class LineDataSource<T = any> extends DataSource<T> {
             });
         }
         // Add clipped lines
-        const c = this.data.length;
         let points: ILinePoint[] = [];
         let r0 = this.getItemRect(this.transform(this.data[0], 0));
         let iAdded = -1;
