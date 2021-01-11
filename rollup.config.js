@@ -10,6 +10,7 @@ const outputDefaults = {
     globals: {
         react: 'React',
         'react-native': 'ReactNative',
+        'decimal.js': 'Decimal',
     },
 };
 
@@ -33,6 +34,7 @@ const rOutputDefaults = {
 let baseConfig = {
     input: 'src/index.ts',
     external: [
+        'decimal.js',
         'react-native-web',
         ...Object.keys(pkg.dependencies || {}),
         ...Object.keys(pkg.peerDependencies || {}),

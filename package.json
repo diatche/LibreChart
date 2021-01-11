@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/diatche/librechart#readme",
   "peerDependencies": {
+    "decimal.js": "^10.2.1",
     "evergrid": "*",
     "react": ">=16.11.0",
     "react-native": ">=0.62.0 <1.0.0",
@@ -50,6 +51,7 @@
     "@types/react-native": "^0.63.25",
     "acorn": "^6.4.2",
     "acorn-jsx": "^5.3.1",
+    "decimal.js": "^10.2.1",
     "evergrid": "file:../evergrid",
     "jest": "^26.5.2",
     "moment-timezone": "^0.5.32",
@@ -66,7 +68,6 @@
     "@types/lodash.debounce": "^4.0.6",
     "@types/lodash.ismatchwith": "^4.4.6",
     "d3-shape": "^2.0.0",
-    "decimal.js": "^10.2.1",
     "lodash.debounce": "^4.0.8",
     "lodash.ismatchwith": "^4.4.0",
     "moment": "^2.29.1"

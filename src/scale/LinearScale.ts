@@ -175,22 +175,27 @@ export default class LinearScale extends Scale<Decimal> {
     }
 
     addIntervalToValue(value: Decimal, interval: Decimal): Decimal {
-        return value.add(interval);
+        return new Decimal(value).add(interval);
     }
 
     floorValue(value: Decimal): Decimal {
-        return value
+        return new Decimal(value)
             .div(this.tickScale.interval.valueInterval)
             .floor()
             .mul(this.tickScale.interval.valueInterval);
     }
 
     locationOfValue(value: Decimal): Decimal {
-        return value;
+        try {
+            new Decimal(value);
+        } catch (error) {
+            console.debug(`locationOfValue(${value.constructor.name})`);
+        }
+        return new Decimal(value);
     }
 
     valueAtLocation(location: Decimal): Decimal {
-        return location;
+        return new Decimal(location);
     }
 
     isValue(value: any): value is Decimal {
