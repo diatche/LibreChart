@@ -1,20 +1,21 @@
+import Decimal from 'decimal.js';
 import { ITickScaleConstraints } from '../../src/scale/Scale';
-import LinearScale from '../../src/scale/LinearScale';
+import DecimalLinearScale from '../../src/scale/DecimalLinearScale';
 
-export interface LinearTickInput {
-    start: number;
-    end: number;
-    stride: number;
-    constraints?: ITickScaleConstraints<number>;
+export interface DecimalLinearTickInput {
+    start: Decimal.Value;
+    end: Decimal.Value;
+    stride: Decimal.Value;
+    constraints?: ITickScaleConstraints<Decimal>;
 }
 
-export const getExpectedLinearTicks = (input: LinearTickInput): string[] => {
+export const getExpectedDecimalLinearTicks = (input: DecimalLinearTickInput): string[] => {
     let start = $(input.start);
     let end = $(input.end);
     let stride = $(input.stride);
 
     let expectedTicks: string[] = [];
-    for (let i = start; i <= end; i += stride) {
+    for (let i = start; i.lte(end); i = i.add(stride)) {
         let tick = i.toString();
         expect(expectedTicks).not.toContain(tick);
         expectedTicks.push(tick);
@@ -23,8 +24,8 @@ export const getExpectedLinearTicks = (input: LinearTickInput): string[] => {
     return expectedTicks;
 }
 
-export const getLinearTicks = (input: LinearTickInput): string[] => {
-    return new LinearScale().getTicks(
+export const getDecimalLinearTicks = (input: DecimalLinearTickInput): string[] => {
+    return new DecimalLinearScale().getTicks(
         $(input.start),
         $(input.end),
         input.constraints || {
@@ -35,4 +36,4 @@ export const getLinearTicks = (input: LinearTickInput): string[] => {
     ).map(x => x.value.toString());
 }
 
-export const $ = (x: number) => x;
+export const $ = (x: Decimal.Value) => new Decimal(x);

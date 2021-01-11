@@ -16,6 +16,9 @@ export * from './scale/DateScale';
 export { default as DiscreteScale } from './scale/DiscreteScale';
 export * from './scale/DiscreteScale';
 
+export { default as DecimalLinearScale } from './scale/DecimalLinearScale';
+export * from './scale/DecimalLinearScale';
+
 export { default as FixedScaleController } from './scaleControllers/FixedScaleController';
 export * from './scaleControllers/FixedScaleController';
 
