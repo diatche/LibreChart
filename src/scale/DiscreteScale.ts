@@ -18,11 +18,11 @@ export default class DiscreteScale extends LinearScale {
         return {
             origin: {
                 value: start,
-                location: start,
+                location: start.toNumber(),
             },
             interval: {
                 value: k1,
-                location: k1,
+                location: 1,
             },
         }
     }

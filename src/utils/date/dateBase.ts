@@ -111,11 +111,11 @@ export const kDateUnitUniformDecimalMs = mapDateUnitObject(
  */
 export const kDateUnitUniformMaxFraction = new Decimal(1000);
 
-export const kDateUnitRadix: Partial<DateUnitMapping<Decimal>> = {
-    second: new Decimal(60),
-    minute: new Decimal(60),
-    hour: new Decimal(24),
-    month: new Decimal(12),
+export const kDateUnitRadix: Partial<DateUnitMapping<number>> = {
+    second: 60,
+    minute: 60,
+    hour: 24,
+    month: 12,
 };
 
 // Factors of 12: 1, 2, 3, 4, 6, 12

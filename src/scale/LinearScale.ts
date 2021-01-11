@@ -27,11 +27,11 @@ export default class LinearScale extends Scale<Decimal> {
         this.tickScale = {
             origin: {
                 value: k0,
-                location: k0,
+                location: 0,
             },
             interval: {
                 value: k1,
-                location: k1,
+                location: 1,
             },
         }
     }
@@ -71,7 +71,7 @@ export default class LinearScale extends Scale<Decimal> {
         }
 
         if (constraints.minInterval?.location) {
-            let min = constraints.minInterval.location;
+            let min = new Decimal(constraints.minInterval.location);
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
@@ -155,11 +155,11 @@ export default class LinearScale extends Scale<Decimal> {
                 bestScale = {
                     origin: {
                         value: origin,
-                        location: origin,
+                        location: origin.toNumber(),
                     },
                     interval: {
-                        location: interval,
                         value: interval,
+                        location: interval.toNumber(),
                     },
                 };
                 break;
@@ -185,16 +185,11 @@ export default class LinearScale extends Scale<Decimal> {
             .mul(this.tickScale.interval.value);
     }
 
-    locationOfValue(value: Decimal): Decimal {
-        try {
-            new Decimal(value);
-        } catch (error) {
-            console.debug(`locationOfValue(${value.constructor.name})`);
-        }
-        return new Decimal(value);
+    locationOfValue(value: Decimal): number {
+        return +value;
     }
 
-    valueAtLocation(location: Decimal): Decimal {
+    valueAtLocation(location: number): Decimal {
         return new Decimal(location);
     }
 

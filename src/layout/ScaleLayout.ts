@@ -6,7 +6,6 @@ import {
     normalizeAnimatedValue,
     weakref,
 } from "evergrid";
-import Decimal from "decimal.js";
 import Scale from "../scale/Scale";
 import LinearScale from "../scale/LinearScale";
 import { PlotLayout } from "../internal";
@@ -19,8 +18,6 @@ import { Observable } from "../utils/observable";
 import ScaleController from "../scaleControllers/ScaleController";
 import DiscreteScale from "../scale/DiscreteScale";
 import AutoScaleController from "../scaleControllers/AutoScaleController";
-
-const k0 = new Decimal(0);
 
 export interface IScaleLayoutOptions<T = any, D = T> {
     /**
@@ -73,7 +70,7 @@ interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
     negHalfMajorViewInterval$?: Animated.AnimatedInterpolation;
 }
 
-export default class ScaleLayout<T = Decimal, D = T> {
+export default class ScaleLayout<T = number, D = T> {
     scale: Scale<T, D>;
     readonly controller?: ScaleController<T, D>;
     /** If true, then the layout is detached from the standard grid. */
@@ -172,7 +169,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
         
         this.layoutInfo.containerLength$.setValue(axisLengthInfo.containerLength);
 
-        let negHalfMajorInterval = this.scale.tickScale.interval.location.div(2).neg().toNumber();
+        let negHalfMajorInterval = -this.scale.tickScale.interval.location / 2;
         this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
 
         this.didChangeLayout();
@@ -207,12 +204,12 @@ export default class ScaleLayout<T = Decimal, D = T> {
             minorGridLineDistanceMin,
         } = this.style;
         
-        let majorDist = new Decimal(majorGridLineDistanceMin);
-        let minorDist = new Decimal(minorGridLineDistanceMin);
+        let majorDist = majorGridLineDistanceMin;
+        let minorDist = minorGridLineDistanceMin;
 
-        let startLocation = new Decimal(visibleRange[0]);
-        let endLocation = new Decimal(visibleRange[1]);
-        let midLocation = startLocation.add(endLocation).div(2);
+        let startLocation = visibleRange[0];
+        let endLocation = visibleRange[1];
+        let midLocation = (startLocation + endLocation) / 2;
         let startValue = this.scale.valueAtLocation(startLocation);
         let midValue = this.scale.valueAtLocation(midLocation);
         let endValue = this.scale.valueAtLocation(endLocation);
@@ -223,14 +220,14 @@ export default class ScaleLayout<T = Decimal, D = T> {
             endValue,
             {
                 minInterval: {
-                    location: majorDist.div(viewScale).abs(),
+                    location: Math.abs(majorDist / viewScale),
                 },
                 expand: true,
                 minorTickConstraints: [{
                     minInterval: {
-                        location: minorDist.div(viewScale).abs(),
+                        location: Math.abs(minorDist / viewScale),
                     },
-                    maxCount: new Decimal(this.style.minorIntervalCountMax),
+                    maxCount: this.style.minorIntervalCountMax,
                 }],
             }
         );
@@ -249,11 +246,8 @@ export default class ScaleLayout<T = Decimal, D = T> {
         );
         let minorCount = 0;
         let minorInterval = this.scale.minorTickScales[0].interval.location;
-        if (majorCount && !minorInterval.isZero()) {
-            minorCount = this.scale.tickScale.interval.location
-                .div(minorInterval)
-                .round()
-                .toNumber() - 1;
+        if (majorCount && minorInterval !== 0) {
+            minorCount = Math.round(this.scale.tickScale.interval.location / minorInterval) - 1;
         }
 
         // Get container length
@@ -261,16 +255,13 @@ export default class ScaleLayout<T = Decimal, D = T> {
             startLocation,
             endLocation,
         );
-        let containerLength = locationRange[1].sub(locationRange[0]).toNumber();
+        let containerLength = locationRange[1] - locationRange[0];
 
         // Check if recentering is needed
         let newMidLocation = this.scale.locationOfValue(midValue);
-        let recenteringOffset = midLocation
-            .sub(newMidLocation)
-            .div(viewScale)
-            .round()
-            .mul(viewScale)
-            .toNumber();
+        let recenteringOffset = Math.round(
+                (midLocation - newMidLocation) / viewScale
+            ) * viewScale;
 
         return {
             majorCount,
@@ -295,15 +286,15 @@ export default class ScaleLayout<T = Decimal, D = T> {
      * @param location The location.
      * @returns The grid container's range in content coordinates.
      */
-    getContainerRangeAtIndex(index: number): [Decimal, Decimal] {
+    getContainerRangeAtIndex(index: number): [number, number] {
         let interval = this.scale.tickScale.interval.location;
         let count = this.layoutInfo.majorCount || 0;
-        if (count === 0 || interval.lte(0)) {
-            return [k0, k0];
+        if (count === 0 || interval <= 0) {
+            return [0, 0];
         }
-        let len = interval.mul(count);
-        let start = len.mul(index);
-        return [start, start.add(len)];
+        let len = interval * count;
+        let start = len * index;
+        return [start, start + len];
     }
 
     /**

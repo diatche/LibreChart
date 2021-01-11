@@ -1,12 +1,8 @@
-import {
-    IAnimationBaseOptions,
-    IPoint,
-} from "evergrid";
+import { IPoint } from "evergrid";
 import Scale, { 
     ITickScaleConstraints,
 } from "../scale/Scale";
 import DataSource from "../data/DataSource";
-import Decimal from "decimal.js";
 import ScaleController, {
     ContentLimitOptions,
     ScaleControllerOptions,
@@ -46,15 +42,12 @@ export namespace Hysteresis {
             expand: true,
         };
         return (a, b) => {
-            let ad = new Decimal(a);
-            let bd = new Decimal(b);
             scale.updateTickScale(
-                scale.valueAtLocation(ad),
-                scale.valueAtLocation(bd),
+                scale.valueAtLocation(a),
+                scale.valueAtLocation(b),
                 constraints,
             );
-            let span = scale.spanLocationRange(ad, bd);
-            return [span[0].toNumber(), span[1].toNumber()];
+            return scale.spanLocationRange(a, b);
         };
     };
 

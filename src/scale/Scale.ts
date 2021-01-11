@@ -1,11 +1,9 @@
 import Decimal from 'decimal.js';
 import { IMatcher, isMatch } from '../utils/comp';
 
-const k0 = new Decimal(0);
-
 export interface ITickVector<T> {
     value: T;
-    location: Decimal;
+    location: number;
 }
 
 export interface ITickScale<T, D = T> {
@@ -29,7 +27,7 @@ export interface ITickScaleConstraints<D> {
      * Maximum number of intervals to divide
      * the interval into.
      **/
-    maxCount?: Decimal.Value;
+    maxCount?: number;
 
     /**
      * If `true`, expands the interval enough
@@ -55,7 +53,7 @@ export interface ITickScaleConstraints<D> {
      * - When used with months (use a radix of 12).
      * - When used with other number systems. 
      */
-    radix?: Decimal.Value;
+    radix?: number;
 
     /**
      * Factors to exclude when looking for optimal
@@ -139,11 +137,11 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         return {
            origin: {
                value: this.emptyValue(),
-               location: k0,
+               location: 0,
            },
            interval: {
                value: this.emptyValueInterval(),
-               location: k0,
+               location: 0,
            },
         };
     }
@@ -162,7 +160,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         let scale = this.tickScale;
         this.minorTickScales.splice(0, this.minorTickScales.length);
         for (let i = 0; i < this.minorTickDepth; i++) {
-            if (scale.interval.location.isZero()) {
+            if (scale.interval.location === 0) {
                 scale = this.emptyScale();
             } else {
                 scale = this.getTickScale(
@@ -215,7 +213,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         if (this.compareValues(start, end) >= 0) {
             return;
         }
-        if (this.tickScale.interval.location.lte(0)) {
+        if (this.tickScale.interval.location <= 0) {
             return;
         }
 
@@ -251,7 +249,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         if (this.compareValues(start, end) >= 0) {
             return [];
         }
-        if (this.tickScale.interval.location.lte(0)) {
+        if (this.tickScale.interval.location <= 0) {
             return [];
         }
 
@@ -290,7 +288,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param end Exclusive end of interval.
      * @returns Tick locations.
      */
-    getTicksInLocationRange(start: Decimal, end: Decimal): ITickVector<T>[] {
+    getTicksInLocationRange(start: number, end: number): ITickVector<T>[] {
         return this.getTicksInValueRange(
             this.valueAtLocation(start),
             this.valueAtLocation(end),
@@ -315,7 +313,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         let ticks = this.getTicksInValueRange(start, end);
 
         // add tick at end
-        if (ticks.length !== 0 && this.tickScale.interval.location.gt(0)) {
+        if (ticks.length !== 0 && this.tickScale.interval.location > 0) {
             let endTick = this.nextTick(ticks[ticks.length - 1]);
             if (this.compareValues(endTick.value, end) <= 0) {
                 // End tick is before or equal to end
@@ -336,7 +334,7 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param constraints See {@link ITickScaleConstraints}
      * @returns An array of tick locations.
      */
-    getTickLocations(start: T, end: T, constraints: ITickScaleConstraints<D>): Decimal[] {
+    getTickLocations(start: T, end: T, constraints: ITickScaleConstraints<D>): number[] {
         return this.getTicks(start, end, constraints).map(t => t.location);
     }
 
@@ -374,9 +372,9 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * 
      * @param location 
      */
-    nextLocation(location: Decimal): Decimal {
+    nextLocation(location: number): number {
         return this.snapLocation(
-            location.add(this.tickScale.interval.location)
+            location + this.tickScale.interval.location
         );
     }
 
@@ -395,9 +393,9 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param location 
      * @param steps 
      */
-    stepLocation(location: Decimal, steps: Decimal): Decimal {
+    stepLocation(location: number, steps: number): number {
         return this.snapLocation(
-            location.add(steps.mul(this.tickScale.interval.location))
+            location + (steps * this.tickScale.interval.location)
         );
     }
 
@@ -421,21 +419,22 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
      * @param location 
      */
     snapLocation(
-        location: Decimal,
+        location: number,
         overrides?: {
             origin?: Pick<ITickVector<any>, 'location'>,
             interval?: Pick<ITickVector<any>, 'location'>,
         }
-    ): Decimal {
-        let locationInterval = overrides?.origin?.location || this.tickScale.interval.location;
-        let origin = overrides?.interval?.location || this.tickScale.origin.location;
+    ): number {
+        let x = new Decimal(location);
+        let locationInterval = new Decimal(overrides?.origin?.location || this.tickScale.interval.location);
+        let origin = new Decimal(overrides?.interval?.location || this.tickScale.origin.location);
 
-        if (location.isInt() || locationInterval.isInt() || location.eq(origin)) {
+        if (x.isInt() || locationInterval.isInt() || x.eq(origin)) {
             // Integer intervals do not need to be rounded
             return location;
         }
         // Check steps from origin
-        let dist = location.sub(origin);
+        let dist = x.sub(origin);
         let steps = dist.div(locationInterval).round();
 
         // Round value if at edge
@@ -444,16 +443,8 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
             // At edge
             dist = dist.round();
         }
-        return origin.add(dist);
+        return origin.add(dist).toNumber();
     }
-
-    // cleanStepFraction(fraction: Decimal): Decimal {
-    //     let fraction = location.toFraction(this.maxStepFractionDenominator);
-    //     if (steps.mod(fraction[1]).isZero()) {
-    //         // At edge
-    //         dist = dist.round();
-    //     }
-    // }
 
     abstract floorValue(value: T): T;
 
@@ -475,32 +466,34 @@ export default abstract class Scale<T, D = T> implements IScaleOptions<T, D> {
         ];
     }
 
-    floorLocation(location: Decimal): Decimal {
-        return location.sub(this.tickScale.origin.location)
-            .div(this.tickScale.interval.location)
-            .floor()
-            .mul(this.tickScale.interval.location)
-            .add(this.tickScale.origin.location);
+    floorLocation(location: number): number {
+        return Math.floor(
+                (location - this.tickScale.origin.location)
+                    / this.tickScale.interval.location
+            )
+            * this.tickScale.interval.location
+            + this.tickScale.origin.location;
     }
 
-    ceilLocation(location: Decimal): Decimal {
-        return location.sub(this.tickScale.origin.location)
-            .div(this.tickScale.interval.location)
-            .ceil()
-            .mul(this.tickScale.interval.location)
-            .add(this.tickScale.origin.location);
+    ceilLocation(location: number): number {
+        return Math.ceil(
+                (location - this.tickScale.origin.location)
+                    / this.tickScale.interval.location
+            )
+            * this.tickScale.interval.location
+            + this.tickScale.origin.location;
     }
 
-    spanLocationRange(start: Decimal, end: Decimal): [Decimal, Decimal] {
+    spanLocationRange(start: number, end: number): [number, number] {
         return [
             this.floorLocation(start),
             this.ceilLocation(end),
         ];
     }
 
-    abstract locationOfValue(value: T): Decimal;
+    abstract locationOfValue(value: T): number;
 
-    abstract valueAtLocation(location: Decimal): T;
+    abstract valueAtLocation(location: number): T;
 
     abstract isValue(value: any): value is T;
 

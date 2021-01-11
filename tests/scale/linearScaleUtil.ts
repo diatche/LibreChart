@@ -25,7 +25,7 @@ export const getExpectedLinearTicks = (input: LinearTickInput): string[] => {
 }
 
 export const getLinearTicks = (input: LinearTickInput): string[] => {
-    return new LinearScale().getTickLocations(
+    return new LinearScale().getTicks(
         $(input.start),
         $(input.end),
         input.constraints || {
@@ -33,7 +33,7 @@ export const getLinearTicks = (input: LinearTickInput): string[] => {
                 value: $(input.stride),
             },
         }
-    ).map(x => x.toString());
+    ).map(x => x.value.toString());
 }
 
 export const $ = (x: Decimal.Value) => new Decimal(x);

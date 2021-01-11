@@ -6,13 +6,6 @@ export interface IMatcher<T = any> {
     isEqual: (object: T, source: T) => boolean;
 }
 
-const kDecimalMatcher: IMatcher<Decimal> = {
-    isType: Decimal.isDecimal,
-    isEqual: (a, b) => a.eq(b),
-};
-
-const kDefaultMatchers: IMatcher[] = [kDecimalMatcher];
-
 /**
  * Performs a partial deep comparison between object and source to
  * determine if object contains equivalent property values.
@@ -22,9 +15,11 @@ const kDefaultMatchers: IMatcher[] = [kDecimalMatcher];
  * @returns {boolean} Returns true if object is a match, else false.
  */
 export const isMatch = (object: any, source: any, matchers?: IMatcher[]): boolean => {
-    matchers = !!matchers ? [...kDefaultMatchers, ...matchers] : kDefaultMatchers;
+    if (!matchers) {
+        return isMatchWith(object, source, () => undefined);
+    }
     return isMatchWith(object, source, (object, source) => {
-        for (let matcher of matchers!) {
+        for (let matcher of matchers) {
             if (matcher.isType(object) && matcher.isType(source)) {
                 return matcher.isEqual(object, source);
             }

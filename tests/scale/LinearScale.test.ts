@@ -26,16 +26,16 @@ describe('LinearScale', () => {
                         value: $(9.6),
                     },
                     expand: true,
-                    radix: $(24),
+                    radix: 24,
                     excludeFactors: [2, 4, 8],
                 },
             );
 
             expect(scale.tickScale.origin.value.toNumber()).toEqual(-60);
-            expect(scale.tickScale.origin.location.toNumber()).toBe(-60);
+            expect(scale.tickScale.origin.location).toBe(-60);
 
             expect(scale.tickScale.interval.value.toNumber()).toBe(12);
-            expect(scale.tickScale.interval.location.toNumber()).toBe(12);
+            expect(scale.tickScale.interval.location).toBe(12);
         });
     });
 
@@ -54,7 +54,7 @@ describe('LinearScale', () => {
                 start: 0,
                 end: 1,
                 stride: 0.1,
-                constraints: { maxCount: $(10) },
+                constraints: { maxCount: 10 },
             };
             expect(getLinearTicks(input)).toEqual(
                 getExpectedLinearTicks(input),
@@ -63,38 +63,38 @@ describe('LinearScale', () => {
 
         it('should ignore infinite max count', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(1), {
+                .getTicks($(0), $(1), {
                     minInterval: { value: $(0.5) },
-                    maxCount: $(Infinity),
+                    maxCount: Infinity,
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
 
         it('should divide 1 into intervals of 0.2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(1), {
+                .getTicks($(0), $(1), {
                     minInterval: { value: $(0.11) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.2', '0.4', '0.6', '0.8', '1']);
         });
 
         it('should divide 1 into intervals of 0.5 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(1), {
+                .getTicks($(0), $(1), {
                     minInterval: { value: $(0.21) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
 
         it('should not divide 1 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(1), {
+                .getTicks($(0), $(1), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -102,28 +102,28 @@ describe('LinearScale', () => {
 
         it('should divide 5 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(5), {
+                .getTicks($(0), $(5), {
                     minInterval: { value: k1 },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3', '4', '5']);
         });
 
         it('should not divide 5 into intervals of 2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(5), {
+                .getTicks($(0), $(5), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '5']);
         });
 
         it('should not divide 5 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(5), {
+                .getTicks($(0), $(5), {
                     minInterval: { value: $(5.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -131,28 +131,28 @@ describe('LinearScale', () => {
 
         it('should divide 3 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(3), {
+                .getTicks($(0), $(3), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3']);
         });
 
         it('should not divide 3 into intervals of 2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(3), {
+                .getTicks($(0), $(3), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
         it('should not divide 3 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(3), {
+                .getTicks($(0), $(3), {
                     minInterval: { value: $(3.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -160,28 +160,28 @@ describe('LinearScale', () => {
 
         it('should divide 4 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(4), {
+                .getTicks($(0), $(4), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3', '4']);
         });
 
         it('should divide 4 into intervals of 2 when 1 does not fit and not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(4), {
+                .getTicks($(0), $(4), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '2', '4']);
         });
 
         it('should not divide 4 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(4), {
+                .getTicks($(0), $(4), {
                     minInterval: { value: $(4.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -189,28 +189,28 @@ describe('LinearScale', () => {
 
         it('should divide 7 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(7), {
+                .getTicks($(0), $(7), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3', '4', '5', '6', '7']);
         });
 
         it('should not divide 7 into intervals of 2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(7), {
+                .getTicks($(0), $(7), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
         it('should not divide 7 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(7), {
+                .getTicks($(0), $(7), {
                     minInterval: { value: $(7.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -218,28 +218,28 @@ describe('LinearScale', () => {
 
         it('should divide 0.5 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0.0), $(0.5), {
+                .getTicks($(0.0), $(0.5), {
                     minInterval: { value: $(0.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.1', '0.2', '0.3', '0.4', '0.5']);
         });
 
         it('should not divide 0.5 into intervals of 0.2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0.0), $(0.5), {
+                .getTicks($(0.0), $(0.5), {
                     minInterval: { value: $(0.11) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.5']);
         });
 
         it('should not divide 0.5 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0.0), $(0.5), {
+                .getTicks($(0.0), $(0.5), {
                     minInterval: { value: $(0.51) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -252,7 +252,7 @@ describe('LinearScale', () => {
                 stride: 0.1,
                 constraints: {
                     minInterval: { value: $(0.04) },
-                    maxCount: $(15),
+                    maxCount: 15,
                 },
             };
             expect(getLinearTicks(input)).toEqual(
@@ -262,19 +262,19 @@ describe('LinearScale', () => {
 
         it('should not divide 1.5 into intervals of 0.2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(0.0), $(1.5), {
+                .getTicks($(0.0), $(1.5), {
                     minInterval: { value: $(0.11) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1', '1.5']);
         });
 
         it('should not divide 1.5 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(0.0), $(1.5), {
+                .getTicks($(0.0), $(1.5), {
                     minInterval: { value: $(1.51) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -282,28 +282,28 @@ describe('LinearScale', () => {
 
         it('should divide 10..15 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(10), $(15), {
+                .getTicks($(10), $(15), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['10', '11', '12', '13', '14', '15']);
         });
 
         it('should not divide 10..15 into intervals of 2 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(10), $(15), {
+                .getTicks($(10), $(15), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['10', '15']);
         });
 
         it('should not divide 10..15 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(10), $(15), {
+                .getTicks($(10), $(15), {
                     minInterval: { value: $(5.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['10']);
         });
 
@@ -311,10 +311,10 @@ describe('LinearScale', () => {
 
         it('should divide -10..-5 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(-10), $(-5), {
+                .getTicks($(-10), $(-5), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['-10', '-9', '-8', '-7', '-6', '-5']);
         });
 
@@ -322,10 +322,10 @@ describe('LinearScale', () => {
 
         it('should divide -10..10 into intervals of 1 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(-10), $(10), {
+                .getTicks($(-10), $(10), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             let expectedStride = 1;
             let expectedTicks: string[] = [];
             for (let i = -10; i <= 10; i += expectedStride) {
@@ -360,35 +360,35 @@ describe('LinearScale', () => {
 
         it('should divide -10..10 into intervals of 10 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(-10), $(10), {
+                .getTicks($(-10), $(10), {
                     minInterval: { value: $(5.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['-10', '0', '10']);
         });
 
         it('should divide -10..10 into intervals of 20 with min distance when not expanding', () => {
             let x = new LinearScale()
-                .getTickLocations($(-10), $(10), {
+                .getTicks($(-10), $(10), {
                     minInterval: { value: $(10.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
         it('should not divide -10..10 with large min distance', () => {
             let x = new LinearScale()
-                .getTickLocations($(-10), $(10), {
+                .getTicks($(-10), $(10), {
                     minInterval: { value: $(20.1) },
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
         // empty interval
 
         it('should return empty array for point interval', () => {
-            let x = new LinearScale().getTickLocations($(0), $(0), {
+            let x = new LinearScale().getTicks($(0), $(0), {
                 minInterval: { value: $(0.1) },
             });
             expect(x).toEqual([]);
@@ -397,7 +397,7 @@ describe('LinearScale', () => {
         // empty interval
 
         it('should return empty array for reverse interval', () => {
-            let x = new LinearScale().getTickLocations($(1), $(0), {
+            let x = new LinearScale().getTicks($(1), $(0), {
                 minInterval: { value: $(0.1) },
             });
             expect(x).toEqual([]);
@@ -407,11 +407,11 @@ describe('LinearScale', () => {
 
         it('should fall back to tick interval of 2 when expanding uneven interval', () => {
             let x = new LinearScale()
-                .getTickLocations($(0.1), $(4.9), {
+                .getTicks($(0.1), $(4.9), {
                     minInterval: { value: $(1.1) },
                     expand: true,
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '2', '4', '6']);
         });
 
@@ -419,11 +419,11 @@ describe('LinearScale', () => {
 
         it('should divide 24 into intervals of 12 with min distance when not expanding with radix of 24', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(24), {
+                .getTicks($(0), $(24), {
                     minInterval: { value: $(10) },
-                    radix: $(24),
+                    radix: 24,
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '12', '24']);
         });
 
@@ -431,11 +431,11 @@ describe('LinearScale', () => {
 
         it('should divide 60 into intervals of 30 with min distance when not expanding with radix of 60', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(60), {
+                .getTicks($(0), $(60), {
                     minInterval: { value: $(30) },
-                    radix: $(60),
+                    radix: 60,
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '30', '60']);
         });
 
@@ -443,11 +443,11 @@ describe('LinearScale', () => {
 
         it('should not divide 1 into intervals of 0.2 when a factor of 2 is excluded', () => {
             let x = new LinearScale()
-                .getTickLocations($(0), $(1), {
+                .getTicks($(0), $(1), {
                     minInterval: { value: $(0.11) },
                     excludeFactors: [2],
                 })
-                .map((x) => x.toString());
+                .map((x) => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
     });
