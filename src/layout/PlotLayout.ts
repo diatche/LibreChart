@@ -9,6 +9,7 @@ import {
     EvergridLayout,
     IUpdateInfo,
     IInsets,
+    IAnimationBaseOptions,
 } from "evergrid";
 import DataSource from "../data/DataSource";
 import {
@@ -264,10 +265,36 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         });
     }
 
+    scrollToValueRange(
+        start: { x?: X, y?: Y },
+        end: { x?: X, y?: Y },
+        options: IAnimationBaseOptions,
+    ) {
+        return this.scrollTo({
+            ...options,
+            range: [
+                this.locationOfPartialPoint(start),
+                this.locationOfPartialPoint(end),
+            ],
+            insets: this.getAxisInsets(),
+        });
+    }
+
     locationOfPoint(point: { x: X, y: Y }): IPoint {
         return {
             x: this.xLayout.scale.locationOfValue(point.x),
             y: this.yLayout.scale.locationOfValue(point.y),
+        };
+    }
+
+    locationOfPartialPoint(point: { x?: X, y?: Y }): Partial<IPoint> {
+        return {
+            x: typeof point.x !== 'undefined'
+                ? this.xLayout.scale.locationOfValue(point.x)
+                : undefined,
+            y: typeof point.y !== 'undefined'
+                ? this.yLayout.scale.locationOfValue(point.y)
+                : undefined,
         };
     }
 
