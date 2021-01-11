@@ -23,7 +23,7 @@ import {
     IAxisOptions,
     IAxisStyle,
 } from "./axisTypes";
-import { ITickLocation } from "../../scale/Scale";
+import { ITickVector } from "../../scale/Scale";
 import { PlotLayout } from "../../internal";
 import {
     isAxisHorizontal,
@@ -111,7 +111,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         let {
             axisType,
             hidden = false,
-            getTickLabel = (tick: ITickLocation<T>) => String(tick.value),
+            getTickLabel = (tick: ITickVector<T>) => String(tick.value),
             layoutSourceDefaults = {},
             style = {},
         } = options || {};

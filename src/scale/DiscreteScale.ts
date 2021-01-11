@@ -21,8 +21,8 @@ export default class DiscreteScale extends LinearScale {
                 location: start,
             },
             interval: {
-                valueInterval: k1,
-                locationInterval: k1,
+                value: k1,
+                location: k1,
             },
         }
     }

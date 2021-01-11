@@ -30,8 +30,8 @@ export default class LinearScale extends Scale<Decimal> {
                 location: k0,
             },
             interval: {
-                valueInterval: k1,
-                locationInterval: k1,
+                value: k1,
+                location: k1,
             },
         }
     }
@@ -60,8 +60,8 @@ export default class LinearScale extends Scale<Decimal> {
             ...constraints,
         };
 
-        if (constraints.minInterval?.valueInterval) {
-            let min = constraints.minInterval.valueInterval;
+        if (constraints.minInterval?.value) {
+            let min = constraints.minInterval.value;
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
@@ -70,8 +70,8 @@ export default class LinearScale extends Scale<Decimal> {
             }
         }
 
-        if (constraints.minInterval?.locationInterval) {
-            let min = constraints.minInterval.locationInterval;
+        if (constraints.minInterval?.location) {
+            let min = constraints.minInterval.location;
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
@@ -158,8 +158,8 @@ export default class LinearScale extends Scale<Decimal> {
                         location: origin,
                     },
                     interval: {
-                        locationInterval: interval,
-                        valueInterval: interval,
+                        location: interval,
+                        value: interval,
                     },
                 };
                 break;
@@ -180,9 +180,9 @@ export default class LinearScale extends Scale<Decimal> {
 
     floorValue(value: Decimal): Decimal {
         return new Decimal(value)
-            .div(this.tickScale.interval.valueInterval)
+            .div(this.tickScale.interval.value)
             .floor()
-            .mul(this.tickScale.interval.valueInterval);
+            .mul(this.tickScale.interval.value);
     }
 
     locationOfValue(value: Decimal): Decimal {

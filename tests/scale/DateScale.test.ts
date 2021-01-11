@@ -53,7 +53,7 @@ describe('DateScale', () => {
                 moment('2020-01-01 01:00'),
                 { 
                     minInterval: {
-                        valueInterval: moment.duration(10, 'minute'),
+                        value: moment.duration(10, 'minute'),
                     },
                 },
             );
@@ -111,8 +111,8 @@ describe('DateScale', () => {
                     location: $(-3),
                 },
                 interval: {
-                    valueInterval: moment.duration(0.5, 'day'),
-                    locationInterval: $(0.5),
+                    value: moment.duration(0.5, 'day'),
+                    location: $(0.5),
                 },
             };
             expect(scale.locationOfValue(moment('2020-01-01 00:00')).toString()).toBe('0');
@@ -175,8 +175,8 @@ describe('DateScale', () => {
                     location: $(-3),
                 },
                 interval: {
-                    valueInterval: moment.duration(0.5, 'day'),
-                    locationInterval: $(0.5),
+                    value: moment.duration(0.5, 'day'),
+                    location: $(0.5),
                 },
             };
             
@@ -206,7 +206,7 @@ describe('DateScale', () => {
                 moment('2020-01-04T07:18'),
                 {
                     minInterval: {
-                        valueInterval: moment.duration(0.4, 'day'),
+                        value: moment.duration(0.4, 'day'),
                     },
                     expand: true,
                 },
@@ -217,8 +217,8 @@ describe('DateScale', () => {
             expect(scale.tickScale.origin.location.toNumber()).toBe(-3);
 
             // Scale should be half a day
-            expect(scale.tickScale.interval.valueInterval.asDays()).toBe(0.5);
-            expect(scale.tickScale.interval.locationInterval.toNumber()).toBe(0.5);
+            expect(scale.tickScale.interval.value.asDays()).toBe(0.5);
+            expect(scale.tickScale.interval.location.toNumber()).toBe(0.5);
         });
 
         it('should should update scale correctly with half days with fractional origin', () => {
@@ -233,7 +233,7 @@ describe('DateScale', () => {
                 moment('2020-01-04T07:18'),
                 {
                     minInterval: {
-                        valueInterval: moment.duration(0.4, 'day'),
+                        value: moment.duration(0.4, 'day'),
                     },
                     expand: true,
                 },
@@ -244,8 +244,8 @@ describe('DateScale', () => {
             expect(scale.tickScale.origin.location.toNumber()).toBe(-2.5);
 
             // Scale should be half a day
-            expect(scale.tickScale.interval.valueInterval.asDays()).toBe(0.5);
-            expect(scale.tickScale.interval.locationInterval.toNumber()).toBe(0.5);
+            expect(scale.tickScale.interval.value.asDays()).toBe(0.5);
+            expect(scale.tickScale.interval.location.toNumber()).toBe(0.5);
         });
     });
 
@@ -263,8 +263,8 @@ describe('DateScale', () => {
                     location: $(-20),
                 },
                 interval: {
-                    valueInterval: moment.duration(5, 'day'),
-                    locationInterval: $(5),
+                    value: moment.duration(5, 'day'),
+                    location: $(5),
                 },
             };
 
@@ -547,7 +547,7 @@ describe('DateScale', () => {
 
             let ticks = scale
                 .getTicks(start, end, {
-                    minInterval: { locationInterval: $(0.1) },
+                    minInterval: { location: $(0.1) },
                 })
                 .map((x) => x.location.toString());
 
@@ -571,7 +571,7 @@ describe('DateScale', () => {
             let end = moment('2020-01-01 10:00');
             let ticks = scale
                 .getTicks(start, end, {
-                    minInterval: { locationInterval: k1 },
+                    minInterval: { location: k1 },
                 })
                 .map((x) => x.location.toString());
 
@@ -587,7 +587,7 @@ describe('DateScale', () => {
             let end = moment('2020-01-01 09:00');
             let ticks = scale
                 .getTicks(start, end, {
-                    minInterval: { locationInterval: k1 },
+                    minInterval: { location: k1 },
                 })
                 .map((x) => x.location.toString());
 
@@ -607,7 +607,7 @@ describe('DateScale', () => {
             let end = moment('2020-01-16');
             let ticks = scale
                 .getTicks(start, end, {
-                    minInterval: { locationInterval: k1 },
+                    minInterval: { location: k1 },
                 })
                 .map((x) => x.location.toNumber());
             expect(ticks).toEqual([10, 11, 12, 13, 14, 15]);
@@ -626,7 +626,7 @@ describe('DateScale', () => {
             let start = moment('2020-01-11 00:00');
             let end = moment('2020-01-11 05:00');
             let ticks = scale.getTicks(start, end, {
-                minInterval: { valueInterval: moment.duration(1, 'hour') },
+                minInterval: { value: moment.duration(1, 'hour') },
             });
             let locations = ticks.map((x) => x.location.toFixed(6));
             let dates = ticks.map((x) => x.value.format('YYYY-MM-DD HH:mm'));

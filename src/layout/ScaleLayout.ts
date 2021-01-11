@@ -172,7 +172,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
         
         this.layoutInfo.containerLength$.setValue(axisLengthInfo.containerLength);
 
-        let negHalfMajorInterval = this.scale.tickScale.interval.locationInterval.div(2).neg().toNumber();
+        let negHalfMajorInterval = this.scale.tickScale.interval.location.div(2).neg().toNumber();
         this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
 
         this.didChangeLayout();
@@ -223,12 +223,12 @@ export default class ScaleLayout<T = Decimal, D = T> {
             endValue,
             {
                 minInterval: {
-                    locationInterval: majorDist.div(viewScale).abs(),
+                    location: majorDist.div(viewScale).abs(),
                 },
                 expand: true,
                 minorTickConstraints: [{
                     minInterval: {
-                        locationInterval: minorDist.div(viewScale).abs(),
+                        location: minorDist.div(viewScale).abs(),
                     },
                     maxCount: new Decimal(this.style.minorIntervalCountMax),
                 }],
@@ -248,9 +248,9 @@ export default class ScaleLayout<T = Decimal, D = T> {
             valueRange[1],
         );
         let minorCount = 0;
-        let minorInterval = this.scale.minorTickScales[0].interval.locationInterval;
+        let minorInterval = this.scale.minorTickScales[0].interval.location;
         if (majorCount && !minorInterval.isZero()) {
-            minorCount = this.scale.tickScale.interval.locationInterval
+            minorCount = this.scale.tickScale.interval.location
                 .div(minorInterval)
                 .round()
                 .toNumber() - 1;
@@ -296,7 +296,7 @@ export default class ScaleLayout<T = Decimal, D = T> {
      * @returns The grid container's range in content coordinates.
      */
     getContainerRangeAtIndex(index: number): [Decimal, Decimal] {
-        let interval = this.scale.tickScale.interval.locationInterval;
+        let interval = this.scale.tickScale.interval.location;
         let count = this.layoutInfo.majorCount || 0;
         if (count === 0 || interval.lte(0)) {
             return [k0, k0];
