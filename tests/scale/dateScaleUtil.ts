@@ -31,7 +31,7 @@ export const getExpectedDateTicks = (input: DateTickInput): string[] => {
 export const getDateTicks = (input: DateTickInput & IDateScaleOptions): string[] => {
     let constraints: IDateScaleOptions & ITickScaleConstraints<moment.Duration> = {
         minInterval: {
-            valueInterval: input.stride,
+            value: input.stride,
         },
         ...input.constraints,
     };

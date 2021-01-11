@@ -15,14 +15,13 @@ import {
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
 import { VectorUtil } from '../utils/vectorUtil';
-import Decimal from 'decimal.js';
 
 let _idCounter = 0;
 
 export interface DataSourceProps<
     T,
-    X = Decimal,
-    Y = Decimal,
+    X = number,
+    Y = number,
 > {
     data?: T[];
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
@@ -30,8 +29,8 @@ export interface DataSourceProps<
 
 export interface DataSourceInput<
     T,
-    X = Decimal,
-    Y = Decimal,
+    X = number,
+    Y = number,
 > extends DataSourceProps<T, X, Y> {
     noCopy?: boolean;
 }
@@ -42,8 +41,8 @@ export interface IItemsInLocationRangeOptions {
 
 export default abstract class DataSource<
     T = any,
-    X = Decimal,
-    Y = Decimal,
+    X = number,
+    Y = number,
 > implements DataSourceProps<T, X, Y> {
     id: string;
     data: T[];
@@ -214,14 +213,14 @@ export default abstract class DataSource<
     getItemRect(item: IDataSourceRect<X, Y>): IRect {
         let plot = this.plot;
 
-        let x = plot.xLayout.scale.locationOfValue(item.x).toNumber();
+        let x = plot.xLayout.scale.locationOfValue(item.x);
         let x2 = typeof item.x2 !== 'undefined'
-            ? plot.xLayout.scale.locationOfValue(item.x2).toNumber()
+            ? plot.xLayout.scale.locationOfValue(item.x2)
             : x;
         
-        let y = plot.yLayout.scale.locationOfValue(item.y).toNumber();
+        let y = plot.yLayout.scale.locationOfValue(item.y);
         let y2 = typeof item.y2 !== 'undefined'
-            ? plot.yLayout.scale.locationOfValue(item.y2).toNumber()
+            ? plot.yLayout.scale.locationOfValue(item.y2)
             : y;
 
         return {

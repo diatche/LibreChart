@@ -19,7 +19,7 @@ export default class DateAxis extends Axis<Moment, Duration> {
     constructor(options: IAxisOptions<Moment> & { axisType: AxisType }) {
         options = {
             getTickLabel: tick => {
-                let duration = this.scaleLayout?.scale.tickScale.interval.valueInterval;
+                let duration = this.scaleLayout?.scale.tickScale.interval.value;
                 if (!duration) {
                     return '';
                 }
@@ -42,7 +42,7 @@ export default class DateAxis extends Axis<Moment, Duration> {
             return;
         }
         this._tickStyles = getTickStyles(
-            this.scaleLayout?.scale.tickScale.interval.valueInterval,
+            this.scaleLayout?.scale.tickScale.interval.value,
             this.style,
         );
     }

@@ -1,4 +1,3 @@
-import Decimal from "decimal.js";
 import Scale, {
     ITickScaleConstraints,
     ITickScale,
@@ -9,123 +8,118 @@ import {
     findFactors,
 } from "../utils/factors";
 
-const k0 = new Decimal(0);
-const k1 = new Decimal(1);
-const k10 = new Decimal(10);
-
 const kFactors10 = [1, 2, 5, 10];
 
-type LinearTickScaleType = ITickScale<Decimal>;
+type LinearTickScaleType = ITickScale<number>;
 
-export default class LinearScale extends Scale<Decimal> {
+export default class LinearScale extends Scale<number> {
 
-    tickScale: ITickScale<Decimal>;
+    tickScale: ITickScale<number>;
 
-    constructor(options: IScaleOptions<Decimal> = {}) {
+    constructor(options: IScaleOptions<number> = {}) {
         super(options);
 
         this.tickScale = {
             origin: {
-                value: k0,
-                location: k0,
+                value: 0,
+                location: 0,
             },
             interval: {
-                valueInterval: k1,
-                locationInterval: k1,
+                value: 1,
+                location: 1,
             },
         }
     }
 
-    emptyValue() { return k0 };
-    emptyValueInterval() { return k0 };
+    emptyValue() { return 0 };
+    emptyValueInterval() { return 0 };
 
     getTickScale(
-        start: Decimal,
-        end: Decimal,
-        constraints?: ITickScaleConstraints<Decimal>
+        start: number,
+        end: number,
+        constraints?: ITickScaleConstraints<number>
     ): LinearTickScaleType {
-        if (end.lte(start)) {
+        if (end <= start) {
             return this.emptyScale();
         }
-        if (start.isNaN() || !end.isFinite() || end.isNaN() || !end.isFinite()) {
+        if (isNaN(start) || !isFinite(end) || isNaN(end) || !isFinite(end)) {
             throw new Error('Invalid interval');
         }
-        let len = end.sub(start);
+        let len = end - start;
     
         // Find min interval
-        let minInterval = k0;
+        let minInterval = 0;
     
         constraints = {
             ...this.constraints,
             ...constraints,
         };
 
-        if (constraints.minInterval?.valueInterval) {
-            let min = constraints.minInterval.valueInterval;
-            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
+        if (constraints.minInterval?.value) {
+            let min = constraints.minInterval.value;
+            if (min < 0 || isNaN(min) || !isFinite(min)) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
-            if (min.gt(minInterval)) {
+            if (min > minInterval) {
                 minInterval = min;
             }
         }
 
-        if (constraints.minInterval?.locationInterval) {
-            let min = constraints.minInterval.locationInterval;
-            if (min.lt(0) || min.isNaN() || !min.isFinite()) {
+        if (constraints.minInterval?.location) {
+            let min = constraints.minInterval.location;
+            if (min < 0 || isNaN(min) || !isFinite(min)) {
                 throw new Error('Minimum interval must be finite and with a positive length');
             }
-            if (min.gt(minInterval)) {
+            if (min > minInterval) {
                 minInterval = min;
             }
         }
     
         if (constraints.maxCount) {
-            let maxCount = new Decimal(constraints.maxCount);
-            if (maxCount.eq(0)) {
+            let maxCount = constraints.maxCount;
+            if (maxCount === 0) {
                 return this.emptyScale();
             }
-            if (maxCount.lt(0) || maxCount.isNaN()) {
+            if (maxCount < 0 || isNaN(maxCount)) {
                 throw new Error('Max count must be greater than or equal to zero');
             }
-            let min = len.div(maxCount);
-            if (min.gt(minInterval)) {
+            let min = len / maxCount;
+            if (min > minInterval) {
                 minInterval = min;
             }
         }
     
-        if (minInterval.lte(0)) {
+        if (minInterval <= 0) {
             throw new Error('Must specify either a minimum interval or a maximum interval count');
         }
     
-        let radix = k10;
-        let radixLog10 = k1;
+        let radix = 10;
+        let radixLog10 = 1;
         if (constraints.radix) {
-            radix = new Decimal(constraints.radix);
-            if (!radix.eq(k10)) {
-                radixLog10 = Decimal.log10(radix);
+            radix = constraints.radix;
+            if (radix !== 10) {
+                radixLog10 = Math.log10(radix);
             }
-            if (!radix.isInt() || radix.lt(2) || radix.isNaN() || !radix.isFinite()) {
+            if (radix % 1 !== 0 || radix < 2 || isNaN(radix) || !isFinite(radix)) {
                 throw new Error('Radix must be an integer greater than 1');
             }
         }
     
-        let exponent = radix.pow(
-            Decimal.log10(minInterval)
-                .div(radixLog10)
-                .floor()
+        let exponent = Math.pow(
+            radix,
+            Math.floor(Math.log10(minInterval) / radixLog10)
         );
-        let startScaled = start.div(exponent).floor();
-        let endScaled = end.div(exponent).ceil();
+        let startScaled = Math.floor(start / exponent);
+        let endScaled = Math.ceil(end / exponent);
     
         let factors: number[];
         if (constraints.expand) {
             // Use radix factors
-            factors = findFactors(radix.toNumber());
+            factors = findFactors(radix);
         } else {
             // Use common factors
-            let scaledLen = endScaled.sub(startScaled);
-            factors = findCommonFactors(radix.toNumber(), scaledLen.toNumber());
+            let scaledLen = endScaled - startScaled;
+            factors = findCommonFactors(radix, scaledLen);
         }
         if (factors.length === 0) {
             // Fallback to default
@@ -141,80 +135,73 @@ export default class LinearScale extends Scale<Decimal> {
         do {
             for (let i = 0; i < factors.length; i++) {
                 const factor = factors[i];
-                let fStart = startScaled.div(factor).floor().mul(factor);
-                let fEnd = endScaled.div(factor).ceil().mul(factor);
-                let fLength = fEnd.sub(fStart);
-                let count = fLength.div(factor);
-                let fInterval = fLength.div(count);
-                let interval = fInterval.mul(exponent);
-                if (interval.lt(minInterval)) {
+                let fStart = Math.floor(startScaled / factor) * factor;
+                let fEnd = Math.ceil(endScaled / factor) * factor;
+                let fLength = fEnd - fStart;
+                let count = fLength / factor;
+                let fInterval = fLength / count;
+                let interval = fInterval * exponent;
+                if (interval < minInterval) {
                     continue;
                 }
 
-                let origin = fStart.mul(exponent);
+                let origin = fStart * exponent;
                 bestScale = {
                     origin: {
                         value: origin,
                         location: origin,
                     },
                     interval: {
-                        locationInterval: interval,
-                        valueInterval: interval,
+                        value: interval,
+                        location: interval,
                     },
                 };
                 break;
             }
             if (!bestScale) {
-                exponent = exponent.mul(radix);
-                startScaled = startScaled.div(radix);
-                endScaled = endScaled.div(radix);
+                exponent = exponent * radix;
+                startScaled = startScaled / radix;
+                endScaled = endScaled / radix;
             }
         } while (!bestScale);
     
         return bestScale;
     }
 
-    addIntervalToValue(value: Decimal, interval: Decimal): Decimal {
-        return new Decimal(value).add(interval);
+    addIntervalToValue(value: number, interval: number): number {
+        return value + interval;
     }
 
-    floorValue(value: Decimal): Decimal {
-        return new Decimal(value)
-            .div(this.tickScale.interval.valueInterval)
-            .floor()
-            .mul(this.tickScale.interval.valueInterval);
+    floorValue(value: number): number {
+        return Math.floor(value / this.tickScale.interval.value)
+            * this.tickScale.interval.value
     }
 
-    locationOfValue(value: Decimal): Decimal {
-        try {
-            new Decimal(value);
-        } catch (error) {
-            console.debug(`locationOfValue(${value.constructor.name})`);
-        }
-        return new Decimal(value);
+    locationOfValue(value: number): number {
+        return value;
     }
 
-    valueAtLocation(location: Decimal): Decimal {
-        return new Decimal(location);
+    valueAtLocation(location: number): number {
+        return location;
     }
 
-    isValue(value: any): value is Decimal {
-        return Decimal.isDecimal(value);
+    isValue(value: any): value is number {
+        return typeof value === 'number';
     }
 
-    isInterval(interval: any): interval is Decimal {
-        return Decimal.isDecimal(interval);
+    isInterval(interval: any): interval is number {
+        return typeof interval === 'number';
     }
 
-    isValueEqual(v1: Decimal, v2: Decimal): boolean {
-        return v1.eq(v2);
+    isValueEqual(v1: number, v2: number): boolean {
+        return v1 === v2;
     }
 
-    compareValues(a: Decimal, b: Decimal): number {
-        return a.sub(b).toNumber();
+    compareValues(a: number, b: number): number {
+        return a - b;
     }
 
-    isIntervalEqual(i1: Decimal, i2: Decimal): boolean {
-        return i1.eq(i2);
+    isIntervalEqual(i1: number, i2: number): boolean {
+        return i1 === i2;
     }
 }

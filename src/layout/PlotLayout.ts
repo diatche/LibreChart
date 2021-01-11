@@ -266,8 +266,8 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
 
     locationOfPoint(point: { x: X, y: Y }): IPoint {
         return {
-            x: this.xLayout.scale.locationOfValue(point.x).toNumber(),
-            y: this.yLayout.scale.locationOfValue(point.y).toNumber(),
+            x: this.xLayout.scale.locationOfValue(point.x),
+            y: this.yLayout.scale.locationOfValue(point.y),
         };
     }
 
