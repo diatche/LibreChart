@@ -26,6 +26,7 @@ import { isAxisHorizontal, isAxisType } from './axisUtil';
 import { Cancelable } from '../../types';
 import ScaleLayout from '../ScaleLayout';
 import { Observable } from '../../utils/observable';
+import { PartialChartTheme } from '../../theme';
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -33,10 +34,15 @@ const kDefaultAxisThicknessStep = 10;
 
 export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
 
+export interface IAxisExtraOptions {
+    axisType: AxisType;
+    theme?: PartialChartTheme;
+}
+
 export type AxisManyInput<X = any, Y = any, DX = any, DY = any> =
     | IAxes<X, Y, DX, DY>
     | IAxesOptionsMap<X, Y>
-    | (Axis | IAxisOptions)[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
+    | (Axis | (IAxisOptions & Omit<IAxisExtraOptions, 'axisType'>))[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
 export interface IAxes<X = any, Y = any, DX = any, DY = any> {
     topAxis?: Axis<X, DX>;
@@ -104,7 +110,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates?: Observable.IObserver;
 
-    constructor(options: IAxisOptions<T> & { axisType: AxisType }) {
+    constructor(options: IAxisOptions<T> & IAxisExtraOptions) {
         let {
             axisType,
             hidden = false,
@@ -132,13 +138,17 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             });
         this.style = {
             ...kAxisStyleLightDefaults,
+            ...options.theme?.axis,
             ...style,
             padding: normalizeAnimatedValue(style.padding),
         };
         this.layoutSourceDefaults = layoutSourceDefaults;
     }
 
-    static createMany(input: AxisManyInput | undefined): IAxes {
+    static createMany(
+        input: AxisManyInput | undefined,
+        defaults?: IAxisOptions & Omit<IAxisExtraOptions, 'axisType'>,
+    ): IAxes {
         let axisArrayOrMap: any = input;
         if (!axisArrayOrMap) {
             return {};
@@ -147,14 +157,14 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         // Validate and normalize axis types
         let axisOrOptionsArray: (
             | Axis
-            | (IAxisOptions & { axisType?: AxisType })
+            | (IAxisOptions & IAxisExtraOptions)
         )[] = [];
-        let axisOrOption: Axis | (IAxisOptions & { axisType?: AxisType });
+        let axisOrOption: Axis | (IAxisOptions & IAxisExtraOptions);
         if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
             axisOrOptionsArray = axisArrayOrMap;
         } else {
             let axisMap: {
-                [key: string]: Axis | IAxisOptions;
+                [key: string]: Axis | (IAxisOptions & IAxisExtraOptions);
             } = axisArrayOrMap;
             for (let key of Object.keys(axisMap)) {
                 axisOrOption = axisMap[key];
@@ -184,9 +194,10 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                         'Axis is missing a type. Use an object with axis types as keys or use axis instances.',
                     );
                 }
-                axis = new Axis(
-                    axisOrOption as IAxisOptions & { axisType: AxisType },
-                );
+                axis = new Axis({
+                    ...defaults,
+                    ...axisOrOption,
+                } as IAxisOptions & IAxisExtraOptions);
             }
             axes[axis.axisType] = axis;
         }

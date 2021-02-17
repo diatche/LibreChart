@@ -133,12 +133,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 ref={this.innerRef}
                 renderItem={this.itemRenderMap}
                 layout={this.layout}
-                style={[
-                    this.props.style,
-                    {
-                        backgroundColor: 'white',
-                    },
-                ]}
+                style={this.props.style}
             />
         );
     }

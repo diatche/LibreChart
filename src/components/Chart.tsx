@@ -22,6 +22,10 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
     }
 
     render() {
+        let styleFromTheme: ViewStyle = {};
+        if (this.props.layout.theme?.backgroundColor) {
+            styleFromTheme.backgroundColor = this.props.layout.theme?.backgroundColor;
+        }
         let rows: React.ReactNode[] = [];
         for (let i = 0; i < this.layout.rowHeights.length; i++) {
             let heightInfo = this.layout.rowHeights[i];
@@ -75,7 +79,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                         },
                     },
                 ])}
-                style={[styles.container, this.props.style]}
+                style={[styles.container, styleFromTheme, this.props.style]}
             >
                 {rows}
             </Animated.View>

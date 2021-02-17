@@ -1,3 +1,6 @@
+export * from './types';
+export * from './theme';
+
 export { default as ScaleController } from './scaleControllers/ScaleController';
 export * from './scaleControllers/ScaleController';
 

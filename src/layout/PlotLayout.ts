@@ -25,6 +25,7 @@ import {
 import { Animated, InteractionManager } from 'react-native';
 import { Cancelable } from '../types';
 import debounce from 'lodash.debounce';
+import { PartialChartTheme } from '../theme';
 
 const kGridUpdateDebounceInterval = 100;
 const kDefaultUpdateInfo: IUpdateInfo = {
@@ -46,6 +47,7 @@ export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any>
     dataSources?: DataSource<any, X, Y>[];
     grid?: IChartGridInput | Grid;
     axes?: AxisManyInput<X, Y, DX, DY>;
+    theme?: PartialChartTheme;
 }
 
 export type PlotLayoutManyInput = (PlotLayout | PlotLayoutOptions)[];
@@ -68,6 +70,8 @@ export default class PlotLayout<
     /** Grid layout info. */
     readonly grid: Grid;
 
+    readonly theme: PartialChartTheme;
+
     // /** Reference grid layout (not displayed). */
     // refLayout?: GridLayoutSource;
 
@@ -75,6 +79,7 @@ export default class PlotLayout<
 
     constructor(options?: PlotLayoutOptions<X, Y, DX, DY>) {
         super(options);
+        this.theme = options?.theme || {};
         if (!options?.anchor) {
             this.anchor$.setValue({ x: 0.5, y: 0.5 });
         }
@@ -396,7 +401,7 @@ export default class PlotLayout<
     private _validatedAxes(
         props: PlotLayoutOptions | undefined,
     ): IAxes<X, Y, DX, DY> {
-        return Axis.createMany(props?.axes);
+        return Axis.createMany(props?.axes, { theme: props?.theme });
     }
 
     private _validatedGrid(props: PlotLayoutOptions | undefined): Grid {
@@ -404,7 +409,7 @@ export default class PlotLayout<
         if (gridOrOptions instanceof Grid) {
             return gridOrOptions;
         }
-        return new Grid(gridOrOptions);
+        return new Grid({ theme: props?.theme, ...gridOrOptions });
     }
 
     // private _createRefLayout(): GridLayoutSource {
