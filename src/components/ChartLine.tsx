@@ -9,6 +9,7 @@ import Svg, {
     LinearGradient,
     Path,
     Stop,
+    StopProps,
 } from 'react-native-svg';
 import {
     ILineDataStyle,
@@ -66,9 +67,38 @@ const ChartLine = React.memo((props: ChartLineProps) => {
     
     const viewBox = rectWithOverlap.map(String).join(' ');
     const drawLine = (props.pointStyles || props.strokeColor) && props.strokeWidth;
-    const gradID = `grad_${props.rect[0]}_${props.rect[1]}`;
 
-    // console.debug('rendering path: ' + props.path);
+    let useGrad = false;
+    let gradientStops: StopProps[] = [];
+    if (drawLine) {
+        gradientStops = props.points.reduce((stops, p, i) => {
+            let pointStyle = props.pointStyles?.[i];
+            let color = String(pointStyle?.strokeColor || props.strokeColor);
+            // let offset = p.x;
+            let offset = (p.x - rectWithOverlap[0]) / rectWidthWithOverlap;
+            let stop = {
+                // offset: offset
+                offset: `${offset * 100}%`,
+                stopColor: color,
+                stopOpacity: 1,
+            }
+            let previousStop = stops[stops.length - 1];
+            if (color === previousStop?.stopColor) {
+                // Same color
+                previousStop.offset = stop.offset;
+            } else {
+                // Different color
+                stops.push(stop);
+            }
+            return stops;
+        }, [] as StopProps[]);
+        useGrad = gradientStops.length > 1;
+    }
+    const gradID = `grad_${rectWithOverlap.map(String).join('_')}`;
+    const gradURL = `url(#${gradID})`;
+
+    // console.debug(`rendering with props ${JSON.stringify(props, null, 2)}`);
+    // console.debug(`rendering path ${JSON.stringify(props.points, null, 2)} in viewbox ${JSON.stringify(rectWithOverlap)}`);
     return (
         <View style={{
             flex: 1,
@@ -82,25 +112,24 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                 preserveAspectRatio="none"
                 viewBox={viewBox}
             >
-                {drawLine && (
+                {useGrad && drawLine && (
                     <Defs>
                         <LinearGradient
                             id={gradID}
+                            // x1={rectWithOverlap[0]}
+                            // y1={rectWithOverlap[1]}
+                            // x2={rectWithOverlap[0] + rectWithOverlap[2]}
+                            // y2={rectWithOverlap[1] + rectWithOverlap[3]}
                             x1='0%'
                             y1='0%'
                             x2='100%'
                             y2='0%'
                         >
-                            {props.points.map((p, i) => {
-                                let pointStyle = props.pointStyles?.[i];
-                                let color = String(pointStyle?.strokeColor || props.strokeColor);
-                                let offset = (p.originalPoint.x - rectWithOverlap[0]) / rectWidthWithOverlap;
+                            {gradientStops.map((stop, i) => {
                                 return (
                                     <Stop
-                                        key={`g${i}`}
-                                        offset={`${offset * 100}%`}
-                                        stopColor={color}
-                                        stopOpacity='1'
+                                        key={`${gradID}[${i}]`}
+                                        {...stop}
                                     />
                                 )
                             })}
@@ -113,8 +142,7 @@ const ChartLine = React.memo((props: ChartLineProps) => {
                         fill='none'
                         strokeLinecap='round'
                         strokeWidth={props.strokeWidth}
-                        // stroke={props.strokeColor as string}
-                        stroke={`url(#${gradID})`}
+                        stroke={useGrad ? gradURL : props.strokeColor as string}
                         strokeDasharray={(
                             props.strokeDashArray && props.strokeDashArray.length !== 0
                                 ? props.strokeDashArray.map(String).join(',')
