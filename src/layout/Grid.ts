@@ -10,6 +10,7 @@ import { kChartGridStyleLightDefaults, kGridReuseID } from '../const';
 import { IChartGridStyle, IChartGridStyleInput } from '../types';
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
+import { PartialChartTheme } from '../theme';
 
 export interface IChartGridInput {
     /**
@@ -31,6 +32,7 @@ export interface IChartGridInput {
     horizontal?: boolean;
 
     style?: IChartGridStyleInput;
+    theme?: PartialChartTheme;
 }
 
 export default class Grid {
@@ -55,6 +57,7 @@ export default class Grid {
         this.horizontal = horizontal;
         this.style = {
             ...kChartGridStyleLightDefaults,
+            ...options?.theme?.grid,
             ...options?.style,
         };
     }

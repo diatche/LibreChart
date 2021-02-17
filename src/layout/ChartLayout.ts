@@ -1,6 +1,7 @@
 import { IPoint, zeroPoint } from 'evergrid';
 import { Animated } from 'react-native';
 import { PlotLayout, PlotLayoutManyInput } from '../internal';
+import { ChartTheme, PartialChartTheme } from '../theme';
 
 export type PlotLayoutSizeComponent =
     | Animated.AnimatedInterpolation
@@ -21,6 +22,7 @@ export interface ChartLayoutProps extends ChartLayoutCallbacks {
     rowHeights?: PlotLayoutSizeComponentInput[];
     columnWidths?: PlotLayoutSizeComponentInput[];
     plots: PlotLayoutManyInput;
+    theme?: PartialChartTheme;
 }
 
 export default class ChartLayout {
@@ -28,6 +30,7 @@ export default class ChartLayout {
     readonly columnWidths: PlotLayoutSizeComponent[];
     readonly containerSize$: Animated.ValueXY;
     readonly plots: PlotLayout[];
+    readonly theme: PartialChartTheme;
 
     callbacks: ChartLayoutCallbacks;
 
@@ -37,6 +40,7 @@ export default class ChartLayout {
     } = {};
 
     constructor(props?: ChartLayoutProps) {
+        this.theme = props?.theme || {};
         this.callbacks = {};
         this.callbacks.onViewportSizeChanged = props?.onViewportSizeChanged;
 
