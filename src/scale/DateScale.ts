@@ -1,10 +1,10 @@
-import Decimal from "decimal.js";
+import Decimal from 'decimal.js';
 import moment, { Duration, Moment } from 'moment';
 import Scale, {
     ITickScaleConstraints,
     IScaleOptions,
     ITickScale,
-} from "./Scale";
+} from './Scale';
 import {
     kDateUnitsAsc,
     kDateUnitsLength,
@@ -19,8 +19,8 @@ import {
     floorDate,
     snapDate,
     stepDateLinear,
-} from "../utils/date";
-import LinearScale from "./LinearScale";
+} from '../utils/date';
+import LinearScale from './LinearScale';
 
 const kZeroDate = moment.unix(0);
 const kZeroDuration = moment.duration(0);
@@ -45,7 +45,7 @@ export interface IDateScaleOptions {
      * Specifies how small a unit duration
      * can be before it is discarded in favour
      * of a smaller unit.
-     * 
+     *
      * Smaller values will produce larger intervals.
      */
     minUnitDuration?: number;
@@ -53,7 +53,9 @@ export interface IDateScaleOptions {
 
 type DateTickScaleType = ITickScale<Moment, Duration>;
 
-export default class DateScale extends Scale<Moment, Duration> implements Required<IDateScaleOptions> {
+export default class DateScale
+    extends Scale<Moment, Duration>
+    implements Required<IDateScaleOptions> {
     baseUnit: DateUnit;
     originDate: Moment;
     minUnitDuration: number;
@@ -63,14 +65,13 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     maxStepFractionDenominator = kMaxStepFractionDenominator;
 
-    constructor(options: IDateScaleOptions & IScaleOptions<Moment, Duration> = {}) {
+    constructor(
+        options: IDateScaleOptions & IScaleOptions<Moment, Duration> = {},
+    ) {
         super(options);
 
-        let {
-            baseUnit = 'day',
-            minUnitDuration = 0.6,
-            originDate,
-        } = options || {};
+        let { baseUnit = 'day', minUnitDuration = 0.6, originDate } =
+            options || {};
         if (!isDateUnit(baseUnit)) {
             throw new Error('Invalid base date unit');
         }
@@ -98,16 +99,20 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
                 value: moment.duration(1, baseUnit),
                 location: 1,
             },
-        }
+        };
     }
 
-    emptyValue() { return kZeroDate; };
-    emptyValueInterval() { return kZeroDuration };
+    emptyValue() {
+        return kZeroDate;
+    }
+    emptyValueInterval() {
+        return kZeroDuration;
+    }
 
     getTickScale(
         startDate: Moment,
         endDate: Moment,
-        constraints?: ITickScaleConstraints<Duration>
+        constraints?: ITickScaleConstraints<Duration>,
     ): DateTickScaleType {
         if (endDate.isSameOrBefore(startDate)) {
             return this.emptyScale();
@@ -115,7 +120,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         if (!endDate.isValid() || !startDate.isValid()) {
             throw new Error('Invalid interval');
         }
-    
+
         constraints = {
             ...this.constraints,
             ...constraints,
@@ -123,38 +128,50 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
         let minIntervalTemp = 0;
         let minDuration = kZeroDuration;
-    
+
         if (constraints.minInterval?.value) {
             let min = constraints.minInterval.value;
-            if (!moment.isDuration(min) || !min.isValid() || min.asMilliseconds() <= 0) {
-                throw new Error('Minimum duration must be finite and with a positive length');
+            if (
+                !moment.isDuration(min) ||
+                !min.isValid() ||
+                min.asMilliseconds() <= 0
+            ) {
+                throw new Error(
+                    'Minimum duration must be finite and with a positive length',
+                );
             }
             minDuration = min;
         }
-    
+
         if (constraints.minInterval?.location) {
             let min = constraints.minInterval.location;
             if (min < 0 || isNaN(min) || !isFinite(min)) {
-                throw new Error('Minimum interval must be finite and with a positive length');
+                throw new Error(
+                    'Minimum interval must be finite and with a positive length',
+                );
             }
             minIntervalTemp = min;
         }
-    
+
         if (constraints.maxCount) {
             let maxCount = constraints.maxCount;
             if (maxCount === 0) {
                 return this.emptyScale();
             }
             if (maxCount < 0 || isNaN(maxCount)) {
-                throw new Error('Max count must be greater than or equal to zero');
+                throw new Error(
+                    'Max count must be greater than or equal to zero',
+                );
             }
-            let len = moment.duration(endDate.diff(startDate)).as(this.baseUnit);
+            let len = moment
+                .duration(endDate.diff(startDate))
+                .as(this.baseUnit);
             let min = len / maxCount;
             if (min > minIntervalTemp) {
                 minIntervalTemp = min;
             }
         }
-    
+
         // Convert min interval to duration
         if (minIntervalTemp !== 0) {
             let min = moment.duration(minIntervalTemp, this.baseUnit);
@@ -162,14 +179,16 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
                 minDuration = min;
             }
         }
-    
+
         if (minDuration.asMilliseconds() === 0) {
-            throw new Error('Must specify either a minimum interval, or a minimum duration, or a maximum interval count');
+            throw new Error(
+                'Must specify either a minimum interval, or a minimum duration, or a maximum interval count',
+            );
         }
-    
+
         // Get durations in units
         let minUnitDurations = mapDateUnits(u => minDuration.as(u));
-    
+
         /**
          * The largest non-zero unit of minInterval,
          * specified as an index of `kDateUnitsAsc`.
@@ -182,7 +201,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
                 break;
             }
         }
-    
+
         if (minUnitAscIndex === 0 && this.baseUnit === 'millisecond') {
             // Use linear scale.
             // Note that the minimum interval supported by moment
@@ -208,7 +227,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
                 },
             } as DateTickScaleType;
         }
-    
+
         let unitLinearConstraints: ITickScaleConstraints<number> = {
             expand: constraints.expand,
         };
@@ -223,8 +242,9 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
                 value: minUnitDuration,
             };
             unitLinearConstraints.radix = kDateUnitRadix[unit];
-            unitLinearConstraints.excludeFactors = kDateUnitExcludedFactors[unit];
-    
+            unitLinearConstraints.excludeFactors =
+                kDateUnitExcludedFactors[unit];
+
             let unitStart = snapDate(startDate, unit);
             let unitEnd = snapDate(endDate, unit);
             let tickStart = this._encodeDate(unitStart, unit);
@@ -245,11 +265,11 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     getDateScaleOrigin(date: Moment): Moment {
         return this.originDate || DateScale.epochWithTimeZone(date);
-    };
+    }
 
     static epochWithTimeZone(date: Moment): Moment {
         return date.clone().startOf('year').subtract(date.year(), 'year');
-    };
+    }
 
     addIntervalToValue(date: Moment, interval: Duration): Moment {
         let [value, unit] = dateUnitsWithDuration(interval);
@@ -258,7 +278,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     floorValue(date: Moment): Moment {
         let [value, unit] = dateUnitsWithDuration(
-            this.tickScale.interval.value
+            this.tickScale.interval.value,
         );
         return floorDate(date, value, unit, {
             originDate: this.tickScale.origin.value,
@@ -267,50 +287,32 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
 
     locationOfValue(date: Moment): number {
         let [interval, unit] = dateUnitsWithDuration(
-            this.tickScale.interval.value
+            this.tickScale.interval.value,
         );
-        let steps = dateIntervalLength(
-            this.tickScale.origin.value,
-            date,
-            unit,
-        ) / interval;
+        let steps =
+            dateIntervalLength(this.tickScale.origin.value, date, unit) /
+            interval;
 
-        return this.stepLocation(
-            this.tickScale.origin.location,
-            steps,
-        );
+        return this.stepLocation(this.tickScale.origin.location, steps);
     }
 
     valueAtLocation(location: number): Moment {
         let [interval, unit] = dateUnitsWithDuration(
-            this.tickScale.interval.value
+            this.tickScale.interval.value,
         );
-        let steps = (location - this.tickScale.origin.location)
-            / this.tickScale.interval.location
-            * interval;
-        return stepDateLinear(
-            this.tickScale.origin.value,
-            steps,
-            unit
-        );
+        let steps =
+            ((location - this.tickScale.origin.location) /
+                this.tickScale.interval.location) *
+            interval;
+        return stepDateLinear(this.tickScale.origin.value, steps, unit);
     }
 
-    private _encodeDate(
-        date: Moment,
-        unit: DateUnit,
-    ): number {
+    private _encodeDate(date: Moment, unit: DateUnit): number {
         return dateIntervalLength(this.originDate, date, unit);
     }
 
-    private _decodeDate(
-        location: number,
-        unit: DateUnit,
-    ): Moment {
-        return stepDateLinear(
-            this.originDate,
-            location,
-            unit,
-        );
+    private _decodeDate(location: number, unit: DateUnit): Moment {
+        return stepDateLinear(this.originDate, location, unit);
     }
 
     private _dateScaleWithLinearScale(
@@ -320,15 +322,16 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
         if (linearScale.interval.value === 0) {
             return this.emptyScale();
         }
-        
+
         let value = moment.duration(linearScale.interval.value, unit);
 
         let location = linearScale.interval.location;
         let locationOrigin = linearScale.origin.location;
         if (unit !== this.baseUnit) {
             // Re-scale interval
-            let coef = kDateUnitUniformDecimalMs[unit]
-                .div(kDateUnitUniformDecimalMs[this.baseUnit]);
+            let coef = kDateUnitUniformDecimalMs[unit].div(
+                kDateUnitUniformDecimalMs[this.baseUnit],
+            );
 
             let intervalFraction = new Decimal(linearScale.interval.value)
                 .mul(coef)
@@ -339,7 +342,7 @@ export default class DateScale extends Scale<Moment, Duration> implements Requir
                 coef.mul(linearScale.origin.value).toNumber(),
                 {
                     origin: { location: 0 },
-                    interval: { location },
+                    interval: { location },
                 },
             );
         }

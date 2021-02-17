@@ -5,21 +5,13 @@ import {
     FlatLayoutSource,
     LayoutSourceProps,
     weakref,
-} from "evergrid";
-import {
-    kChartGridStyleLightDefaults,
-    kGridReuseID,
-} from '../const';
-import {
-    IChartGridStyle,
-} from "../types";
-import {
-    PlotLayout,
-} from "../internal";
-import { Observable } from "../utils/observable";
+} from 'evergrid';
+import { kChartGridStyleLightDefaults, kGridReuseID } from '../const';
+import { IChartGridStyle, IChartGridStyleInput } from '../types';
+import { PlotLayout } from '../internal';
+import { Observable } from '../utils/observable';
 
 export interface IChartGridInput {
-
     /**
      * Toggles grid visiblity.
      * Grid is visible by default.
@@ -38,7 +30,7 @@ export interface IChartGridInput {
      */
     horizontal?: boolean;
 
-    style?: IChartGridStyle;
+    style?: IChartGridStyleInput;
 }
 
 export default class Grid {
@@ -51,24 +43,20 @@ export default class Grid {
 
     private _plotWeakRef = weakref<PlotLayout>();
     private _scaleLayoutUpdates?: {
-        x: Observable.IObserver,
-        y: Observable.IObserver,
+        x: Observable.IObserver;
+        y: Observable.IObserver;
     };
 
     constructor(options?: IChartGridInput) {
-        let {
-            hidden = false,
-            vertical = false,
-            horizontal = false,
-            style = {
-                ...kChartGridStyleLightDefaults,
-                ...options?.style,
-            },
-        } = options || {};
+        let { hidden = false, vertical = false, horizontal = false } =
+            options || {};
         this.hidden = hidden;
         this.vertical = vertical;
         this.horizontal = horizontal;
-        this.style = style;
+        this.style = {
+            ...kChartGridStyleLightDefaults,
+            ...options?.style,
+        };
     }
 
     get plot(): PlotLayout {
@@ -93,11 +81,11 @@ export default class Grid {
         };
         // FIXME: Do only one update if both x and y layouts change.
         this._scaleLayoutUpdates = {
-            x: plot.xLayout.updates.addObserver(
-                () => this.update(updateOptions)
+            x: plot.xLayout.updates.addObserver(() =>
+                this.update(updateOptions),
             ),
-            y: plot.yLayout.updates.addObserver(
-                () => this.update(updateOptions)
+            y: plot.yLayout.updates.addObserver(() =>
+                this.update(updateOptions),
             ),
         };
     }
@@ -117,12 +105,7 @@ export default class Grid {
     }
 
     private _createGridLayout(): LayoutSource | undefined {
-        let {
-            hidden,
-            vertical,
-            horizontal,
-            plot,
-        } = this;
+        let { hidden, vertical, horizontal, plot } = this;
 
         if (hidden) {
             vertical = false;
@@ -137,7 +120,7 @@ export default class Grid {
             ...this.plot.getLayoutSourceOptions(),
             shouldRenderItem: () => false,
             reuseID: kGridReuseID,
-        }
+        };
 
         if (vertical && horizontal) {
             return new GridLayoutSource(commonProps);
@@ -147,7 +130,7 @@ export default class Grid {
             return new FlatLayoutSource({
                 ...commonProps,
                 getItemViewLayout: () => ({
-                    size: { y: '100%' }
+                    size: { y: '100%' },
                 }),
                 horizontal: true,
                 stickyEdge: 'bottom',
@@ -158,7 +141,7 @@ export default class Grid {
             return new FlatLayoutSource({
                 ...commonProps,
                 getItemViewLayout: () => ({
-                    size: { x: '100%' }
+                    size: { x: '100%' },
                 }),
                 horizontal: false,
                 stickyEdge: 'left',

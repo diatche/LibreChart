@@ -1,5 +1,5 @@
-import { TextStyle } from "react-native";
-import { IAxisStyle } from "../../layout/axis/axisTypes";
+import { TextStyle } from 'react-native';
+import { IAxisStyle } from '../../layout/axis/axisTypes';
 import {
     DateUnit,
     DateUnitMapping,
@@ -7,10 +7,13 @@ import {
     kDateUnitsLength,
     kDateUnitUniformMs,
     mapDateUnits,
-} from "./dateBase";
-import { getUniformMs } from "./duration";
+} from './dateBase';
+import { getUniformMs } from './duration';
 
-export const getTickStyles = (duration: moment.Duration, style: IAxisStyle): DateUnitMapping<TextStyle> => {
+export const getTickStyles = (
+    duration: moment.Duration,
+    style: IAxisStyle,
+): DateUnitMapping<TextStyle> => {
     // Find unit which has a regular label style
     let uniformMs = getUniformMs(duration);
     let regularIndex = 0;
@@ -34,25 +37,27 @@ export const getTickStyles = (duration: moment.Duration, style: IAxisStyle): Dat
         regularIndex = i;
     }
 
-    return mapDateUnits((dateUnit: DateUnit, index: number): TextStyle => {
-        if (index === regularIndex || index === otherRegularIndex) {
-            // Regular style
-            return {
-                color: style.labelColor,
-                fontWeight: style.labelFontWeight,
-            };
-        } else if (index > regularIndex) {
-            // Strong style
-            return {
-                color: style.majorLabelColor,
-                fontWeight: style.majorLabelFontWeight,
-            };
-        } else {
-            // Subtle style
-            return {
-                color: style.minorLabelColor,
-                fontWeight: style.minorLabelFontWeight,
-            };
-        }
-    });
+    return mapDateUnits(
+        (dateUnit: DateUnit, index: number): TextStyle => {
+            if (index === regularIndex || index === otherRegularIndex) {
+                // Regular style
+                return {
+                    color: style.labelColor,
+                    fontWeight: style.labelFontWeight,
+                };
+            } else if (index > regularIndex) {
+                // Strong style
+                return {
+                    color: style.majorLabelColor,
+                    fontWeight: style.majorLabelFontWeight,
+                };
+            } else {
+                // Subtle style
+                return {
+                    color: style.minorLabelColor,
+                    fontWeight: style.minorLabelFontWeight,
+                };
+            }
+        },
+    );
 };

@@ -10,11 +10,9 @@ import {
     IUpdateInfo,
     IInsets,
     IAnimationBaseOptions,
-} from "evergrid";
-import DataSource from "../data/DataSource";
-import {
-    axisTypeMap,
-} from "./axis/axisUtil";
+} from 'evergrid';
+import DataSource from '../data/DataSource';
+import { axisTypeMap } from './axis/axisUtil';
 import {
     Axis,
     AxisManyInput,
@@ -23,20 +21,19 @@ import {
     IAxes,
     IChartGridInput,
     ScaleLayout,
-} from "../internal";
-import {
-    Animated,
-    InteractionManager,
-} from "react-native";
-import { Cancelable } from "../types";
-import debounce from "lodash.debounce";
+} from '../internal';
+import { Animated, InteractionManager } from 'react-native';
+import { Cancelable } from '../types';
+import debounce from 'lodash.debounce';
 
 const kGridUpdateDebounceInterval = 100;
 const kDefaultUpdateInfo: IUpdateInfo = {
     initial: false,
 };
 
-export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends EvergridLayoutCallbacks, Omit<EvergridLayoutProps, 'layoutSources'> {
+export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any>
+    extends EvergridLayoutCallbacks,
+        Omit<EvergridLayoutProps, 'layoutSources'> {
     /**
      * Location index of the plot with the top left
      * corner having a location { x: 0, y: 0 } and the
@@ -53,7 +50,12 @@ export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any> extends
 
 export type PlotLayoutManyInput = (PlotLayout | PlotLayoutOptions)[];
 
-export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends EvergridLayout { 
+export default class PlotLayout<
+    X = any,
+    Y = any,
+    DX = any,
+    DY = any
+> extends EvergridLayout {
     index: IPoint;
     dataSources: DataSource<any, X, Y>[];
 
@@ -76,7 +78,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         if (!options?.anchor) {
             this.anchor$.setValue({ x: 0.5, y: 0.5 });
         }
-        
+
         this.index = options?.index || zeroPoint();
         this.xLayout = options?.xLayout || new ScaleLayout<X, DX>();
         this.yLayout = options?.yLayout || new ScaleLayout<Y, DY>();
@@ -87,12 +89,12 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
 
     /**
      * Normalizes or creates plots from options.
-     * 
+     *
      * By default, plots with no index are distributed into rows.
      * Set `columns` to `true` to distribute into columns.
-     * 
-     * @param input 
-     * @param options 
+     *
+     * @param input
+     * @param options
      */
     static createMany(
         input: PlotLayoutManyInput | undefined,
@@ -115,7 +117,11 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
                 // Shift plots down by default
                 plot = new PlotLayout(plotOrOptions);
             }
-            if (plot.index.x === 0 && plot.index.y === 0 && plots.length !== 0) {
+            if (
+                plot.index.x === 0 &&
+                plot.index.y === 0 &&
+                plots.length !== 0
+            ) {
                 if (options?.columns) {
                     index.x += 1;
                 } else {
@@ -128,7 +134,9 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
             }
             let indexStr = `{ x: ${index.x}, y: ${index.y} }`;
             if (indexes.has(indexStr)) {
-                throw new Error(`There are more than one plot at index: ${indexStr}`);
+                throw new Error(
+                    `There are more than one plot at index: ${indexStr}`,
+                );
             }
             indexes.add(indexStr);
             index = { ...plot.index };
@@ -150,7 +158,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
 
     configurePlot(chart: ChartLayout) {
         this.chart = chart;
-        
+
         // The order of configuration is important here
 
         for (let dataSource of this.dataSources) {
@@ -185,7 +193,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
             let axis = this.axes[axisType];
             axis?.unconfigure();
         });
-    
+
         this.grid.layout = undefined;
 
         for (let dataSource of this.dataSources) {
@@ -224,9 +232,9 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
             return;
         }
 
-        this._scheduledPlotUpdate = InteractionManager.runAfterInteractions(() => (
-            this._debouncedPlotUpdate()
-        ));
+        this._scheduledPlotUpdate = InteractionManager.runAfterInteractions(
+            () => this._debouncedPlotUpdate(),
+        );
     }
 
     cancelPlotUpdate() {
@@ -236,7 +244,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         }
         this._debouncedPlotUpdate.cancel();
     }
-    
+
     private _scheduledPlotUpdate?: Cancelable;
 
     private _debouncedPlotUpdate = debounce(
@@ -253,7 +261,7 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
 
     updatePlot(info: IUpdateInfo) {
         this.cancelPlotUpdate();
-        
+
         this.xLayout.update();
         this.yLayout.update();
 
@@ -261,13 +269,13 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
             offset: {
                 x: this.xLayout.layoutInfo.recenteringOffset,
                 y: this.yLayout.layoutInfo.recenteringOffset,
-            }
+            },
         });
     }
 
     scrollToValueRange(
-        start: { x?: X, y?: Y },
-        end: { x?: X, y?: Y },
+        start: { x?: X; y?: Y },
+        end: { x?: X; y?: Y },
         options: IAnimationBaseOptions,
     ) {
         return this.scrollTo({
@@ -280,21 +288,23 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         });
     }
 
-    locationOfPoint(point: { x: X, y: Y }): IPoint {
+    locationOfPoint(point: { x: X; y: Y }): IPoint {
         return {
             x: this.xLayout.scale.locationOfValue(point.x),
             y: this.yLayout.scale.locationOfValue(point.y),
         };
     }
 
-    locationOfPartialPoint(point: { x?: X, y?: Y }): Partial<IPoint> {
+    locationOfPartialPoint(point: { x?: X; y?: Y }): Partial<IPoint> {
         return {
-            x: typeof point.x !== 'undefined'
-                ? this.xLayout.scale.locationOfValue(point.x)
-                : undefined,
-            y: typeof point.y !== 'undefined'
-                ? this.yLayout.scale.locationOfValue(point.y)
-                : undefined,
+            x:
+                typeof point.x !== 'undefined'
+                    ? this.xLayout.scale.locationOfValue(point.x)
+                    : undefined,
+            y:
+                typeof point.y !== 'undefined'
+                    ? this.yLayout.scale.locationOfValue(point.y)
+                    : undefined,
         };
     }
 
@@ -383,7 +393,9 @@ export default class PlotLayout<X = any, Y = any, DX = any, DY = any> extends Ev
         };
     }
 
-    private _validatedAxes(props: PlotLayoutOptions | undefined): IAxes<X, Y, DX, DY> {
+    private _validatedAxes(
+        props: PlotLayoutOptions | undefined,
+    ): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes);
     }
 

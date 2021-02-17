@@ -36,7 +36,8 @@ export default class PointDataSource<T = any> extends DataSource<T> {
             ...props,
             getItemLayout: i => this.getItemLayout(i),
             getItemViewLayout: () => kDefaultPointViewLayout,
-            getVisibleIndexSet: pointRange => new Set(this.getItemsIndexesInLocationRange(pointRange)),
+            getVisibleIndexSet: pointRange =>
+                new Set(this.getItemsIndexesInLocationRange(pointRange)),
             shouldRenderItem: () => false,
         });
     }

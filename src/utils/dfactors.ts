@@ -22,7 +22,7 @@ const _findFactorsPos = (x: Decimal): Decimal[] => {
         tail.unshift(x.div(max));
     }
     return head.concat(tail);
-}
+};
 
 export const findFactors = (value: Decimal.Value): Decimal[] => {
     let x = new Decimal(value);
@@ -42,7 +42,7 @@ export const findFactors = (value: Decimal.Value): Decimal[] => {
         let factors = [...kFactors10];
         if (isNegative) {
             factors = factors.map(x => x.neg());
-            factors = factors.reverse(); 
+            factors = factors.reverse();
         }
         return factors;
     } else {
@@ -50,12 +50,15 @@ export const findFactors = (value: Decimal.Value): Decimal[] => {
     }
     if (isNegative) {
         factors = factors.map(x => x.neg());
-        factors = factors.reverse(); 
+        factors = factors.reverse();
     }
     return factors;
-}
+};
 
-export const findCommonFactors = (v1: Decimal.Value, v2: Decimal.Value): Decimal[] => {
+export const findCommonFactors = (
+    v1: Decimal.Value,
+    v2: Decimal.Value,
+): Decimal[] => {
     // let xOrig1 = new Decimal(v1);
     // let xOrig2 = new Decimal(v2);
     // let x1 = xOrig1;

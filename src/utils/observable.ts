@@ -1,6 +1,4 @@
-
 export namespace Observable {
-
     export interface IObservable<T = any> {
         emit: (...args: T[]) => void;
         addObserver: (callback: (...args: T[]) => any) => IObserver;
@@ -22,12 +20,15 @@ export namespace Observable {
                     try {
                         observer(...args);
                     } catch (error) {
-                        console.error('Uncaught error in observer: ' + (error?.message || error));
+                        console.error(
+                            'Uncaught error in observer: ' +
+                                (error?.message || error),
+                        );
                     }
                 }
             },
             addObserver: callback => {
-                let id = (++idCounter);
+                let id = ++idCounter;
                 ids.push(id);
                 observers.push(callback);
                 return {
@@ -38,12 +39,12 @@ export namespace Observable {
                         }
                         ids.splice(i, 1);
                         observers.splice(i, 1);
-                    }
+                    },
                 };
             },
             removeObserver: observer => {
                 observer.cancel();
             },
         };
-    };
+    }
 }

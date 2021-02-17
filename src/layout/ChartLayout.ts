@@ -1,16 +1,15 @@
-import {
-    IPoint,
-    zeroPoint,
-} from "evergrid";
-import { Animated } from "react-native";
-import {
-    PlotLayout,
-    PlotLayoutManyInput,
-} from "../internal";
+import { IPoint, zeroPoint } from 'evergrid';
+import { Animated } from 'react-native';
+import { PlotLayout, PlotLayoutManyInput } from '../internal';
 
-export type PlotLayoutSizeComponent = Animated.AnimatedInterpolation | Animated.Value | number | string | {
-    flex: number;
-}
+export type PlotLayoutSizeComponent =
+    | Animated.AnimatedInterpolation
+    | Animated.Value
+    | number
+    | string
+    | {
+          flex: number;
+      };
 
 export type PlotLayoutSizeComponentInput = PlotLayoutSizeComponent | undefined;
 
@@ -33,7 +32,9 @@ export default class ChartLayout {
     callbacks: ChartLayoutCallbacks;
 
     private _containerSize: IPoint;
-    private _animatedSubscriptions: { [id: string]: Animated.Value | Animated.ValueXY } = {};
+    private _animatedSubscriptions: {
+        [id: string]: Animated.Value | Animated.ValueXY;
+    } = {};
 
     constructor(props?: ChartLayoutProps) {
         this.callbacks = {};
@@ -46,7 +47,10 @@ export default class ChartLayout {
                 // console.debug('Ignoring invalid containerSize value: ' + JSON.stringify(p));
                 return;
             }
-            if (Math.abs(p.x - this._containerSize.x) < 1 && Math.abs(p.y - this._containerSize.y) < 1) {
+            if (
+                Math.abs(p.x - this._containerSize.x) < 1 &&
+                Math.abs(p.y - this._containerSize.y) < 1
+            ) {
                 return;
             }
             this._containerSize = p;
@@ -57,20 +61,17 @@ export default class ChartLayout {
         this.plots = this._validatedPlotLayouts(props);
         let plotIndexRange = this._getPlotLayoutIndexRange(this.plots);
 
-        this.rowHeights = this._validatedPlotSizeComponents(
-            props?.rowHeights,
-            {
-                relativeLength: this.containerSize$.y,
-                count: plotIndexRange?.[1].y || 1,
-            }
-        );
-        
+        this.rowHeights = this._validatedPlotSizeComponents(props?.rowHeights, {
+            relativeLength: this.containerSize$.y,
+            count: plotIndexRange?.[1].y || 1,
+        });
+
         this.columnWidths = this._validatedPlotSizeComponents(
             props?.columnWidths,
             {
                 relativeLength: this.containerSize$.x,
                 count: plotIndexRange?.[1].x || 1,
-            }
+            },
         );
     }
 
@@ -114,7 +115,9 @@ export default class ChartLayout {
         sizes = sizes || [];
         let flexTotal = count - sizes.length;
 
-        const getFlex = (size: PlotLayoutSizeComponentInput | undefined): number | undefined => {
+        const getFlex = (
+            size: PlotLayoutSizeComponentInput | undefined,
+        ): number | undefined => {
             if (typeof size === 'undefined') {
                 return 1;
             } else if (typeof size === 'object' && 'flex' in size) {
@@ -122,7 +125,7 @@ export default class ChartLayout {
             } else {
                 return undefined;
             }
-        }
+        };
 
         // Convert flex into animated
         for (let size of sizes) {
@@ -144,7 +147,9 @@ export default class ChartLayout {
         return normSizes;
     }
 
-    private _validatedPlotLayouts(props: ChartLayoutProps | undefined): PlotLayout[] {
+    private _validatedPlotLayouts(
+        props: ChartLayoutProps | undefined,
+    ): PlotLayout[] {
         return PlotLayout.createMany(props?.plots);
     }
 
@@ -152,7 +157,9 @@ export default class ChartLayout {
      * Returns the plot index range.
      * Start is inclusive, end is exclusive.
      */
-    private _getPlotLayoutIndexRange(plots: PlotLayout[]): [IPoint, IPoint] | undefined {
+    private _getPlotLayoutIndexRange(
+        plots: PlotLayout[],
+    ): [IPoint, IPoint] | undefined {
         if (plots.length === 0) {
             return undefined;
         }

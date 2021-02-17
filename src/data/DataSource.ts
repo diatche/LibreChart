@@ -6,32 +6,20 @@ import {
     weakref,
     zeroPoint,
 } from 'evergrid';
-import {
-    ChartDataType,
-    IDataSourceRect,
-    IDataRect,
-    IRect,
-} from '../types';
+import { ChartDataType, IDataSourceRect, IDataRect, IRect } from '../types';
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
 import { VectorUtil } from '../utils/vectorUtil';
 
 let _idCounter = 0;
 
-export interface DataSourceProps<
-    T,
-    X = number,
-    Y = number,
-> {
+export interface DataSourceProps<T, X = number, Y = number> {
     data?: T[];
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
 }
 
-export interface DataSourceInput<
-    T,
-    X = number,
-    Y = number,
-> extends DataSourceProps<T, X, Y> {
+export interface DataSourceInput<T, X = number, Y = number>
+    extends DataSourceProps<T, X, Y> {
     noCopy?: boolean;
 }
 
@@ -39,11 +27,8 @@ export interface IItemsInLocationRangeOptions {
     partial?: boolean;
 }
 
-export default abstract class DataSource<
-    T = any,
-    X = number,
-    Y = number,
-> implements DataSourceProps<T, X, Y> {
+export default abstract class DataSource<T = any, X = number, Y = number>
+    implements DataSourceProps<T, X, Y> {
     id: string;
     data: T[];
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
@@ -51,19 +36,17 @@ export default abstract class DataSource<
 
     private _plotWeakRef = weakref<PlotLayout<X, Y>>();
     private _scaleLayoutUpdates?: {
-        x: Observable.IObserver,
-        y: Observable.IObserver,
+        x: Observable.IObserver;
+        y: Observable.IObserver;
     };
 
     constructor(input: DataSourceInput<T, X, Y>) {
-        this.id = `${(++_idCounter)}`;
+        this.id = `${++_idCounter}`;
         if (input.noCopy && !input.data) {
             throw new Error('Cannot use "noCopy" with null data.');
         }
         if (input.data) {
-            this.data = input.noCopy
-                ? input.data
-                : [...input.data];
+            this.data = input.noCopy ? input.data : [...input.data];
         } else {
             this.data = [];
         }
@@ -92,18 +75,18 @@ export default abstract class DataSource<
         };
         // FIXME: Do only one update if both x and y layouts change.
         this._scaleLayoutUpdates = {
-            x: plot.xLayout.updates.addObserver(
-                () => this.update(updateOptions)
+            x: plot.xLayout.updates.addObserver(() =>
+                this.update(updateOptions),
             ),
-            y: plot.yLayout.updates.addObserver(
-                () => this.update(updateOptions)
+            y: plot.yLayout.updates.addObserver(() =>
+                this.update(updateOptions),
             ),
         };
     }
 
     unconfigure() {
         this.layout = undefined;
-        
+
         if (this._scaleLayoutUpdates) {
             this._scaleLayoutUpdates.x.cancel();
             this._scaleLayoutUpdates.y.cancel();
@@ -121,12 +104,11 @@ export default abstract class DataSource<
 
     abstract createLayoutSource(): LayoutSource;
 
-    getDataBoundingRectInRange(pointRange: [IPoint, IPoint]): [IPoint, IPoint] | undefined {
+    getDataBoundingRectInRange(
+        pointRange: [IPoint, IPoint],
+    ): [IPoint, IPoint] | undefined {
         // Get data range
-        let rects = this.getDataRectsInRange(
-            pointRange,
-            { partial: true },
-        );
+        let rects = this.getDataRectsInRange(pointRange, { partial: true });
         if (rects.length === 0) {
             return undefined;
         }
@@ -168,16 +150,20 @@ export default abstract class DataSource<
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
             let r = this.getItemRect(this.transform(this.data[i], i));
-            if (r.width === 0 && r.height === 0 ? isPointInRange(r, pointRange) : VectorUtil.rectsIntersect(
-                r.x,
-                r.y,
-                r.width,
-                r.height,
-                pointRange[0].x,
-                pointRange[0].y,
-                xLen,
-                yLen,
-            )) {
+            if (
+                r.width === 0 && r.height === 0
+                    ? isPointInRange(r, pointRange)
+                    : VectorUtil.rectsIntersect(
+                          r.x,
+                          r.y,
+                          r.width,
+                          r.height,
+                          pointRange[0].x,
+                          pointRange[0].y,
+                          xLen,
+                          yLen,
+                      )
+            ) {
                 points.push({
                     ...r,
                     dataIndex: i,
@@ -194,16 +180,20 @@ export default abstract class DataSource<
         const c = this.data.length;
         for (let i = 0; i < c; i++) {
             let r = this.getItemRect(this.transform(this.data[i], i));
-            if (r.width === 0 && r.height === 0 ? isPointInRange(r, pointRange) : VectorUtil.rectsIntersect(
-                r.x,
-                r.y,
-                r.width,
-                r.height,
-                pointRange[0].x,
-                pointRange[0].y,
-                xLen,
-                yLen,
-            )) {
+            if (
+                r.width === 0 && r.height === 0
+                    ? isPointInRange(r, pointRange)
+                    : VectorUtil.rectsIntersect(
+                          r.x,
+                          r.y,
+                          r.width,
+                          r.height,
+                          pointRange[0].x,
+                          pointRange[0].y,
+                          xLen,
+                          yLen,
+                      )
+            ) {
                 indexes.push(i);
             }
         }
@@ -214,14 +204,16 @@ export default abstract class DataSource<
         let plot = this.plot;
 
         let x = plot.xLayout.scale.locationOfValue(item.x);
-        let x2 = typeof item.x2 !== 'undefined'
-            ? plot.xLayout.scale.locationOfValue(item.x2)
-            : x;
-        
+        let x2 =
+            typeof item.x2 !== 'undefined'
+                ? plot.xLayout.scale.locationOfValue(item.x2)
+                : x;
+
         let y = plot.yLayout.scale.locationOfValue(item.y);
-        let y2 = typeof item.y2 !== 'undefined'
-            ? plot.yLayout.scale.locationOfValue(item.y2)
-            : y;
+        let y2 =
+            typeof item.y2 !== 'undefined'
+                ? plot.yLayout.scale.locationOfValue(item.y2)
+                : y;
 
         return {
             x,

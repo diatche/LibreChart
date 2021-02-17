@@ -3,7 +3,7 @@ import {
     AxisTypeMapping,
     IAxisStyle,
     IAxisStyleInput,
-} from "./axisTypes";
+} from './axisTypes';
 import { Colors } from '../../utils/colors';
 
 export const kAxisContentReuseIDs: AxisTypeMapping<string> = {
@@ -20,15 +20,9 @@ export const kAxisBackgroundReuseIDs: AxisTypeMapping<string> = {
     leftAxis: 'leftAxisBackground',
 };
 
-export const kHorizontalAxisTypes: AxisType[] = [
-    'topAxis',
-    'bottomAxis',
-];
+export const kHorizontalAxisTypes: AxisType[] = ['topAxis', 'bottomAxis'];
 
-export const kVerticalAxisTypes: AxisType[] = [
-    'rightAxis',
-    'leftAxis',
-];
+export const kVerticalAxisTypes: AxisType[] = ['rightAxis', 'leftAxis'];
 
 export const kAllAxisTypes = kHorizontalAxisTypes.concat(kVerticalAxisTypes);
 export const kAllAxisTypeSet = new Set(kAllAxisTypes);
@@ -49,7 +43,7 @@ export const kAxisStyleBaseDefaults: IAxisStyleInput = {
     labelFontWeight: 'normal',
     majorLabelFontWeight: 'bold',
     minorLabelFontWeight: 'normal',
-}
+};
 
 export const kAxisStyleLightDefaults = {
     ...kAxisStyleBaseDefaults,

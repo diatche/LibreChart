@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-    View,
-    StyleSheet,
-    ViewStyle,
-} from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { IChartGridStyle } from '../types';
 
 export interface ChartGridProps extends Required<IChartGridStyle> {
@@ -46,32 +42,28 @@ const ChartGrid = React.memo((props: ChartGridProps) => {
     let xMajorGridItems: React.ReactNode[] = [];
     let xMinorGridItems: React.ReactNode[] = [];
     for (let i = 0; i < props.majorCountX; i++) {
-        xMajorGridItems.push((
-            <View key={`xa${i}`} style={xMajorGridStyle} />
-        ));
-        xMinorGridItems.push((
-            <View key={`xa${i}`} style={styles.placeholder} />
-        ));
+        xMajorGridItems.push(<View key={`xa${i}`} style={xMajorGridStyle} />);
+        xMinorGridItems.push(
+            <View key={`xa${i}`} style={styles.placeholder} />,
+        );
         for (let j = 0; j < props.minorCountX; j++) {
-            xMinorGridItems.push((
-                <View key={`xi${i},${j}`} style={xMinorGridStyle} />
-            ));
+            xMinorGridItems.push(
+                <View key={`xi${i},${j}`} style={xMinorGridStyle} />,
+            );
         }
     }
 
     let yMajorGridItems: React.ReactNode[] = [];
     let yMinorGridItems: React.ReactNode[] = [];
     for (let i = 0; i < props.majorCountY; i++) {
-        yMajorGridItems.push((
-            <View key={`ya${i}`} style={yMajorGridStyle} />
-        ));
-        yMinorGridItems.push((
-            <View key={`ya${i}`} style={styles.placeholder} />
-        ));
+        yMajorGridItems.push(<View key={`ya${i}`} style={yMajorGridStyle} />);
+        yMinorGridItems.push(
+            <View key={`ya${i}`} style={styles.placeholder} />,
+        );
         for (let j = 0; j < props.minorCountY; j++) {
-            yMinorGridItems.push((
-                <View key={`yi${i},${j}`} style={yMinorGridStyle} />
-            ));
+            yMinorGridItems.push(
+                <View key={`yi${i},${j}`} style={yMinorGridStyle} />,
+            );
         }
     }
 

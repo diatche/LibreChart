@@ -1,15 +1,11 @@
-import Decimal from "decimal.js";
-import {
-    AnimatedValueInput,
-    GridLayoutSourceProps, IPoint,
-} from "evergrid";
-import {
-    Animated,
-    ColorValue,
-    TextStyle,
-} from "react-native";
+import Decimal from 'decimal.js';
+import { GridLayoutSourceProps, IPoint } from 'evergrid';
+import { Animated, TextStyle } from 'react-native';
 
-export type AnimatedValueAny = number | Animated.Value | Animated.AnimatedInterpolation;
+export type AnimatedValueAny =
+    | number
+    | Animated.Value
+    | Animated.AnimatedInterpolation;
 
 export interface IDataSourceRect<X, Y> {
     x: X;
@@ -33,14 +29,14 @@ export interface IPointStyle {
     /** Point outer radius in view coordinates. */
     pointOuterRadius?: AnimatedValueAny;
 
-    pointInnerColor?: ColorValue;
-    pointOuterColor?: ColorValue;
+    pointInnerColor?: string;
+    pointOuterColor?: string;
 }
 
 export interface IStrokeStyle {
     /** Stroke width in view coordinates. */
     strokeWidth?: AnimatedValueAny;
-    strokeColor?: ColorValue;
+    strokeColor?: string;
     /** Stroke dash array in view coordinates. */
     strokeDashArray?: number[];
 }
@@ -50,7 +46,6 @@ export interface IFillStyle {
 }
 
 export interface IRectStyle extends IFillStyle, IStrokeStyle {
-
     cornerRadius?: AnimatedValueAny;
     topLeftCornerRadius?: AnimatedValueAny;
     topRightCornerRadius?: AnimatedValueAny;
@@ -78,15 +73,16 @@ export interface IDecimalPoint {
 
 export interface IChartGridStyleInput {
     majorGridLineThickness?: number;
-    majorGridLineColor?: ColorValue;
+    majorGridLineColor?: string;
 
     minorGridLineThickness?: number;
-    minorGridLineColor?: ColorValue;
+    minorGridLineColor?: string;
 }
 
 export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 
-export interface IGridLayoutSourceProps extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
+export interface IGridLayoutSourceProps
+    extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
 
 export type ChartDataType = 'path' | 'point' | 'bar' | 'rect';
 

@@ -1,10 +1,7 @@
-import {
-    AnimatedValueInput,
-    FlatLayoutSourceProps,
-} from "evergrid";
-import { Animated, ColorValue, TextStyle } from "react-native";
-import { ITickLabel } from "../../types";
-import { ITickVector } from "../../scale/Scale";
+import { AnimatedValueInput, FlatLayoutSourceProps } from 'evergrid';
+import { Animated, TextStyle } from 'react-native';
+import { ITickLabel } from '../../types';
+import { ITickVector } from '../../scale/Scale';
 
 export type AxisType = 'topAxis' | 'rightAxis' | 'bottomAxis' | 'leftAxis';
 export type Direction = 'horizontal' | 'vertical';
@@ -20,9 +17,9 @@ export interface IAxisContentLayoutStyle {
 }
 
 export interface IAxisContentStyleInput extends IAxisContentLayoutStyle {
-    labelColor?: ColorValue;
-    majorLabelColor?: ColorValue;
-    minorLabelColor?: ColorValue;
+    labelColor?: string;
+    majorLabelColor?: string;
+    minorLabelColor?: string;
 }
 
 export interface IAxisContentStyle extends Required<IAxisContentStyleInput> {}
@@ -42,17 +39,20 @@ export interface IAxisBackgroundLayoutStyle {
 }
 
 export interface IAxisBackgroundStyleInput extends IAxisBackgroundLayoutStyle {
-    axisBackgroundColor?: ColorValue;
-    axisLineColor?: ColorValue;
+    axisBackgroundColor?: string;
+    axisLineColor?: string;
     axisLineThickness?: number;
 
     majorTickThickness?: number;
-    majorTickColor?: ColorValue;
+    majorTickColor?: string;
 }
 
-export interface IAxisBackgroundStyle extends Required<IAxisBackgroundStyleInput> {}
+export interface IAxisBackgroundStyle
+    extends Required<IAxisBackgroundStyleInput> {}
 
-export interface IAxisStyleInput extends IAxisContentStyleInput, IAxisBackgroundStyleInput {
+export interface IAxisStyleInput
+    extends IAxisContentStyleInput,
+        IAxisBackgroundStyleInput {
     padding?: AnimatedValueInput;
 }
 
@@ -60,7 +60,8 @@ export interface IAxisStyle extends Required<IAxisStyleInput> {
     padding: Animated.Value;
 }
 
-export interface IAxisLayoutSourceProps extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
+export interface IAxisLayoutSourceProps
+    extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 
 export interface IAxisOptions<T = any> {
     axisType?: AxisType;

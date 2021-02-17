@@ -1,23 +1,14 @@
-import {
-    Animated,
-} from "react-native";
-import {
-    isRangeEmpty,
-    normalizeAnimatedValue,
-    weakref,
-} from "evergrid";
-import Scale from "../scale/Scale";
-import LinearScale from "../scale/LinearScale";
-import { PlotLayout } from "../internal";
-import { 
-    IAxisStyle,
-    IAxisStyleInput,
-} from "./axis/axisTypes";
-import { kAxisStyleLightDefaults } from "./axis/axisConst";
-import { Observable } from "../utils/observable";
-import ScaleController from "../scaleControllers/ScaleController";
-import DiscreteScale from "../scale/DiscreteScale";
-import AutoScaleController from "../scaleControllers/AutoScaleController";
+import { Animated } from 'react-native';
+import { isRangeEmpty, normalizeAnimatedValue, weakref } from 'evergrid';
+import Scale from '../scale/Scale';
+import LinearScale from '../scale/LinearScale';
+import { PlotLayout } from '../internal';
+import { IAxisStyle, IAxisStyleInput } from './axis/axisTypes';
+import { kAxisStyleLightDefaults } from './axis/axisConst';
+import { Observable } from '../utils/observable';
+import ScaleController from '../scaleControllers/ScaleController';
+import DiscreteScale from '../scale/DiscreteScale';
+import AutoScaleController from '../scaleControllers/AutoScaleController';
 
 export interface IScaleLayoutOptions<T = any, D = T> {
     /**
@@ -57,14 +48,14 @@ interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
     /**
      * This value equals negative half of major
      * tick interval (in content coordinates).
-     * 
+     *
      * This is used to syncronize the grid with labels.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
     /**
      * This value equals negative half of major
      * tick interval (in view coordinates).
-     * 
+     *
      * This is used to syncronize the grid with labels.
      **/
     negHalfMajorViewInterval$?: Animated.AnimatedInterpolation;
@@ -135,14 +126,17 @@ export default class ScaleLayout<T = number, D = T> {
         plot: PlotLayout,
         config: {
             isHorizontal: boolean;
-        }
+        },
     ) {
         this.plot = plot;
-        if (this._isHorizontalStrict && this.isHorizontal !== config.isHorizontal) {
+        if (
+            this._isHorizontalStrict &&
+            this.isHorizontal !== config.isHorizontal
+        ) {
             throw new Error('Scale layout direction mismatch');
         }
         this.isHorizontal = config.isHorizontal;
-        this.custom = (plot.index.x !== 0 || plot.index.y !== 0);
+        this.custom = plot.index.x !== 0 || plot.index.y !== 0;
 
         let negHalfMajorViewInterval = Animated.multiply(
             this.layoutInfo.negHalfMajorInterval$,
@@ -166,8 +160,10 @@ export default class ScaleLayout<T = number, D = T> {
         // console.debug(`axisLengthInfo ${this.isHorizontal ? 'H' : 'V'}: ` + JSON.stringify(axisLengthInfo, null, 2));
 
         Object.assign(this.layoutInfo, axisLengthInfo);
-        
-        this.layoutInfo.containerLength$.setValue(axisLengthInfo.containerLength);
+
+        this.layoutInfo.containerLength$.setValue(
+            axisLengthInfo.containerLength,
+        );
 
         let negHalfMajorInterval = -this.scale.tickScale.interval.location / 2;
         this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
@@ -184,26 +180,23 @@ export default class ScaleLayout<T = number, D = T> {
         let plot = this.plot;
         let insets = plot.getAxisInsets();
         let r = plot.getVisibleLocationRange({ insets });
-        return this.isHorizontal
-            ? [r[0].x, r[1].x]
-            : [r[0].y, r[1].y];
+        return this.isHorizontal ? [r[0].x, r[1].x] : [r[0].y, r[1].y];
     }
 
     private _getNewLengthInfo(): IScaleLayoutLengthBaseInfo | undefined {
         let viewScaleVector = this.plot.scale;
-        let viewScale = this.isHorizontal ? viewScaleVector.x : viewScaleVector.y;
+        let viewScale = this.isHorizontal
+            ? viewScaleVector.x
+            : viewScaleVector.y;
         let visibleRange = this.getVisibleLocationRange();
 
         if (isRangeEmpty(visibleRange)) {
             this._resetLengthInfo();
             return undefined;
         }
-        
-        let {
-            majorGridLineDistanceMin,
-            minorGridLineDistanceMin,
-        } = this.style;
-        
+
+        let { majorGridLineDistanceMin, minorGridLineDistanceMin } = this.style;
+
         let majorDist = majorGridLineDistanceMin;
         let minorDist = minorGridLineDistanceMin;
 
@@ -215,31 +208,26 @@ export default class ScaleLayout<T = number, D = T> {
         let endValue = this.scale.valueAtLocation(endLocation);
 
         // Update tick scale
-        let scaleUpdated = this.scale.updateTickScale(
-            startValue,
-            endValue,
-            {
-                minInterval: {
-                    location: Math.abs(majorDist / viewScale),
-                },
-                expand: true,
-                minorTickConstraints: [{
+        let scaleUpdated = this.scale.updateTickScale(startValue, endValue, {
+            minInterval: {
+                location: Math.abs(majorDist / viewScale),
+            },
+            expand: true,
+            minorTickConstraints: [
+                {
                     minInterval: {
                         location: Math.abs(minorDist / viewScale),
                     },
                     maxCount: this.style.minorIntervalCountMax,
-                }],
-            }
-        );
+                },
+            ],
+        });
         if (!scaleUpdated && this.layoutInfo.majorCount !== 0) {
             return undefined;
         }
-        
+
         // Count ticks
-        let valueRange = this.scale.spanValueRange(
-            startValue,
-            endValue,
-        );
+        let valueRange = this.scale.spanValueRange(startValue, endValue);
         let majorCount = this.scale.countTicksInValueRange(
             valueRange[0],
             valueRange[1],
@@ -247,7 +235,10 @@ export default class ScaleLayout<T = number, D = T> {
         let minorCount = 0;
         let minorInterval = this.scale.minorTickScales[0].interval.location;
         if (majorCount && minorInterval !== 0) {
-            minorCount = Math.round(this.scale.tickScale.interval.location / minorInterval) - 1;
+            minorCount =
+                Math.round(
+                    this.scale.tickScale.interval.location / minorInterval,
+                ) - 1;
         }
 
         // Get container length
@@ -259,9 +250,8 @@ export default class ScaleLayout<T = number, D = T> {
 
         // Check if recentering is needed
         let newMidLocation = this.scale.locationOfValue(midValue);
-        let recenteringOffset = Math.round(
-                (midLocation - newMidLocation) / viewScale
-            ) * viewScale;
+        let recenteringOffset =
+            Math.round((midLocation - newMidLocation) / viewScale) * viewScale;
 
         return {
             majorCount,
@@ -278,11 +268,11 @@ export default class ScaleLayout<T = number, D = T> {
         this.layoutInfo.containerLength = 0;
         this.layoutInfo.containerLength$.setValue(0);
     }
-    
+
     /**
      * Returns the axis container's range at the
      * specified index.
-     * 
+     *
      * @param location The location.
      * @returns The grid container's range in content coordinates.
      */

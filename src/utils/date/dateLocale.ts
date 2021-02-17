@@ -1,7 +1,4 @@
-import moment, {
-    CalendarSpec,
-    Moment,
-} from "moment";
+import moment, { CalendarSpec, Moment } from 'moment';
 
 let _localeData: {
     [locale: string]: {
@@ -10,7 +7,7 @@ let _localeData: {
         monthFormatHasSuffix?: boolean;
         defaultCalendarFormatWithoutTime?: CalendarSpec;
         dateUnitFormatIndexTable?: { [unit: string]: number };
-    }
+    };
 } = {};
 
 export const longYearFormat = (locale?: string) => {
@@ -20,9 +17,11 @@ export const longYearFormat = (locale?: string) => {
     if (yearFormat) {
         return yearFormat;
     }
-    let longDateFormat = moment.localeData(locale)?.longDateFormat?.('LL') || fallbackFormat;
+    let longDateFormat =
+        moment.localeData(locale)?.longDateFormat?.('LL') || fallbackFormat;
     // Extract year and its tokens only
-    yearFormat = longDateFormat.match(/[^MD,]*Y+[^MD,]*/g)?.[0] || fallbackFormat;
+    yearFormat =
+        longDateFormat.match(/[^MD,]*Y+[^MD,]*/g)?.[0] || fallbackFormat;
     yearFormat = yearFormat.trim();
 
     if (!_localeData[locale]) {
@@ -36,23 +35,19 @@ const CALENDAR_KEYS = [
     'sameDay',
     'nextDay',
     'lastDay',
-    // 'nextWeek', 
-    // 'lastWeek', 
+    // 'nextWeek',
+    // 'lastWeek',
     // 'sameElse',
 ];
 
 export const getCalendarFormat = (
     options: {
-        dateFormat?: string,
-        timeFormat?: string,
-        locale?: string,
-    } = {}
+        dateFormat?: string;
+        timeFormat?: string;
+        locale?: string;
+    } = {},
 ): CalendarSpec | undefined => {
-    const {
-        dateFormat = 'L',
-        timeFormat,
-        locale = moment.locale(),
-    } = options;
+    const { dateFormat = 'L', timeFormat, locale = moment.locale() } = options;
     const defaultCal = defaultCalendarFormatWithoutTime(locale);
     if (!defaultCal) {
         return undefined;
@@ -135,12 +130,12 @@ export const isCurrentYear = (date: Moment, now: Moment, locale?: string) => {
     //     return false;
     // }
     return true;
-}
+};
 
 /**
  * Whether the month spelling changes when printing
  * the month separately and with a day.
- * @param locale 
+ * @param locale
  */
 const monthFormatHasSuffix = (locale?: string): boolean => {
     const fallbackValue = false;
@@ -195,7 +190,9 @@ const DATE_UNIT_FORMAT_INDEX_TABLE_DEFAULT: { [unit: string]: number } = {
     millisecond: 6,
 };
 
-const _dateUnitFormatIndexTable = (locale?: string): { [unit: string]: number } => {
+const _dateUnitFormatIndexTable = (
+    locale?: string,
+): { [unit: string]: number } => {
     locale = locale || moment.locale();
     let order = _localeData[locale]?.dateUnitFormatIndexTable;
     if (order) {
@@ -203,7 +200,8 @@ const _dateUnitFormatIndexTable = (locale?: string): { [unit: string]: number } 
     }
     const data = moment.localeData(locale);
     const longDateFormat = data.longDateFormat('LLL');
-    let orderedSymbols = longDateFormat.split(/[^a-zA-Z]/g)
+    let orderedSymbols = longDateFormat
+        .split(/[^a-zA-Z]/g)
         .filter(x => !!x)
         .map(x => x[0]);
     order = {};

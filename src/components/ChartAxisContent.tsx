@@ -18,7 +18,9 @@ import {
 } from '../layout/axis/axisTypes';
 import { ITickVector } from '../scale/Scale';
 
-export interface ChartAxisContentProps<T> extends ViewProps, Required<IAxisStyle> {
+export interface ChartAxisContentProps<T>
+    extends ViewProps,
+        Required<IAxisStyle> {
     axisType: AxisType;
     /** Tick locations in ascending order in content coordinates. */
     ticks: ITickVector<T>[];
@@ -39,8 +41,10 @@ export interface ChartAxisContentProps<T> extends ViewProps, Required<IAxisStyle
 
 interface ChartAxisContentState {}
 
-export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisContentProps<T>, ChartAxisContentState> {
-
+export default class ChartAxisContent<T> extends React.PureComponent<
+    ChartAxisContentProps<T>,
+    ChartAxisContentState
+> {
     getTickLabel(tick: ITickVector<T>): ITickLabel {
         // TODO: cache labels until prop change
         try {
@@ -50,7 +54,9 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
             }
             return label;
         } catch (error) {
-            console.error('Uncaught error while getting tick label: ' + error.message);
+            console.error(
+                'Uncaught error while getting tick label: ' + error.message,
+            );
             return { title: '' };
         }
     }
@@ -62,23 +68,20 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
 
     /**
      * The outer container style.
-     * 
+     *
      * Draw's the background and axis line.
      */
     getContainerStyle() {
         // TODO: cache style until prop change
-        return [
-            styles.container,
-            axisStyles[this.props.axisType].container,
-        ];
+        return [styles.container, axisStyles[this.props.axisType].container];
     }
 
     /**
      * The inner container style.
-     * 
+     *
      * Holds all the tick and label containers
      * and distributes them.
-     * 
+     *
      * This container's dimensions are the optimal
      * for the axis.
      */
@@ -92,7 +95,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
 
     /**
      * The tick container style.
-     * 
+     *
      * Holds ticks.
      */
     getTickContainerStyle() {
@@ -105,7 +108,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
 
     /**
      * The label container style.
-     * 
+     *
      * Holds inner label containers.
      */
     getLabelContainerStyle() {
@@ -138,7 +141,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
 
     /**
      * The label inner container style.
-     * 
+     *
      * Holds labels.
      */
     getLabelInnerContainerStyle() {
@@ -228,18 +231,15 @@ export default class ChartAxisContent<T> extends React.PureComponent<ChartAxisCo
         for (let i = 0; i < labels.length; i++) {
             ticks.push(<View key={i} style={tickStyle} />);
 
-            labelInnerContainers.push((
-                <View
-                    key={i}
-                    style={labelInnerContainerStyle}
-                >
+            labelInnerContainers.push(
+                <View key={i} style={labelInnerContainerStyle}>
                     <Text style={[labelStyle, labels[i].style]}>
                         {labels[i].title}
                     </Text>
-                </View>
-            ));
+                </View>,
+            );
         }
-    
+
         return (
             <View style={this.getContainerStyle()}>
                 <View

@@ -1,7 +1,7 @@
-import Decimal from "decimal.js";
+import Decimal from 'decimal.js';
 
 export type DateUnit =
-    'millisecond'
+    | 'millisecond'
     | 'second'
     | 'minute'
     | 'hour'
@@ -14,7 +14,9 @@ export type DateUnitMapping<T> = { [unit in DateUnit]: T };
 export type ImmutableDateUnitMapping<T> = { readonly [unit in DateUnit]: T };
 
 export type CalendarUnitMapping<T> = { [unit in CalendarUnit]: T };
-export type ImmutableCalendarUnitMapping<T> = { readonly [unit in CalendarUnit]: T };
+export type ImmutableCalendarUnitMapping<T> = {
+    readonly [unit in CalendarUnit]: T;
+};
 
 export const kDateUnitsAsc: DateUnit[] = [
     'millisecond',
@@ -60,9 +62,11 @@ export const kCalendaryUnitMomentMap: ImmutableCalendarUnitMapping<moment.unitOf
  * Iterates through all date units in ascending order
  * and collects the values returned by the `iterator`
  * in a table with the date units as keys.
- * @param iterator 
+ * @param iterator
  */
-export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit, index: number) => T): DateUnitMapping<T> => {
+export const mapDateUnits = <T>(
+    iterator: (dateUnit: DateUnit, index: number) => T,
+): DateUnitMapping<T> => {
     let mapped: Partial<DateUnitMapping<T>> = {};
     for (let i = 0; i < kDateUnitsLength; i++) {
         mapped[kDateUnitsAsc[i]] = iterator(kDateUnitsAsc[i], i);
@@ -72,7 +76,7 @@ export const mapDateUnits = <T>(iterator: (dateUnit: DateUnit, index: number) =>
 
 export const mapDateUnitObject = <U, V>(
     obj: DateUnitMapping<U>,
-    iterator: (value: U, dateUnit: DateUnit) => V
+    iterator: (value: U, dateUnit: DateUnit) => V,
 ): DateUnitMapping<V> => {
     let mapped: Partial<DateUnitMapping<V>> = {};
     for (let dateUnit of kDateUnitsAsc) {
@@ -87,10 +91,10 @@ export const mapDateUnitObject = <U, V>(
  */
 export const kDateUnitUniformMs: DateUnitMapping<number> = {
     millisecond: 1,
-    second: 1000,      // 1000 ms
-    minute: 60000,     // 60 s
-    hour: 3600000,     // 60 m
-    day: 86400000,     // 24 h
+    second: 1000, // 1000 ms
+    minute: 60000, // 60 s
+    hour: 3600000, // 60 m
+    day: 86400000, // 24 h
     month: 2592000000, // 30 d
     year: 31104000000, // 12 M
 };
@@ -145,11 +149,11 @@ export const kDateNonUniform: Partial<DateUnitMapping<boolean>> = {
 
 export const isDateUnit = (unit: any): unit is DateUnit => {
     return kDateUnitsAsc.indexOf(unit as any) >= 0;
-}
+};
 
 export const isCalendarUnit = (unit: any): unit is CalendarUnit => {
     return kCalendarUnitsAsc.indexOf(unit as any) >= 0;
-}
+};
 
 export const largerDateUnit = (unit: DateUnit): DateUnit | undefined => {
     let i = kDateUnitsDes.indexOf(unit);
@@ -163,18 +167,18 @@ export const smallerDateUnit = (unit: DateUnit): DateUnit | undefined => {
 
 /**
  * Returns:
- * 
+ *
  * - A positive number if `unit1` is larger than `unit2`;
  * - 0 if `unit1` is the same as `unit2`;
  * - A negative number if `unit1` is smaller than `unit2`;
  * - NaN if a unit is invalid.
- * 
+ *
  * To get an intuitive sense of the return value,
  * you can think of the comma between the
  * arguments as a minus sign.
- * 
- * @param unit1 
- * @param unit2 
+ *
+ * @param unit1
+ * @param unit2
  */
 export const compareDateUnits = (unit1: DateUnit, unit2: DateUnit): number => {
     let i1 = kDateUnitsAsc.indexOf(unit1);

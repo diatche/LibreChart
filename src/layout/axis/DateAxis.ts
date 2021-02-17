@@ -1,17 +1,14 @@
-import { Duration, Moment } from "moment";
-import { TextStyle } from "react-native";
-import { ITickLabel } from "../../types";
-import Axis from "./Axis";
+import { Duration, Moment } from 'moment';
+import { TextStyle } from 'react-native';
+import { ITickLabel } from '../../types';
+import Axis from './Axis';
 import {
     DateUnitMapping,
     dateUnitsWithDuration,
     formatDateDelta,
     getTickStyles,
-} from "../../utils/date";
-import {
-    AxisType,
-    IAxisOptions,
-} from "./axisTypes";
+} from '../../utils/date';
+import { AxisType, IAxisOptions } from './axisTypes';
 
 export default class DateAxis extends Axis<Moment, Duration> {
     private _tickStyles?: DateUnitMapping<TextStyle>;

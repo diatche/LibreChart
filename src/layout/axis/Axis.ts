@@ -1,7 +1,4 @@
-import {
-    Animated,
-    InteractionManager,
-} from "react-native";
+import { Animated, InteractionManager } from 'react-native';
 import {
     FlatLayoutSource,
     FlatLayoutSourceProps,
@@ -9,7 +6,7 @@ import {
     isRangeEmpty,
     normalizeAnimatedValue,
     weakref,
-} from "evergrid";
+} from 'evergrid';
 import {
     kAxisBackgroundReuseIDs,
     kAxisContentReuseIDs,
@@ -22,16 +19,13 @@ import {
     IAxisLayoutSourceProps,
     IAxisOptions,
     IAxisStyle,
-} from "./axisTypes";
-import { ITickVector } from "../../scale/Scale";
-import { PlotLayout } from "../../internal";
-import {
-    isAxisHorizontal,
-    isAxisType,
-} from "./axisUtil";
-import { Cancelable } from "../../types";
-import ScaleLayout from "../ScaleLayout";
-import { Observable } from "../../utils/observable";
+} from './axisTypes';
+import { ITickVector } from '../../scale/Scale';
+import { PlotLayout } from '../../internal';
+import { isAxisHorizontal, isAxisType } from './axisUtil';
+import { Cancelable } from '../../types';
+import ScaleLayout from '../ScaleLayout';
+import { Observable } from '../../utils/observable';
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -39,7 +33,10 @@ const kDefaultAxisThicknessStep = 10;
 
 export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
 
-export type AxisManyInput<X = any, Y = any, DX = any, DY = any> = IAxes<X, Y, DX, DY> | IAxesOptionsMap<X, Y> | (Axis | IAxisOptions)[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
+export type AxisManyInput<X = any, Y = any, DX = any, DY = any> =
+    | IAxes<X, Y, DX, DY>
+    | IAxesOptionsMap<X, Y>
+    | (Axis | IAxisOptions)[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
 export interface IAxes<X = any, Y = any, DX = any, DY = any> {
     topAxis?: Axis<X, DX>;
@@ -91,14 +88,14 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     /**
      * Contains axis ticks and labels.
-     * 
+     *
      * Always renders when dequeuing a container.
      */
     contentLayout?: FlatLayoutSource;
 
     /**
      * Contains background, axis and line.
-     * 
+     *
      * Nevers renders when dequeuing a container.
      */
     backgroundLayout?: FlatLayoutSource;
@@ -123,18 +120,16 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         this.axisType = axisType;
         this.hidden = hidden;
         this.getTickLabel = getTickLabel;
-        this.isHorizontal = isAxisHorizontal(this.axisType),
-
-        this.layoutInfo = {
-            thickness: 0,
-            thicknessStep: kDefaultAxisThicknessStep,
-            thickness$: new Animated.Value(0),
-            optimalThicknesses: {},
-            onOptimalThicknessChange: (thickness, index) => (
-                this.onOptimalThicknessChange(thickness, index)
-            ),
-            visibleContainerIndexRange: [0, 0],
-        };
+        (this.isHorizontal = isAxisHorizontal(this.axisType)),
+            (this.layoutInfo = {
+                thickness: 0,
+                thicknessStep: kDefaultAxisThicknessStep,
+                thickness$: new Animated.Value(0),
+                optimalThicknesses: {},
+                onOptimalThicknessChange: (thickness, index) =>
+                    this.onOptimalThicknessChange(thickness, index),
+                visibleContainerIndexRange: [0, 0],
+            });
         this.style = {
             ...kAxisStyleLightDefaults,
             ...style,
@@ -150,12 +145,17 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         }
 
         // Validate and normalize axis types
-        let axisOrOptionsArray: (Axis | IAxisOptions & { axisType?: AxisType })[] = [];
+        let axisOrOptionsArray: (
+            | Axis
+            | (IAxisOptions & { axisType?: AxisType })
+        )[] = [];
         let axisOrOption: Axis | (IAxisOptions & { axisType?: AxisType });
         if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
             axisOrOptionsArray = axisArrayOrMap;
         } else {
-            let axisMap: { [key: string]: (Axis | IAxisOptions) } = axisArrayOrMap;
+            let axisMap: {
+                [key: string]: Axis | IAxisOptions;
+            } = axisArrayOrMap;
             for (let key of Object.keys(axisMap)) {
                 axisOrOption = axisMap[key];
                 if (!axisOrOption.axisType) {
@@ -165,7 +165,9 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                         throw new Error('Invalid axis type');
                     }
                 } else if (axisOrOption.axisType !== key) {
-                    console.warn(`Axis with type "${axisOrOption.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`);
+                    console.warn(
+                        `Axis with type "${axisOrOption.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`,
+                    );
                 }
                 axisOrOptionsArray.push(axisOrOption);
             }
@@ -178,9 +180,13 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 axis = axisOrOption;
             } else {
                 if (!axisOrOption.axisType) {
-                    throw new Error('Axis is missing a type. Use an object with axis types as keys or use axis instances.');
+                    throw new Error(
+                        'Axis is missing a type. Use an object with axis types as keys or use axis instances.',
+                    );
                 }
-                axis = new Axis(axisOrOption as IAxisOptions & { axisType: AxisType });
+                axis = new Axis(
+                    axisOrOption as IAxisOptions & { axisType: AxisType },
+                );
             }
             axes[axis.axisType] = axis;
         }
@@ -204,9 +210,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     configure(plot: PlotLayout) {
         this.plot = plot;
-        this._scaleLayout = this.isHorizontal
-            ? plot.xLayout
-            : plot.yLayout;
+        this._scaleLayout = this.isHorizontal ? plot.xLayout : plot.yLayout;
 
         if (!this.hidden) {
             this.contentLayout = this._createContentLayoutSource(
@@ -224,7 +228,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 forceRender: true,
             };
             this._scaleLayoutUpdates = this.scaleLayout?.updates.addObserver(
-                () => this.update(updateOptions)
+                () => this.update(updateOptions),
             );
         }
     }
@@ -232,7 +236,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     unconfigure() {
         this.contentLayout = undefined;
         this.backgroundLayout = undefined;
-        
+
         this._scaleLayoutUpdates?.cancel();
         this._scaleLayoutUpdates = undefined;
     }
@@ -274,10 +278,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
     ): FlatLayoutSource | undefined {
         let layoutPropsBase = defaults;
-        let thickness = Animated.add(
-            this.style.padding,
-            layoutInfo.thickness$,
-        );
+        let thickness = Animated.add(this.style.padding, layoutInfo.thickness$);
 
         switch (this.axisType) {
             case 'bottomAxis':
@@ -334,7 +335,9 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         // update is triggered.
 
         // Apply thickness step
-        thickness = Math.ceil(thickness / this.layoutInfo.thicknessStep) * this.layoutInfo.thicknessStep;
+        thickness =
+            Math.ceil(thickness / this.layoutInfo.thicknessStep) *
+            this.layoutInfo.thicknessStep;
 
         if (thickness !== this.layoutInfo.optimalThicknesses[index]) {
             this.layoutInfo.optimalThicknesses[index] = thickness;
@@ -346,9 +349,9 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         if (!this.contentLayout || this._scheduledThicknessUpdate) {
             return;
         }
-        this._scheduledThicknessUpdate = InteractionManager.runAfterInteractions(() => (
-            this._debouncedThicknessUpdate()
-        ));
+        this._scheduledThicknessUpdate = InteractionManager.runAfterInteractions(
+            () => this._debouncedThicknessUpdate(),
+        );
     }
 
     cancelThicknessUpdate() {
@@ -358,7 +361,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         }
         this._debouncedThicknessUpdate.cancel();
     }
-    
+
     private _debouncedThicknessUpdate = debounce(
         () => this.updateThickness(),
         kAxisUpdateDebounceInterval,
@@ -371,13 +374,17 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
         // Get optimal axis thickness
         let thickness = 0;
-        for (let optimalThickness of Object.values(this.layoutInfo.optimalThicknesses)) {
+        for (let optimalThickness of Object.values(
+            this.layoutInfo.optimalThicknesses,
+        )) {
             if (optimalThickness > thickness) {
                 thickness = optimalThickness;
             }
         }
 
-        thickness = Math.ceil(thickness / this.layoutInfo.thicknessStep) * this.layoutInfo.thicknessStep;
+        thickness =
+            Math.ceil(thickness / this.layoutInfo.thicknessStep) *
+            this.layoutInfo.thicknessStep;
 
         if (thickness !== this.layoutInfo.thickness) {
             // Thickness changed
@@ -416,9 +423,11 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     }
 
     onContainerDequeue(fromIndex: number, toIndex: number) {
-        // Move optimal axis 
+        // Move optimal axis
         if (this.layoutInfo.optimalThicknesses[fromIndex]) {
-            this.layoutInfo.optimalThicknesses[toIndex] = this.layoutInfo.optimalThicknesses[fromIndex];
+            this.layoutInfo.optimalThicknesses[
+                toIndex
+            ] = this.layoutInfo.optimalThicknesses[fromIndex];
             delete this.layoutInfo.optimalThicknesses[fromIndex];
         }
     }

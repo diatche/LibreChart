@@ -1,13 +1,8 @@
-import {
-    IAnimationBaseOptions,
-    IInsets,
-    IPoint,
-    weakref,
-} from "evergrid";
-import debounce from "lodash.debounce";
-import { InteractionManager } from "react-native";
-import { ScaleLayout } from "../internal";
-import { Cancelable } from "../types";
+import { IAnimationBaseOptions, IInsets, IPoint, weakref } from 'evergrid';
+import debounce from 'lodash.debounce';
+import { InteractionManager } from 'react-native';
+import { ScaleLayout } from '../internal';
+import { Cancelable } from '../types';
 
 export interface ContentLimitOptions {
     containerSize: IPoint;
@@ -40,10 +35,10 @@ export default abstract class ScaleController<T = any, D = any> {
 
     constructor(options: ScaleControllerOptions) {
         this.viewPaddingAbs = this.validatedPadding(
-            options.viewPaddingAbs || ScaleController.defaultViewPaddingAbs
+            options.viewPaddingAbs || ScaleController.defaultViewPaddingAbs,
         );
         this.viewPaddingRel = this.validatedPadding(
-            options.viewPaddingRel || ScaleController.defaultViewPaddingRel
+            options.viewPaddingRel || ScaleController.defaultViewPaddingRel,
         );
 
         this.animationOptions = options.animationOptions || {
@@ -113,24 +108,21 @@ export default abstract class ScaleController<T = any, D = any> {
 
     private _interaction?: Cancelable;
 
-    private _debouncedUpdate = debounce(
-        () => {
-            let plot = this._maybeScaleLayout?.plot;
-            if (!plot) {
-                return;
-            }
-            if (plot.isInteracting) {
-                // Skip update during interaction
-                this._interaction = InteractionManager.runAfterInteractions(() => {
-                    this._interaction = undefined;
-                    this.scheduleUpdate();
-                });
-            } else {
-                this.update();
-            }
-        },
-        ScaleController.updateDebounceInterval,
-    );
+    private _debouncedUpdate = debounce(() => {
+        let plot = this._maybeScaleLayout?.plot;
+        if (!plot) {
+            return;
+        }
+        if (plot.isInteracting) {
+            // Skip update during interaction
+            this._interaction = InteractionManager.runAfterInteractions(() => {
+                this._interaction = undefined;
+                this.scheduleUpdate();
+            });
+        } else {
+            this.update();
+        }
+    }, ScaleController.updateDebounceInterval);
 
     update(options?: { animationOptions?: IAnimationBaseOptions }) {
         this.cancelUpdate();
@@ -151,9 +143,11 @@ export default abstract class ScaleController<T = any, D = any> {
         let containerChanged = !this._containerSize;
         if (this._containerSize) {
             if (scaleLayout.isHorizontal) {
-                containerChanged = Math.abs(this._containerSize.x - containerSize.x) >= 1;
+                containerChanged =
+                    Math.abs(this._containerSize.x - containerSize.x) >= 1;
             } else {
-                containerChanged = Math.abs(this._containerSize.y - containerSize.y) >= 1;
+                containerChanged =
+                    Math.abs(this._containerSize.y - containerSize.y) >= 1;
             }
         }
 
@@ -236,16 +230,22 @@ export default abstract class ScaleController<T = any, D = any> {
                 contentMax += this.viewPaddingRel[1] * diff;
             }
         }
-        
+
         if (this.viewPaddingAbs[0] || this.viewPaddingAbs[1]) {
             // Convert view padding to target scale
             let contentLen = contentMax - contentMin;
             if (contentLen > 0) {
                 let viewLen = 0;
                 if (this.scaleLayout.isHorizontal) {
-                    viewLen = options.containerSize.x - (options.insets.left || 0) - (options.insets.right || 0);
+                    viewLen =
+                        options.containerSize.x -
+                        (options.insets.left || 0) -
+                        (options.insets.right || 0);
                 } else {
-                    viewLen = options.containerSize.y - (options.insets.top || 0) - (options.insets.bottom || 0);
+                    viewLen =
+                        options.containerSize.y -
+                        (options.insets.top || 0) -
+                        (options.insets.bottom || 0);
                 }
                 viewLen -= this.viewPaddingAbs[0];
                 viewLen -= this.viewPaddingAbs[1];
@@ -266,7 +266,10 @@ export default abstract class ScaleController<T = any, D = any> {
             case 'number':
                 return [padding, padding];
             case 'object':
-                if (typeof padding[0] === 'number' && typeof padding[1] === 'number') {
+                if (
+                    typeof padding[0] === 'number' &&
+                    typeof padding[1] === 'number'
+                ) {
                     return [padding[0], padding[1]];
                 }
                 break;

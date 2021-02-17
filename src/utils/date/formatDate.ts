@@ -1,32 +1,26 @@
-import moment, {
-    Duration,
-    Moment,
-} from "moment";
+import moment, { Duration, Moment } from 'moment';
 import {
     DateUnit,
     isDateUnit,
     kCalendaryUnitMomentMap,
     kDateUnitsDes,
     kDateUnitsLength,
-} from "./dateBase";
+} from './dateBase';
 import {
     getCalendarFormat,
     is24Hour,
     isCurrentYear,
     longYearFormat,
-} from "./dateLocale";
-import {
-    dateUnitsWithDuration,
-    snapDate,
-} from "./duration";
+} from './dateLocale';
+import { dateUnitsWithDuration, snapDate } from './duration';
 
 /**
  * Returns a localised date string up
  * to the specified date `unit`.
- * 
+ *
  * ~~A `resolution` of `week` is a special case
  * and is handled the same as `day`.~~
- * @param options 
+ * @param options
  */
 export const formatDate = (
     date: Moment,
@@ -55,9 +49,10 @@ export const formatDate = (
     if (!cleanDate || !cleanDate.isValid()) {
         throw new Error('Invalid date');
     }
-    const canRemoveYear = typeof showYear !== 'undefined'
-        ? !showYear
-        : isCurrentYear(cleanDate, now);
+    const canRemoveYear =
+        typeof showYear !== 'undefined'
+            ? !showYear
+            : isCurrentYear(cleanDate, now);
     const dateFormat = style === 'long' || canRemoveYear ? 'll' : 'L';
 
     const withoutCurrentYear = (dateFormat: string, timeFormat?: string) => {
@@ -128,10 +123,7 @@ export const formatDateDelta = (
     if (!moment.isDuration(duration) || !duration.isValid()) {
         throw new Error('Invalid duration');
     }
-    const {
-        now = moment(),
-        weekdays = false,
-    } = options;
+    const { now = moment(), weekdays = false } = options;
     const [interval, unit] = dateUnitsWithDuration(duration);
     // date = floorDate(date, interval, unit);
     let previousDate = date.clone().subtract(duration);

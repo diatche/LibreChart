@@ -1,15 +1,11 @@
-import LinearScale from "./LinearScale";
-import {
-    ITickScale,
-    ITickScaleConstraints,
-} from "./Scale";
+import LinearScale from './LinearScale';
+import { ITickScale, ITickScaleConstraints } from './Scale';
 
 export default class DiscreteScale extends LinearScale {
-
     getTickScale(
         start: number,
         end: number,
-        constraints?: ITickScaleConstraints<number>
+        constraints?: ITickScaleConstraints<number>,
     ): ITickScale<number> {
         start = Math.floor(start);
         return {
@@ -21,6 +17,6 @@ export default class DiscreteScale extends LinearScale {
                 value: 1,
                 location: 1,
             },
-        }
+        };
     }
 }

@@ -1,14 +1,6 @@
 import React from 'react';
-import {
-    ChartLayout,
-    Plot,
-} from '../internal';
-import {
-    Animated,
-    StyleSheet,
-    ViewProps,
-    ViewStyle,
-} from 'react-native';
+import { ChartLayout, Plot } from '../internal';
+import { Animated, StyleSheet, ViewProps, ViewStyle } from 'react-native';
 import { PlotProps } from './Plot';
 
 export interface ChartProps extends Animated.AnimatedProps<ViewProps> {
@@ -58,24 +50,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
                 // Render plot inside row
                 rowPlots.push(
-                    <Plot
-                        key={j}
-                        layout={plot}
-                        style={columnStyle}
-                    />
+                    <Plot key={j} layout={plot} style={columnStyle} />,
                 );
             }
             // Render row
             rows.push(
-                <Animated.View
-                    key={i}
-                    style={[
-                        styles.row,
-                        rowStyle,
-                    ]}
-                >
+                <Animated.View key={i} style={[styles.row, rowStyle]}>
                     {rowPlots}
-                </Animated.View>
+                </Animated.View>,
             );
         }
 
@@ -83,18 +65,17 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         return (
             <Animated.View
                 {...this.props}
-                onLayout={Animated.event([{
-                    nativeEvent: {
-                        layout: {
-                            width: this.props.layout.containerSize$.x,
-                            height: this.props.layout.containerSize$.y,
-                        }
-                    }
-                }])}
-                style={[
-                    styles.container,
-                    this.props.style,
-                ]}
+                onLayout={Animated.event([
+                    {
+                        nativeEvent: {
+                            layout: {
+                                width: this.props.layout.containerSize$.x,
+                                height: this.props.layout.containerSize$.y,
+                            },
+                        },
+                    },
+                ])}
+                style={[styles.container, this.props.style]}
             >
                 {rows}
             </Animated.View>

@@ -1,24 +1,11 @@
-import {
-    GridLayoutSource,
-    GridLayoutSourceProps,
-    IPoint,
-} from 'evergrid';
+import { GridLayoutSource, GridLayoutSourceProps, IPoint } from 'evergrid';
 import DataSource, {
     DataSourceInput,
     IItemsInLocationRangeOptions,
 } from './DataSource';
-import {
-    ChartDataType,
-    IDataRect,
-    IPointStyle,
-    IStrokeStyle,
-} from '../types';
+import { ChartDataType, IDataRect, IPointStyle, IStrokeStyle } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
-import {
-    LinePath,
-    PathCurve,
-    CanvasUtil,
-} from '../utils/canvas';
+import { LinePath, PathCurve, CanvasUtil } from '../utils/canvas';
 
 export interface ILinePoint extends IDataRect {
     clipped: boolean;
@@ -29,12 +16,17 @@ export interface ILineDataStyle extends IPointStyle, IStrokeStyle {
     curve?: PathCurve;
 }
 
-export interface LineDataSourceInput<T, X = number, Y = number> extends DataSourceInput<T, X, Y> {
+export interface LineDataSourceInput<T, X = number, Y = number>
+    extends DataSourceInput<T, X, Y> {
     style?: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
 }
 
-export default class LineDataSource<T = any, X = number, Y = number> extends DataSource<T, X, Y> {
+export default class LineDataSource<
+    T = any,
+    X = number,
+    Y = number
+> extends DataSource<T, X, Y> {
     style: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
 
@@ -73,10 +65,14 @@ export default class LineDataSource<T = any, X = number, Y = number> extends Dat
         for (let i = 1; i < c; i++) {
             let r = this.getItemRect(this.transform(this.data[i], i));
             let line = VectorUtil.cohenSutherlandLineClip(
-                r0.x, r0.y,
-                r.x, r.y,
-                pointRange[0].x, pointRange[0].y,
-                pointRange[1].x, pointRange[1].y
+                r0.x,
+                r0.y,
+                r.x,
+                r.y,
+                pointRange[0].x,
+                pointRange[0].y,
+                pointRange[1].x,
+                pointRange[1].y,
             );
             if (line) {
                 let isPoint = line[0] === line[2] && line[1] === line[3];
@@ -88,7 +84,10 @@ export default class LineDataSource<T = any, X = number, Y = number> extends Dat
                             width: 0,
                             height: 0,
                             dataIndex: i - 1,
-                            clipped: !VectorUtil.isPointInClosedRange(r0, pointRange),
+                            clipped: !VectorUtil.isPointInClosedRange(
+                                r0,
+                                pointRange,
+                            ),
                             originalPoint: r0,
                         });
                         iAdded = i - 1;
@@ -99,7 +98,10 @@ export default class LineDataSource<T = any, X = number, Y = number> extends Dat
                         width: 0,
                         height: 0,
                         dataIndex: i,
-                        clipped: !VectorUtil.isPointInClosedRange(r, pointRange),
+                        clipped: !VectorUtil.isPointInClosedRange(
+                            r,
+                            pointRange,
+                        ),
                         originalPoint: r,
                     });
                     iAdded = i;
@@ -119,20 +121,23 @@ export default class LineDataSource<T = any, X = number, Y = number> extends Dat
             x: index.x * width,
             y: index.y * height,
         };
-        return [start, {
-            x: start.x + width,
-            y: start.y + height,
-        }];
+        return [
+            start,
+            {
+                x: start.x + width,
+                y: start.y + height,
+            },
+        ];
     }
 
     /**
      * Returns the canvas view box for the specified
      * container in the form [x, y, width, height].
-     * @param index 
+     * @param index
      */
     getContainerCanvasRect(index: IPoint): number[] {
         let range = this.getContainerLocationRange(index);
-        let scale = this.layout?.getScale() || { x: 1, y: 1};
+        let scale = this.layout?.getScale() || { x: 1, y: 1 };
         for (let i = 0; i < 2; i++) {
             let p = range[i];
             p.x *= scale.x;
@@ -151,17 +156,12 @@ export default class LineDataSource<T = any, X = number, Y = number> extends Dat
             yLen = -yLen;
         }
 
-        return [
-            range[0].x,
-            range[0].y,
-            xLen,
-            yLen,
-        ];
+        return [range[0].x, range[0].y, xLen, yLen];
     }
 
     /**
      * Returns point locations in canvas coordinates.
-     * @param index 
+     * @param index
      */
     getCanvasPointsInContainer(index: IPoint): ILinePoint[] {
         const c = this.data.length;

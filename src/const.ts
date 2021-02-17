@@ -1,7 +1,4 @@
-import {
-    IChartGridStyle,
-    IChartGridStyleInput,
-} from "./types";
+import { IChartGridStyle, IChartGridStyleInput } from './types';
 import { Colors } from './utils/colors';
 
 export const kRefLayoutReuseID = 'ref';
@@ -10,7 +7,7 @@ export const kGridReuseID = 'grid';
 export const kChartGridStyleBaseDefaults: IChartGridStyleInput = {
     majorGridLineThickness: 1,
     minorGridLineThickness: 1,
-}
+};
 
 export const kChartGridStyleLightDefaults = {
     ...kChartGridStyleBaseDefaults,

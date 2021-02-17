@@ -1,4 +1,4 @@
-import { IPoint } from "evergrid";
+import { IPoint } from 'evergrid';
 import * as d3 from 'd3-shape';
 
 // TODO: Add other curves
@@ -6,15 +6,15 @@ import * as d3 from 'd3-shape';
 export type PathCurve = 'linear' | 'natural' | 'monotoneX' | d3.CurveFactory;
 export type LinePath = d3.Line<IPoint>;
 
-const kLine: LinePath = d3.line<IPoint>(p => p.x, p => p.y);
+const kLine: LinePath = d3.line<IPoint>(
+    p => p.x,
+    p => p.y,
+);
 
 export namespace CanvasUtil {
-
-    export const getCurve = (
-        options?: {
-            curve?: PathCurve;
-        },
-    ): d3.CurveFactory => {
+    export const getCurve = (options?: {
+        curve?: PathCurve;
+    }): d3.CurveFactory => {
         const { curve = d3.curveLinear } = options || {};
         let curveFactory: d3.CurveFactory;
         if (typeof curve === 'string') {
@@ -35,15 +35,13 @@ export namespace CanvasUtil {
             curveFactory = curve;
         }
         return curveFactory;
-    }
+    };
 
-    export const createLinePath = (
-        options?: {
-            curve?: PathCurve;
-        },
-    ): LinePath => {
+    export const createLinePath = (options?: {
+        curve?: PathCurve;
+    }): LinePath => {
         return kLine.curve(getCurve(options));
-    }
+    };
 
     export const pathWithPoints = (
         points: IPoint[],

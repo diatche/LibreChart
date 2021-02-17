@@ -1,12 +1,10 @@
-import { IPoint } from "evergrid";
-import Scale, { 
-    ITickScaleConstraints,
-} from "../scale/Scale";
-import DataSource from "../data/DataSource";
+import { IPoint } from 'evergrid';
+import Scale, { ITickScaleConstraints } from '../scale/Scale';
+import DataSource from '../data/DataSource';
 import ScaleController, {
     ContentLimitOptions,
     ScaleControllerOptions,
-} from "./ScaleController";
+} from './ScaleController';
 
 export type ScaleHysteresisFunction = (
     min: number,
@@ -16,7 +14,6 @@ export type ScaleHysteresisFunction = (
 ) => [number, number] | null;
 
 export namespace Hysteresis {
-
     export const none: ScaleHysteresisFunction = () => null;
 
     export const step = (
@@ -36,7 +33,7 @@ export namespace Hysteresis {
     };
 
     export function withScale<T = any, D = any>(
-        scale: Scale<T, D>
+        scale: Scale<T, D>,
     ): ScaleHysteresisFunction {
         let constraints: ITickScaleConstraints<D> = {
             expand: true,
@@ -49,7 +46,7 @@ export namespace Hysteresis {
             );
             return scale.spanLocationRange(a, b);
         };
-    };
+    }
 
     // export const log10 = (
     //     options: {
@@ -94,7 +91,7 @@ export namespace Hysteresis {
     //             let al0 = floor(al);
     //             al = floor((al - al0) / step) * step + al0;
     //         }
-            
+
     //         let bl = Math.log10(b);
     //         if (step === 1 || !isFinite(bl)) {
     //             bl = ceil(bl);
@@ -121,7 +118,10 @@ export interface AutoScaleOptions extends ScaleControllerOptions {
     hysteresis?: ScaleHysteresisFunction;
 }
 
-export default class AutoScaleController<T = any, D = any> extends ScaleController<T, D> {
+export default class AutoScaleController<
+    T = any,
+    D = any
+> extends ScaleController<T, D> {
     static defaultContentPaddingAbs = 0;
     static defaultContentPaddingRel = 0.2;
 
@@ -139,26 +139,36 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
         super(options);
 
         this.contentPaddingAbs = this.validatedPadding(
-            options.contentPaddingAbs || AutoScaleController.defaultContentPaddingAbs
+            options.contentPaddingAbs ||
+                AutoScaleController.defaultContentPaddingAbs,
         );
         this.contentPaddingRel = this.validatedPadding(
-            options.contentPaddingRel || AutoScaleController.defaultContentPaddingRel
+            options.contentPaddingRel ||
+                AutoScaleController.defaultContentPaddingRel,
         );
         this.min = options.min;
         this.max = options.max;
         this.anchor = options.anchor;
         this.hysteresis = options.hysteresis;
 
-        if (typeof this.min !== 'undefined' && typeof this.max !== 'undefined' && this.max < this.min) {
+        if (
+            typeof this.min !== 'undefined' &&
+            typeof this.max !== 'undefined' &&
+            this.max < this.min
+        ) {
             throw new Error('Invalid autoscale range');
         }
 
         if (typeof this.anchor !== 'undefined') {
             if (typeof this.min !== 'undefined' && this.anchor < this.min) {
-                console.warn(`Autoscale anchor (${this.anchor}) is below min value (${this.min})`);
+                console.warn(
+                    `Autoscale anchor (${this.anchor}) is below min value (${this.min})`,
+                );
             }
             if (typeof this.max !== 'undefined' && this.anchor > this.max) {
-                console.warn(`Autoscale anchor (${this.anchor}) is above max value (${this.max})`);
+                console.warn(
+                    `Autoscale anchor (${this.anchor}) is above max value (${this.max})`,
+                );
             }
         }
 
@@ -270,18 +280,27 @@ export default class AutoScaleController<T = any, D = any> extends ScaleControll
                 let res = this.hysteresis(min, max, this.min, this.max);
                 if (res) {
                     if (
-                        typeof res[0] !== 'number' || typeof res[1] !== 'number' ||
-                        isNaN(res[0]) || isNaN(res[1]) ||
-                        !isFinite(res[0]) || !isFinite(res[1])
+                        typeof res[0] !== 'number' ||
+                        typeof res[1] !== 'number' ||
+                        isNaN(res[0]) ||
+                        isNaN(res[1]) ||
+                        !isFinite(res[0]) ||
+                        !isFinite(res[1])
                     ) {
-                        console.warn(`Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`);
+                        console.warn(
+                            `Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`,
+                        );
                     } else {
                         min = res[0];
                         max = res[1];
                     }
                 }
             } catch (error) {
-                console.error(`Uncaught error in hysteresis function: ${error?.message || error}`);
+                console.error(
+                    `Uncaught error in hysteresis function: ${
+                        error?.message || error
+                    }`,
+                );
             }
         }
 

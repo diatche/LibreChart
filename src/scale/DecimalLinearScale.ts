@@ -1,13 +1,10 @@
-import Decimal from "decimal.js";
+import Decimal from 'decimal.js';
 import Scale, {
     ITickScaleConstraints,
     ITickScale,
     IScaleOptions,
-} from "./Scale";
-import {
-    findCommonFactors,
-    findFactors,
-} from "../utils/factors";
+} from './Scale';
+import { findCommonFactors, findFactors } from '../utils/factors';
 
 const k0 = new Decimal(0);
 const k1 = new Decimal(1);
@@ -18,7 +15,6 @@ const kFactors10 = [1, 2, 5, 10];
 type DecimalLinearTickScaleType = ITickScale<Decimal>;
 
 export default class DecimalLinearScale extends Scale<Decimal> {
-
     tickScale: ITickScale<Decimal>;
 
     constructor(options: IScaleOptions<Decimal> = {}) {
@@ -33,28 +29,37 @@ export default class DecimalLinearScale extends Scale<Decimal> {
                 value: k1,
                 location: 1,
             },
-        }
+        };
     }
 
-    emptyValue() { return k0 };
-    emptyValueInterval() { return k0 };
+    emptyValue() {
+        return k0;
+    }
+    emptyValueInterval() {
+        return k0;
+    }
 
     getTickScale(
         start: Decimal,
         end: Decimal,
-        constraints?: ITickScaleConstraints<Decimal>
+        constraints?: ITickScaleConstraints<Decimal>,
     ): DecimalLinearTickScaleType {
         if (end.lte(start)) {
             return this.emptyScale();
         }
-        if (start.isNaN() || !end.isFinite() || end.isNaN() || !end.isFinite()) {
+        if (
+            start.isNaN() ||
+            !end.isFinite() ||
+            end.isNaN() ||
+            !end.isFinite()
+        ) {
             throw new Error('Invalid interval');
         }
         let len = end.sub(start);
-    
+
         // Find min interval
         let minInterval = k0;
-    
+
         constraints = {
             ...this.constraints,
             ...constraints,
@@ -63,7 +68,9 @@ export default class DecimalLinearScale extends Scale<Decimal> {
         if (constraints.minInterval?.value) {
             let min = constraints.minInterval.value;
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
-                throw new Error('Minimum interval must be finite and with a positive length');
+                throw new Error(
+                    'Minimum interval must be finite and with a positive length',
+                );
             }
             if (min.gt(minInterval)) {
                 minInterval = min;
@@ -73,31 +80,37 @@ export default class DecimalLinearScale extends Scale<Decimal> {
         if (constraints.minInterval?.location) {
             let min = new Decimal(constraints.minInterval.location);
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
-                throw new Error('Minimum interval must be finite and with a positive length');
+                throw new Error(
+                    'Minimum interval must be finite and with a positive length',
+                );
             }
             if (min.gt(minInterval)) {
                 minInterval = min;
             }
         }
-    
+
         if (constraints.maxCount) {
             let maxCount = new Decimal(constraints.maxCount);
             if (maxCount.eq(0)) {
                 return this.emptyScale();
             }
             if (maxCount.lt(0) || maxCount.isNaN()) {
-                throw new Error('Max count must be greater than or equal to zero');
+                throw new Error(
+                    'Max count must be greater than or equal to zero',
+                );
             }
             let min = len.div(maxCount);
             if (min.gt(minInterval)) {
                 minInterval = min;
             }
         }
-    
+
         if (minInterval.lte(0)) {
-            throw new Error('Must specify either a minimum interval or a maximum interval count');
+            throw new Error(
+                'Must specify either a minimum interval or a maximum interval count',
+            );
         }
-    
+
         let radix = k10;
         let radixLog10 = k1;
         if (constraints.radix) {
@@ -105,19 +118,22 @@ export default class DecimalLinearScale extends Scale<Decimal> {
             if (!radix.eq(k10)) {
                 radixLog10 = Decimal.log10(radix);
             }
-            if (!radix.isInt() || radix.lt(2) || radix.isNaN() || !radix.isFinite()) {
+            if (
+                !radix.isInt() ||
+                radix.lt(2) ||
+                radix.isNaN() ||
+                !radix.isFinite()
+            ) {
                 throw new Error('Radix must be an integer greater than 1');
             }
         }
-    
+
         let exponent = radix.pow(
-            Decimal.log10(minInterval)
-                .div(radixLog10)
-                .floor()
+            Decimal.log10(minInterval).div(radixLog10).floor(),
         );
         let startScaled = start.div(exponent).floor();
         let endScaled = end.div(exponent).ceil();
-    
+
         let factors: number[];
         if (constraints.expand) {
             // Use radix factors
@@ -135,9 +151,9 @@ export default class DecimalLinearScale extends Scale<Decimal> {
             let excludeFactors = new Set(constraints.excludeFactors);
             factors = factors.filter(x => !excludeFactors.has(x));
         }
-    
+
         let bestScale: DecimalLinearTickScaleType | undefined;
-    
+
         do {
             for (let i = 0; i < factors.length; i++) {
                 const factor = factors[i];
@@ -170,7 +186,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
                 endScaled = endScaled.div(radix);
             }
         } while (!bestScale);
-    
+
         return bestScale;
     }
 

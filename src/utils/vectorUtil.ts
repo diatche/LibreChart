@@ -1,12 +1,11 @@
-import { IPoint } from "evergrid";
+import { IPoint } from 'evergrid';
 
 export namespace VectorUtil {
-
     const INSIDE = 0; // 0000
-    const LEFT = 1;   // 0001
-    const RIGHT = 2;  // 0010
+    const LEFT = 1; // 0001
+    const RIGHT = 2; // 0010
     const BOTTOM = 4; // 0100
-    const TOP = 8;    // 1000
+    const TOP = 8; // 1000
 
     // export interface IPoint {
     //     x: number;
@@ -20,19 +19,19 @@ export namespace VectorUtil {
 
     /**
      * Cohen–Sutherland clipping algorithm clips a line from
-     * P0 = (x0, y0) to P1 = (x1, y1) against a rectangle with 
+     * P0 = (x0, y0) to P1 = (x1, y1) against a rectangle with
      * diagonal from (xmin, ymin) to (xmax, ymax).
-     * 
+     *
      * Source: https://en.wikipedia.org/wiki/Cohen–Sutherland_algorithm
-     * 
-     * @param x0 
-     * @param y0 
-     * @param x1 
-     * @param y1 
-     * @param xmin 
-     * @param ymin 
-     * @param xmax 
-     * @param ymax 
+     *
+     * @param x0
+     * @param y0
+     * @param x1
+     * @param y1
+     * @param xmin
+     * @param ymin
+     * @param xmax
+     * @param ymax
      * @returns The clipped line described by `[x0, y0, x1, y1]`, if the line intersects the rectangle, otherwise `undefined`.
      */
     export const cohenSutherlandLineClip = (
@@ -78,17 +77,21 @@ export namespace VectorUtil {
                 //   y = y0 + slope * (xm - x0), where xm is xmin or xmax
                 // No need to worry about divide-by-zero because, in each case, the
                 // outcode bit being tested guarantees the denominator is non-zero
-                if (outcodeOut & TOP) {           // point is above the clip window
-                    x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0);
+                if (outcodeOut & TOP) {
+                    // point is above the clip window
+                    x = x0 + ((x1 - x0) * (ymax - y0)) / (y1 - y0);
                     y = ymax;
-                } else if (outcodeOut & BOTTOM) { // point is below the clip window
-                    x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0);
+                } else if (outcodeOut & BOTTOM) {
+                    // point is below the clip window
+                    x = x0 + ((x1 - x0) * (ymin - y0)) / (y1 - y0);
                     y = ymin;
-                } else if (outcodeOut & RIGHT) {  // point is to the right of clip window
-                    y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0);
+                } else if (outcodeOut & RIGHT) {
+                    // point is to the right of clip window
+                    y = y0 + ((y1 - y0) * (xmax - x0)) / (x1 - x0);
                     x = xmax;
-                } else if (outcodeOut & LEFT) {   // point is to the left of clip window
-                    y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0);
+                } else if (outcodeOut & LEFT) {
+                    // point is to the left of clip window
+                    y = y0 + ((y1 - y0) * (xmin - x0)) / (x1 - x0);
                     x = xmin;
                 }
 
@@ -107,20 +110,20 @@ export namespace VectorUtil {
         }
 
         return accept ? [x0, y0, x1, y1] : undefined;
-    }
+    };
 
     /**
      * Compute the bit code for a point (x, y) using the clip
      * bounded diagonally by (xmin, ymin), and (xmax, ymax).
-     * 
+     *
      * Source: https://en.wikipedia.org/wiki/Cohen–Sutherland_algorithm
-     * 
-     * @param x 
-     * @param y 
-     * @param xmin 
-     * @param ymin 
-     * @param xmax 
-     * @param ymax 
+     *
+     * @param x
+     * @param y
+     * @param xmin
+     * @param ymin
+     * @param xmax
+     * @param ymax
      */
     const _computeOutCode = (
         x: number,
@@ -143,37 +146,39 @@ export namespace VectorUtil {
         if (y < ymin) {
             // below the clip window
             code |= BOTTOM;
-        }
-        else if (y > ymax) {
+        } else if (y > ymax) {
             // above the clip window
             code |= TOP;
         }
 
         return code;
-    }
+    };
 
     /**
      * Returns true if the specified point `p` is inside the
      * specified range `r`.
-     * 
+     *
      * The range lower bounds are inclusive and upper bounds
      * are inclusive.
-     * 
-     * @param p {IPoint} The point. 
+     *
+     * @param p {IPoint} The point.
      * @param r {[IPoint, IPoint]} The point range.
      */
-    export const isPointInClosedRange = (p: IPoint, r: [IPoint, IPoint]): boolean => {
+    export const isPointInClosedRange = (
+        p: IPoint,
+        r: [IPoint, IPoint],
+    ): boolean => {
         return p.x >= r[0].x && p.x <= r[1].x && p.y >= r[0].y && p.y <= r[1].y;
     };
 
     /**
      * Returns true if the specified point `p` is inside the
      * specified range `r`.
-     * 
+     *
      * The range lower bounds are inclusive and upper bounds
      * are inclusive.
-     * 
-     * @param p {IPoint} The point. 
+     *
+     * @param p {IPoint} The point.
      * @param r {[IPoint, IPoint]} The point range.
      */
     export const rectsIntersect = (
@@ -186,9 +191,11 @@ export namespace VectorUtil {
         w2: number,
         h2: number,
     ): boolean => {
-        return (isFinite(w1) ? x2 < x1 + w1 : w1 > 0)
-            && (isFinite(w2) ? x1 < x2 + w2 : w2 > 0)
-            && (isFinite(h1) ? y2 < y1 + h1 : h1 > 0)
-            && (isFinite(h2) ? y1 < y2 + h2 : h2 > 0);
+        return (
+            (isFinite(w1) ? x2 < x1 + w1 : w1 > 0) &&
+            (isFinite(w2) ? x1 < x2 + w2 : w2 > 0) &&
+            (isFinite(h1) ? y2 < y1 + h1 : h1 > 0) &&
+            (isFinite(h2) ? y1 < y2 + h2 : h2 > 0)
+        );
     };
 }

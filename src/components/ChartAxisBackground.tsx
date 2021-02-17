@@ -1,13 +1,6 @@
 import React from 'react';
-import {
-    View,
-    StyleSheet,
-    ViewStyle,
-} from 'react-native';
-import {
-    AxisType,
-    IAxisBackgroundStyle,
-} from '../layout/axis/axisTypes';
+import { View, StyleSheet, ViewStyle } from 'react-native';
+import { AxisType, IAxisBackgroundStyle } from '../layout/axis/axisTypes';
 
 export interface ChartAxisBackgroundProps extends IAxisBackgroundStyle {
     axisType: AxisType;
@@ -32,7 +25,7 @@ const ChartAxisBackground = React.memo((props: ChartAxisBackgroundProps) => {
             containerStyle.borderLeftWidth = props.axisLineThickness;
             break;
     }
-    
+
     return <View style={[styles.container, containerStyle]} />;
 });
 

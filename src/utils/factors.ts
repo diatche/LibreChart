@@ -15,7 +15,7 @@ const _findFactorsPos = (x: number): number[] => {
         tail.unshift(x / max);
     }
     return head.concat(tail);
-}
+};
 
 export const findFactors = (value: number): number[] => {
     let x = value;
@@ -35,7 +35,7 @@ export const findFactors = (value: number): number[] => {
         let factors = [...kFactors10];
         if (isNegative) {
             factors = factors.map(x => -x);
-            factors = factors.reverse(); 
+            factors = factors.reverse();
         }
         return factors;
     } else {
@@ -43,13 +43,13 @@ export const findFactors = (value: number): number[] => {
     }
     if (isNegative) {
         factors = factors.map(x => -x);
-        factors = factors.reverse(); 
+        factors = factors.reverse();
     }
     return factors;
-}
+};
 
 export const findCommonFactors = (x1: number, x2: number): number[] => {
-    if (x1 === 0 || x2 === 0 || (x1 < 0) !== (x2 < 0)) {
+    if (x1 === 0 || x2 === 0 || x1 < 0 !== x2 < 0) {
         return [];
     }
     if (x1 === x2) {

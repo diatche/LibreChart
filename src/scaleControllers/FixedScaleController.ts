@@ -1,7 +1,7 @@
 import ScaleController, {
     ContentLimitOptions,
     ScaleControllerOptions,
-} from "./ScaleController";
+} from './ScaleController';
 
 // TODO: Support animated min, max
 
@@ -10,7 +10,10 @@ export interface FixedScaleOptions extends ScaleControllerOptions {
     max: number;
 }
 
-export default class FixedScaleController<T = any, D = any> extends ScaleController<T, D> {
+export default class FixedScaleController<
+    T = any,
+    D = any
+> extends ScaleController<T, D> {
     readonly min: number;
     readonly max: number;
 

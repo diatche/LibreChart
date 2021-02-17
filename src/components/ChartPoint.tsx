@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-    StyleSheet,
-    Animated,
-} from 'react-native';
+import { StyleSheet, Animated } from 'react-native';
 
 export interface ChartPointProps {
     diameter: Animated.Animated;
@@ -12,9 +9,16 @@ export interface ChartPointProps {
  * OUTDATED
  */
 const ChartPoint = React.memo(({ diameter }: ChartPointProps) => {
-    return <Animated.View style={[styles.point, {
-        borderRadius: Animated.divide(diameter, 2),
-    }]} />;
+    return (
+        <Animated.View
+            style={[
+                styles.point,
+                {
+                    borderRadius: Animated.divide(diameter, 2),
+                },
+            ]}
+        />
+    );
 });
 
 const styles = StyleSheet.create({

@@ -14,7 +14,11 @@ export interface IMatcher<T = any> {
  * @param matchers Custom equality matchers.
  * @returns {boolean} Returns true if object is a match, else false.
  */
-export const isMatch = (object: any, source: any, matchers?: IMatcher[]): boolean => {
+export const isMatch = (
+    object: any,
+    source: any,
+    matchers?: IMatcher[],
+): boolean => {
     if (!matchers) {
         return isMatchWith(object, source, () => undefined);
     }

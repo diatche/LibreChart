@@ -4,18 +4,13 @@ import Evergrid, {
     IItem,
     IPoint,
     ItemRenderMap,
-} from 'evergrid'
-import {
-    Axis,
-    PlotLayout,
-} from '../internal';
+} from 'evergrid';
+import { Axis, PlotLayout } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
 import ChartAxisBackground from './ChartAxisBackground';
-import LineDataSource, {
-    ILineDataStyle,
-} from '../data/LineDataSource';
+import LineDataSource, { ILineDataStyle } from '../data/LineDataSource';
 import ChartLine from './ChartLine';
 import { axisTypeMap } from '../layout/axis/axisUtil';
 import RectDataSource from '../data/RectDataSource';
@@ -63,9 +58,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         // Grid
         if (this.layout.grid.layout) {
             itemRenderMap[this.layout.grid.layout.id] = {
-                renderItem: (item, layoutSource, context) => (
-                    this.renderGrid(context)
-                ),
+                renderItem: (item, layoutSource, context) =>
+                    this.renderGrid(context),
                 context: this.layout,
             };
         }
@@ -78,17 +72,15 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             }
             if (axis.contentLayout) {
                 itemRenderMap[axis.contentLayout.id] = {
-                    renderItem: (item, layoutSource, context) => (
-                        this.renderAxisContent(item, context)
-                    ),
+                    renderItem: (item, layoutSource, context) =>
+                        this.renderAxisContent(item, context),
                     context: axis,
                 };
             }
             if (axis.backgroundLayout) {
                 itemRenderMap[axis.backgroundLayout.id] = {
-                    renderItem: (item, layoutSource, context) => (
-                        this.renderAxisBackground(item, context)
-                    ),
+                    renderItem: (item, layoutSource, context) =>
+                        this.renderAxisBackground(item, context),
                     context: axis,
                 };
             }
@@ -102,30 +94,32 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             switch (dataSource.type) {
                 case 'path':
                     itemRenderMap[dataSource.layout.id] = {
-                        renderItem: (item, layoutSource, context) => (
-                            this.renderPath(item, context)
-                        ),
+                        renderItem: (item, layoutSource, context) =>
+                            this.renderPath(item, context),
                         context: dataSource as LineDataSource,
                     };
                     break;
                 case 'point':
                     itemRenderMap[dataSource.layout.id] = {
                         renderItem: (item, layoutSource, context) => (
-                            <ChartPoint diameter={item.animated.viewLayout.size.x} />
+                            <ChartPoint
+                                diameter={item.animated.viewLayout.size.x}
+                            />
                         ),
                         context: dataSource as LineDataSource,
                     };
                     break;
                 case 'rect':
                     itemRenderMap[dataSource.layout.id] = {
-                        renderItem: (item, layoutSource, context) => (
-                            this.renderRect(item, context)
-                        ),
+                        renderItem: (item, layoutSource, context) =>
+                            this.renderRect(item, context),
                         context: dataSource as RectDataSource,
                     };
                     break;
                 default:
-                    throw new Error(`Unsupported data source type: ${dataSource.type}`);
+                    throw new Error(
+                        `Unsupported data source type: ${dataSource.type}`,
+                    );
             }
         }
         this.itemRenderMap = itemRenderMap;
@@ -143,13 +137,16 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                     this.props.style,
                     {
                         backgroundColor: 'white',
-                    }
+                    },
                 ]}
             />
         );
     }
 
-    renderPath(item: IItem<IPoint>, dataSource: LineDataSource): React.ReactNode {
+    renderPath(
+        item: IItem<IPoint>,
+        dataSource: LineDataSource,
+    ): React.ReactNode {
         if (!dataSource.layout) {
             return null;
         }
@@ -171,7 +168,11 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                     dataSource.data[p.dataIndex],
                     p,
                 );
-                if (!hasItemStyle && itemStyle && Object.keys(itemStyle).length !== 0) {
+                if (
+                    !hasItemStyle &&
+                    itemStyle &&
+                    Object.keys(itemStyle).length !== 0
+                ) {
                     hasItemStyle = true;
                 }
                 return itemStyle;
@@ -195,12 +196,23 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 
-    renderRect(item: IItem<number>, dataSource: RectDataSource): React.ReactNode {
+    renderRect(
+        item: IItem<number>,
+        dataSource: RectDataSource,
+    ): React.ReactNode {
         let dataItem = dataSource.data[item.index];
-        return <ChartRect {...dataSource.style} {...dataSource.itemStyle?.(dataItem, item.index)} />
+        return (
+            <ChartRect
+                {...dataSource.style}
+                {...dataSource.itemStyle?.(dataItem, item.index)}
+            />
+        );
     }
 
-    renderAxisContent({ index, reuseID }: IItem<any>, axis: Axis): React.ReactNode {
+    renderAxisContent(
+        { index, reuseID }: IItem<any>,
+        axis: Axis,
+    ): React.ReactNode {
         if (axis.hidden) {
             return null;
         }
@@ -209,9 +221,16 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             return null;
         }
         let range = scaleLayout.getContainerRangeAtIndex(index);
-        let ticks = scaleLayout.scale.getTicksInLocationRange(range[0], range[1]);
+        let ticks = scaleLayout.scale.getTicksInLocationRange(
+            range[0],
+            range[1],
+        );
         let isInverted = scaleLayout.isInverted();
-        let labelLength = scaleLayout.layoutInfo.containerLength * scaleLayout.layoutInfo.viewScale / ticks.length - axis.style.labelMargin * 2;
+        let labelLength =
+            (scaleLayout.layoutInfo.containerLength *
+                scaleLayout.layoutInfo.viewScale) /
+                ticks.length -
+            axis.style.labelMargin * 2;
         return (
             <ChartAxisContent
                 {...axis.style}
@@ -219,12 +238,13 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
-                labelOffset={scaleLayout.layoutInfo.negHalfMajorViewInterval$ || 0}
+                labelOffset={
+                    scaleLayout.layoutInfo.negHalfMajorViewInterval$ || 0
+                }
                 isInverted={isInverted}
-                onOptimalThicknessChange={thickness => axis?.onOptimalThicknessChange(
-                    thickness,
-                    index,
-                )}
+                onOptimalThicknessChange={thickness =>
+                    axis?.onOptimalThicknessChange(thickness, index)
+                }
             />
         );
     }
@@ -233,12 +253,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         if (axis.hidden) {
             return null;
         }
-        return (
-            <ChartAxisBackground
-                {...axis.style}
-                axisType={axis.axisType}
-            />
-        );
+        return <ChartAxisBackground {...axis.style} axisType={axis.axisType} />;
     }
 
     renderGrid(plot: PlotLayout): React.ReactNode {
@@ -246,7 +261,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             return null;
         }
         let xLayout = plot.grid.vertical ? plot.xLayout : undefined;
-        let yLayout = plot.grid.horizontal ? plot.yLayout : undefined
+        let yLayout = plot.grid.horizontal ? plot.yLayout : undefined;
         if (!xLayout && !yLayout) {
             return null;
         }
