@@ -1,6 +1,6 @@
 # LibreChart
 
-Highly performant charts for Expo, React Native and web using [Evergid](https://github.com/diatche/evergrid).
+Highly performant interactive charts for Expo, React Native and web using [Evergid](https://github.com/diatche/evergrid).
 
 For an overview see the [demo](https://github.com/diatche/LibreChartExpoDemo).
 
