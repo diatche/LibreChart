@@ -1,13 +1,7 @@
 import moment from 'moment';
-import {
-    IAxisStyle,
-} from '../../../src/layout/axis/axisTypes';
-import {
-    kAxisStyleLightDefaults,
-} from '../../../src/layout/axis/axisConst';
-import {
-    getTickStyles,
-} from '../../../src/utils/date/dateStyle'
+import { IAxisStyle } from '../../../src/layout/axis/axisTypes';
+import { kAxisStyleLightDefaults } from '../../../src/layout/axis/axisConst';
+import { getTickStyles } from '../../../src/utils/date/dateStyle';
 import { TextStyle } from 'react-native';
 
 const strongStyle: TextStyle = {
@@ -26,14 +20,12 @@ const subtleStyle: TextStyle = {
 };
 
 describe('dateStyle', () => {
-
     describe('getTickStyles', () => {
-
         const axisStyle: IAxisStyle = {
             ...kAxisStyleLightDefaults,
-            majorLabelColor: strongStyle.color!,
-            labelColor: regularStyle.color!,
-            minorLabelColor: subtleStyle.color!,
+            majorLabelColor: String(strongStyle.color),
+            labelColor: String(regularStyle.color),
+            minorLabelColor: String(subtleStyle.color),
 
             majorLabelFontWeight: strongStyle.fontWeight!,
             labelFontWeight: regularStyle.fontWeight!,
@@ -41,7 +33,10 @@ describe('dateStyle', () => {
         };
 
         it('should style correctly with 100 millisecond scale', () => {
-            let styles = getTickStyles(moment.duration(100, 'millisecond'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(100, 'millisecond'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -53,7 +48,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 200 millisecond scale', () => {
-            let styles = getTickStyles(moment.duration(200, 'millisecond'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(200, 'millisecond'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -65,7 +63,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 500 millisecond scale', () => {
-            let styles = getTickStyles(moment.duration(500, 'millisecond'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(500, 'millisecond'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -77,7 +78,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 1 second scale', () => {
-            let styles = getTickStyles(moment.duration(10, 'second'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(10, 'second'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -89,7 +93,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 10 second scale', () => {
-            let styles = getTickStyles(moment.duration(10, 'second'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(10, 'second'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -101,7 +108,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 20 second scale', () => {
-            let styles = getTickStyles(moment.duration(20, 'second'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(20, 'second'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -113,7 +123,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 30 second scale', () => {
-            let styles = getTickStyles(moment.duration(30, 'second'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(30, 'second'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -125,7 +138,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 1 minute scale', () => {
-            let styles = getTickStyles(moment.duration(10, 'minute'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(10, 'minute'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -137,7 +153,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 10 minute scale', () => {
-            let styles = getTickStyles(moment.duration(10, 'minute'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(10, 'minute'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -149,7 +168,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 20 minute scale', () => {
-            let styles = getTickStyles(moment.duration(20, 'minute'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(20, 'minute'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
@@ -161,7 +183,10 @@ describe('dateStyle', () => {
         });
 
         it('should style correctly with 30 minute scale', () => {
-            let styles = getTickStyles(moment.duration(30, 'minute'), axisStyle);
+            let styles = getTickStyles(
+                moment.duration(30, 'minute'),
+                axisStyle,
+            );
 
             expect(styles['year']).toEqual(strongStyle);
             expect(styles['month']).toEqual(strongStyle);
