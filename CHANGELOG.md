@@ -18,7 +18,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 #### Bug Fixes
 
--   Fixed a bug whene background color of the chart could not be changed.
+-   Fixed a bug where background color of the chart could not be changed.
 
 ## 0.1.1
 
