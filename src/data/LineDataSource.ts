@@ -52,11 +52,12 @@ export default class LineDataSource<
         if (c === 0) {
             return [];
         }
-        if (!options?.partial) {
-            return super.getDataRectsInRange(pointRange, options).map(p => {
-                let lp = p as ILinePoint;
-                return lp;
-            });
+        if (!options?.partial || c === 1) {
+            return super.getDataRectsInRange(pointRange, options).map(p => ({
+                ...p,
+                clipped: false,
+                originalPoint: p,
+            }));
         }
         // Add clipped lines
         let points: ILinePoint[] = [];
