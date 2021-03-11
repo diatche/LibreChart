@@ -1,6 +1,6 @@
 {
     "name": "librechart",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Highly performant interactive charts for Expo, React Native and web.",
     "main": "dist/reactnative/index.js",
     "module": "dist/reactnative/index.js",
