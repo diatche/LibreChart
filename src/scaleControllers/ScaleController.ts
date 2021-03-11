@@ -168,6 +168,11 @@ export default abstract class ScaleController<T = any, D = any> {
         if (!containerChanged && min === this._min && max === this._max) {
             return;
         }
+        // console.debug(
+        //     `scaling to min: ${min} (from ${this._min}) max: ${max} (from ${
+        //         this._max
+        //     }) options: ${JSON.stringify(options, null, 2)}`,
+        // );
         this._min = min;
         this._max = max;
 
@@ -185,7 +190,6 @@ export default abstract class ScaleController<T = any, D = any> {
             },
         };
 
-        // console.debug(`scaling to min: ${min} max: ${max}`);
         if (max > min) {
             // Scroll and scale to range
             let pMin: Partial<IPoint> = {};

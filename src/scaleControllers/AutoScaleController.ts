@@ -114,6 +114,8 @@ export interface AutoScaleOptions extends ScaleControllerOptions {
     contentPaddingRel?: number | [number, number];
     min?: number;
     max?: number;
+    defaultMin?: number;
+    defaultMax?: number;
     anchor?: number;
     hysteresis?: ScaleHysteresisFunction;
 }
@@ -129,6 +131,8 @@ export default class AutoScaleController<
     readonly contentPaddingRel: [number, number];
     readonly min: number | undefined;
     readonly max: number | undefined;
+    readonly defaultMin: number | undefined;
+    readonly defaultMax: number | undefined;
     readonly anchor: number | undefined;
 
     hysteresis?: ScaleHysteresisFunction;
@@ -148,6 +152,9 @@ export default class AutoScaleController<
         );
         this.min = options.min;
         this.max = options.max;
+        let { defaultMin = options.min, defaultMax = options.max } = options;
+        this.defaultMin = defaultMin;
+        this.defaultMax = defaultMax;
         this.anchor = options.anchor;
         this.hysteresis = options.hysteresis;
 
@@ -168,6 +175,33 @@ export default class AutoScaleController<
             if (typeof this.max !== 'undefined' && this.anchor > this.max) {
                 console.warn(
                     `Autoscale anchor (${this.anchor}) is above max value (${this.max})`,
+                );
+            }
+        }
+
+        if (
+            typeof this.defaultMin !== 'undefined' &&
+            typeof this.defaultMax !== 'undefined' &&
+            this.defaultMax < this.defaultMin
+        ) {
+            throw new Error('Invalid autoscale default range');
+        }
+
+        if (typeof this.anchor !== 'undefined') {
+            if (
+                typeof this.defaultMin !== 'undefined' &&
+                this.anchor < this.defaultMin
+            ) {
+                console.warn(
+                    `Autoscale anchor (${this.anchor}) is below defaultMin value (${this.defaultMin})`,
+                );
+            }
+            if (
+                typeof this.defaultMax !== 'undefined' &&
+                this.anchor > this.defaultMax
+            ) {
+                console.warn(
+                    `Autoscale anchor (${this.anchor}) is above defaultMax value (${this.defaultMax})`,
                 );
             }
         }
@@ -240,7 +274,21 @@ export default class AutoScaleController<
             hasRange = true;
         }
         if (!hasRange) {
-            return undefined;
+            if (
+                typeof this.defaultMin !== 'undefined' &&
+                typeof this.defaultMax !== 'undefined'
+            ) {
+                minLoc = this.defaultMin;
+                maxLoc = this.defaultMax;
+            } else if (typeof this.defaultMin !== 'undefined') {
+                minLoc = this.defaultMin;
+                maxLoc = this.defaultMin;
+            } else if (typeof this.defaultMax !== 'undefined') {
+                minLoc = this.defaultMax;
+                maxLoc = this.defaultMax;
+            } else {
+                return undefined;
+            }
         }
 
         let min = minLoc;

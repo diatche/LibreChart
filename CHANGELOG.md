@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+#### Features
+
+-   Added `defaultMin` and `defaultMax` properties to `AutoScaleController`.
+
 ## 0.2.0
 
 **18 Feb 2020**
