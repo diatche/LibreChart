@@ -4,19 +4,23 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
-#### Features
+### Features
 
 -   Added `defaultMin` and `defaultMax` properties to `AutoScaleController`.
+
+### Bug Fixes
+
+-   [[#23](https://github.com/diatche/LibreChart/pull/23)] Fixed a bug where a single point in a line data source would not be displayed.
 
 ## 0.2.0
 
 **18 Feb 2020**
 
-#### Features
+### Features
 
--   Added a `theme` prop, which propagates to all layout elements. See [PR](https://github.com/diatche/LibreChart/pull/22) for more info.
+-   [[#22](https://github.com/diatche/LibreChart/pull/22)] Added a `theme` prop, which propagates to all layout elements.
 
-#### Bug Fixes
+### Bug Fixes
 
 -   Fixed a bug where background color of the chart could not be changed.
 
@@ -24,6 +28,6 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 **17 Feb 2020**
 
-#### Bug Fixes
+### Bug Fixes
 
--   Added a workaround for a [bug](https://github.com/diatche/LibreChart/issues/21) where a data line is not shown when a gradient is used.
+-   [[#21](https://github.com/diatche/LibreChart/issues/21)] Added a workaround for a bug where a data line is not shown when a gradient is used.
