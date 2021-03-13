@@ -14,7 +14,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 ## 0.2.0
 
-**18 Feb 2020**
+**18 Feb 2021**
 
 ### Features
 
@@ -26,7 +26,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 ## 0.1.1
 
-**17 Feb 2020**
+**17 Feb 2021**
 
 ### Bug Fixes
 
