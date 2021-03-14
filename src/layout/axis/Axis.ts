@@ -87,6 +87,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     axisType: AxisType;
     hidden: boolean;
     getTickLabel: IAxisProps<T>['getTickLabel'];
+    onThicknessChange: IAxisProps<T>['onThicknessChange'];
+    onOptimalThicknessChange: IAxisProps<T>['onOptimalThicknessChange'];
     layoutSourceDefaults: IAxisLayoutSourceProps;
     readonly style: IAxisStyle;
     isHorizontal: boolean;
@@ -115,6 +117,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             axisType,
             hidden = false,
             getTickLabel = (tick: ITickVector<T>) => String(tick.value),
+            onOptimalThicknessChange,
+            onThicknessChange,
             layoutSourceDefaults = {},
             style = {},
         } = options || {};
@@ -126,6 +130,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         this.axisType = axisType;
         this.hidden = hidden;
         this.getTickLabel = getTickLabel;
+        this.onOptimalThicknessChange = onOptimalThicknessChange;
+        this.onThicknessChange = onThicknessChange;
         (this.isHorizontal = isAxisHorizontal(this.axisType)),
             (this.layoutInfo = {
                 thickness: 0,
@@ -355,6 +361,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         if (thickness !== this.layoutInfo.optimalThicknesses[index]) {
             this.layoutInfo.optimalThicknesses[index] = thickness;
             this.scheduleThicknessUpdate();
+            this.onOptimalThicknessChange?.(thickness);
         }
     }
 
@@ -415,6 +422,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             } else {
                 this.layoutInfo.thickness$.setValue(thickness);
             }
+
+            this.onThicknessChange?.(thickness);
         }
 
         this._cleanThicknessInfo();
