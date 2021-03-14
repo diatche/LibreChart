@@ -178,7 +178,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 axisOrOption = axisMap[key];
                 if (!axisOrOption.axisType) {
                     if (isAxisType(key)) {
-                        axisOrOption.axisType = key;
+                        // FIXME: Workaround for type error
+                        (axisOrOption as IAxisExtraOptions).axisType = key;
                     } else {
                         throw new Error('Invalid axis type');
                     }
