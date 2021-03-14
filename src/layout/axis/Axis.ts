@@ -359,9 +359,10 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             this.layoutInfo.thicknessStep;
 
         if (thickness !== this.layoutInfo.optimalThicknesses[index]) {
+            let previousThickness = this.layoutInfo.optimalThicknesses[index];
             this.layoutInfo.optimalThicknesses[index] = thickness;
             this.scheduleThicknessUpdate();
-            this.onOptimalThicknessChange?.(thickness);
+            this.onOptimalThicknessChange?.(thickness, previousThickness);
         }
     }
 
@@ -408,6 +409,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
         if (thickness !== this.layoutInfo.thickness) {
             // Thickness changed
+            let previousThickness = this.layoutInfo.thickness;
             this.layoutInfo.thickness = thickness;
 
             let duration = kAxisResizeDuration;
@@ -423,7 +425,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 this.layoutInfo.thickness$.setValue(thickness);
             }
 
-            this.onThicknessChange?.(thickness);
+            this.onThicknessChange?.(thickness, previousThickness);
         }
 
         this._cleanThicknessInfo();
