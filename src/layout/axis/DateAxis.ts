@@ -13,7 +13,7 @@ import { IAxisOptions } from './axisTypes';
 export default class DateAxis extends Axis<Moment, Duration> {
     private _tickStyles?: DateUnitMapping<TextStyle>;
 
-    constructor(options: IAxisOptions<Moment> & IAxisExtraOptions) {
+    constructor(options: Partial<IAxisOptions<Moment>> & IAxisExtraOptions) {
         options = {
             getTickLabel: tick => {
                 let duration = this.scaleLayout?.scale.tickScale.interval.value;

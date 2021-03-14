@@ -238,7 +238,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 }
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness =>
-                    axis?.onOptimalThicknessChange(thickness, index)
+                    axis?.setOptimalThickness(thickness, index)
                 }
             />
         );

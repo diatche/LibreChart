@@ -64,17 +64,17 @@ export interface IAxisLayoutSourceProps
     extends Omit<FlatLayoutSourceProps, 'shouldRenderItem'> {}
 
 export interface IAxisOptions<T = any> {
-    axisType?: AxisType;
+    axisType: AxisType;
 
     /**
      * Toggles axis visiblity.
      * Axis is visible by default.
      **/
-    hidden?: boolean;
+    hidden: boolean;
 
-    getTickLabel?: (tick: ITickVector<T>) => string | ITickLabel;
+    getTickLabel: (tick: ITickVector<T>) => string | ITickLabel;
 
-    layoutSourceDefaults?: IAxisLayoutSourceProps;
+    layoutSourceDefaults: IAxisLayoutSourceProps;
 
-    style?: IAxisStyleInput;
+    style: IAxisStyleInput;
 }

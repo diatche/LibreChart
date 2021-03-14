@@ -29,7 +29,7 @@ export interface ChartAxisContentProps<T>
     /** Called on thickness layout change. */
     onOptimalThicknessChange: (thickness: number) => void;
     /** Return a label for the tick. */
-    getTickLabel: Required<IAxisOptions<T>>['getTickLabel'];
+    getTickLabel: IAxisOptions<T>['getTickLabel'];
     /** The maximum label length in the direction of the axis */
     labelLength: number;
     /**

@@ -32,7 +32,7 @@ const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
 const kDefaultAxisThicknessStep = 10;
 
-export interface IAxisProps<T> extends Required<IAxisOptions<T>> {}
+export interface IAxisProps<T> extends IAxisOptions<T> {}
 
 export interface IAxisExtraOptions {
     axisType: AxisType;
@@ -42,7 +42,7 @@ export interface IAxisExtraOptions {
 export type AxisManyInput<X = any, Y = any, DX = any, DY = any> =
     | IAxes<X, Y, DX, DY>
     | IAxesOptionsMap<X, Y>
-    | (Axis | (IAxisOptions & Omit<IAxisExtraOptions, 'axisType'>))[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
+    | (Axis | (Partial<IAxisOptions> & Omit<IAxisExtraOptions, 'axisType'>))[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
 
 export interface IAxes<X = any, Y = any, DX = any, DY = any> {
     topAxis?: Axis<X, DX>;
@@ -52,10 +52,10 @@ export interface IAxes<X = any, Y = any, DX = any, DY = any> {
 }
 
 export interface IAxesOptionsMap<X = any, Y = any> {
-    topAxis?: IAxisOptions<X>;
-    bottomAxis?: IAxisOptions<X>;
-    leftAxis?: IAxisOptions<Y>;
-    rightAxis?: IAxisOptions<Y>;
+    topAxis?: Partial<IAxisOptions<X>>;
+    bottomAxis?: Partial<IAxisOptions<X>>;
+    leftAxis?: Partial<IAxisOptions<Y>>;
+    rightAxis?: Partial<IAxisOptions<Y>>;
 }
 
 interface IAxisLayoutInfo {
@@ -78,7 +78,7 @@ interface IAxisLayoutInfo {
      * Called by the axis container view, after a
      * view layout, with the new optimal thickness.
      */
-    onOptimalThicknessChange: (thickness: number, index: number) => void;
+    setOptimalThickness: (thickness: number, index: number) => void;
     /** The currently visible container index ranges. */
     visibleContainerIndexRange: [number, number];
 }
@@ -110,7 +110,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates?: Observable.IObserver;
 
-    constructor(options: IAxisOptions<T> & IAxisExtraOptions) {
+    constructor(options: Partial<IAxisOptions<T>> & IAxisExtraOptions) {
         let {
             axisType,
             hidden = false,
@@ -132,8 +132,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 thicknessStep: kDefaultAxisThicknessStep,
                 thickness$: new Animated.Value(0),
                 optimalThicknesses: {},
-                onOptimalThicknessChange: (thickness, index) =>
-                    this.onOptimalThicknessChange(thickness, index),
+                setOptimalThickness: (thickness, index) =>
+                    this.setOptimalThickness(thickness, index),
                 visibleContainerIndexRange: [0, 0],
             });
         this.style = {
@@ -147,7 +147,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     static createMany(
         input: AxisManyInput | undefined,
-        defaults?: IAxisOptions & Omit<IAxisExtraOptions, 'axisType'>,
+        defaults?: Partial<IAxisOptions> & Omit<IAxisExtraOptions, 'axisType'>,
     ): IAxes {
         let axisArrayOrMap: any = input;
         if (!axisArrayOrMap) {
@@ -157,14 +157,16 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         // Validate and normalize axis types
         let axisOrOptionsArray: (
             | Axis
-            | (IAxisOptions & IAxisExtraOptions)
+            | (Partial<IAxisOptions> & IAxisExtraOptions)
         )[] = [];
-        let axisOrOption: Axis | (IAxisOptions & IAxisExtraOptions);
+        let axisOrOption: Axis | (Partial<IAxisOptions> & IAxisExtraOptions);
         if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
             axisOrOptionsArray = axisArrayOrMap;
         } else {
             let axisMap: {
-                [key: string]: Axis | (IAxisOptions & IAxisExtraOptions);
+                [key: string]:
+                    | Axis
+                    | (Partial<IAxisOptions> & IAxisExtraOptions);
             } = axisArrayOrMap;
             for (let key of Object.keys(axisMap)) {
                 axisOrOption = axisMap[key];
@@ -341,7 +343,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     willUpdateLayout() {}
 
-    onOptimalThicknessChange(thickness: number, index: number) {
+    setOptimalThickness(thickness: number, index: number) {
         // Save optimal thicknesses until an
         // update is triggered.
 
