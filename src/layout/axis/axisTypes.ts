@@ -74,6 +74,9 @@ export interface IAxisOptions<T = any> {
 
     getTickLabel: (tick: ITickVector<T>) => string | ITickLabel;
 
+    onThicknessChange?: (thickness: number) => void;
+    onOptimalThicknessChange?: (thickness: number) => void;
+
     layoutSourceDefaults: IAxisLayoutSourceProps;
 
     style: IAxisStyleInput;
