@@ -7,7 +7,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 ### Features
 
 -   Added `defaultMin` and `defaultMax` properties to `AutoScaleController`.
--   [[#25](https://github.com/diatche/LibreChart/pull/25)] Added `onThicknessChange(thickness: number)` and `onOptimalThicknessChange(thickness: number)` to `Axis`.
+-   [[#25](https://github.com/diatche/LibreChart/pull/25)] Added `onThicknessChange()` and `onOptimalThicknessChange()` to `Axis`.
 
 ### Bug Fixes
 
