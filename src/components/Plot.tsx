@@ -185,7 +185,6 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 path={path}
                 points={points}
                 pointStyles={pointStyles}
-                scale={dataSource.layout.root.scale$}
                 {...dataSource.style}
             />
         );

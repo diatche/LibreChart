@@ -22,8 +22,6 @@ export interface ChartLineProps extends ILineDataStyle {
     points: ILinePoint[];
     /** Point styles corresponding to points. */
     pointStyles?: (ILineDataStyle | undefined)[];
-    /** View scale. */
-    scale: Animated.ValueXY;
 }
 
 const ChartLine = React.memo(
