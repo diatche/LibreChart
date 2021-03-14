@@ -4,10 +4,21 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.4.0
+
+**15 Mar 2021**
+
+### Features
+
+-   [[#25](https://github.com/diatche/LibreChart/pull/25)] Added `onThicknessChange()` and `onOptimalThicknessChange()` to `Axis`.
+
+## 0.3.0
+
+**11 Mar 2021**
+
 ### Features
 
 -   Added `defaultMin` and `defaultMax` properties to `AutoScaleController`.
--   [[#25](https://github.com/diatche/LibreChart/pull/25)] Added `onThicknessChange()` and `onOptimalThicknessChange()` to `Axis`.
 
 ### Bug Fixes
 
