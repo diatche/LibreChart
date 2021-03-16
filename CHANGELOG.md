@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.5.0
+
+**17 Mar 2021**
+
 ### Features
 
 -   [[#26](https://github.com/diatche/LibreChart/pull/26)] Added `locale` property to `DateAxis`.
