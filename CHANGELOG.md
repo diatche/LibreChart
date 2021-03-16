@@ -4,6 +4,14 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Features
+
+-   [[#26](https://github.com/diatche/LibreChart/pull/26)] Added `locale` property to `DateAxis`.
+
+### Bug Fixes
+
+-   [[#26](https://github.com/diatche/LibreChart/pull/26)] Added a workaround for `TypeError: Cannot add property ll, object is not extensible`. See [moment issue](https://github.com/moment/momentjs.com/issues/292).
+
 ## 0.4.0
 
 **15 Mar 2021**
