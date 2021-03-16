@@ -11,6 +11,7 @@ import {
     is24Hour,
     isCurrentYear,
     longYearFormat,
+    shortLocalizedDateFormat,
 } from './dateLocale';
 import { dateUnitsWithDuration, snapDate } from './duration';
 
@@ -28,6 +29,7 @@ export const formatDate = (
         unit?: moment.unitOfTime.All;
         now?: Moment;
         relativeDay?: boolean;
+        locale?: string;
         showYear?: boolean;
         style?: 'compact' | 'long';
     },
@@ -36,68 +38,89 @@ export const formatDate = (
         relativeDay = false,
         style = 'compact',
         showYear,
-        now = moment(),
+        locale,
     } = options;
-    let unit = moment.normalizeUnits(options.unit as any) || 'hour';
-    if (!isDateUnit(unit)) {
-        throw new Error('Invalid date unit');
-    }
-    if (unit === 'millisecond') {
-        throw new Error('Date unit not supported');
-    }
-    const cleanDate = snapDate(date, unit).startOf(unit);
-    if (!cleanDate || !cleanDate.isValid()) {
-        throw new Error('Invalid date');
-    }
-    const canRemoveYear =
-        typeof showYear !== 'undefined'
-            ? !showYear
-            : isCurrentYear(cleanDate, now);
-    const dateFormat = style === 'long' || canRemoveYear ? 'll' : 'L';
 
-    const withoutCurrentYear = (dateFormat: string, timeFormat?: string) => {
-        let cleanTimeFormat = timeFormat ? ', ' + timeFormat : '';
-        let format = dateFormat + cleanTimeFormat;
-        let str: string;
-        if (relativeDay) {
-            const calFormat = getCalendarFormat({
-                dateFormat,
-                timeFormat,
-            });
-            str = cleanDate.calendar(now, calFormat);
-        } else {
-            str = cleanDate.format(format);
+    const previousLocale = moment.locale();
+    try {
+        if (locale && locale !== previousLocale) {
+            moment.locale(locale);
         }
-        if (canRemoveYear) {
-            // TODO: Remove year from format instead
-            let yearStr = cleanDate.format(longYearFormat());
-            str = str.replace(', ' + yearStr, '');
-            str = str.replace(' ' + yearStr, '');
-            str = str.trim();
+        if (date.locale() !== moment.locale()) {
+            date = date.clone();
+            date.locale(moment.locale());
         }
-        return str;
-    };
+        const { now = moment() } = options;
 
-    switch (unit) {
-        case 'second':
-            return withoutCurrentYear(dateFormat, 'LTS');
-        case 'minute':
-            return withoutCurrentYear(dateFormat, 'LT');
-        case 'hour': {
-            let str = withoutCurrentYear(dateFormat, 'LT');
-            if (!is24Hour()) {
-                // Clean up zeros
-                str = str.replace(/:00/g, '');
+        let unit = moment.normalizeUnits(options.unit as any) || 'hour';
+        if (!isDateUnit(unit)) {
+            throw new Error('Invalid date unit');
+        }
+        if (unit === 'millisecond') {
+            throw new Error('Date unit not supported');
+        }
+        let cleanDate = snapDate(date, unit).startOf(unit);
+        if (!cleanDate || !cleanDate.isValid()) {
+            throw new Error('Invalid date');
+        }
+        const canRemoveYear =
+            typeof showYear !== 'undefined'
+                ? !showYear
+                : isCurrentYear(cleanDate, now);
+        const dateFormat =
+            style === 'long' || canRemoveYear
+                ? shortLocalizedDateFormat()
+                : 'L';
+
+        const withoutCurrentYear = (
+            dateFormat: string,
+            timeFormat?: string,
+        ) => {
+            let cleanTimeFormat = timeFormat ? ', ' + timeFormat : '';
+            let format = dateFormat + cleanTimeFormat;
+            let str: string;
+            if (relativeDay) {
+                const calFormat = getCalendarFormat({
+                    dateFormat,
+                    timeFormat,
+                });
+                str = cleanDate.calendar(now, calFormat);
+            } else {
+                str = cleanDate.format(format);
+            }
+            if (canRemoveYear) {
+                // TODO: Remove year from format instead
+                let yearStr = cleanDate.format(longYearFormat());
+                str = str.replace(', ' + yearStr, '');
+                str = str.replace(' ' + yearStr, '');
+                str = str.trim();
             }
             return str;
+        };
+
+        switch (unit) {
+            case 'second':
+                return withoutCurrentYear(dateFormat, 'LTS');
+            case 'minute':
+                return withoutCurrentYear(dateFormat, 'LT');
+            case 'hour': {
+                let str = withoutCurrentYear(dateFormat, 'LT');
+                if (!is24Hour()) {
+                    // Clean up zeros
+                    str = str.replace(/:00/g, '');
+                }
+                return str;
+            }
+            case 'day':
+                return withoutCurrentYear(dateFormat);
+            case 'month': {
+                return withoutCurrentYear('MMM ' + longYearFormat());
+            }
+            case 'year':
+                return cleanDate.format(longYearFormat());
         }
-        case 'day':
-            return withoutCurrentYear(dateFormat);
-        case 'month': {
-            return withoutCurrentYear('MMM ' + longYearFormat());
-        }
-        case 'year':
-            return cleanDate.format(longYearFormat());
+    } finally {
+        moment.locale(previousLocale);
     }
 };
 
@@ -112,6 +135,7 @@ export const formatDateDelta = (
     options: {
         now?: Moment;
         weekdays?: boolean;
+        locale?: string;
     } = {},
 ): {
     title: string;
@@ -123,91 +147,104 @@ export const formatDateDelta = (
     if (!moment.isDuration(duration) || !duration.isValid()) {
         throw new Error('Invalid duration');
     }
-    const { now = moment(), weekdays = false } = options;
-    const [interval, unit] = dateUnitsWithDuration(duration);
-    // date = floorDate(date, interval, unit);
-    let previousDate = date.clone().subtract(duration);
-    if (date.isSame(previousDate)) {
-        return { title: '' };
-    }
-
-    let changedUnit: DateUnit = 'millisecond';
-    let displayUnit: DateUnit = 'millisecond';
-
-    for (let i = 0; i < kDateUnitsLength; i++) {
-        let dateUnit = kDateUnitsDes[i];
-        let momentUnit = kCalendaryUnitMomentMap[dateUnit];
-        if (date.get(momentUnit) !== previousDate.get(momentUnit)) {
-            // Largest unit to change
-            changedUnit = dateUnit;
-            break;
+    const { weekdays = false, locale } = options;
+    const previousLocale = moment.locale();
+    try {
+        if (locale && locale !== previousLocale) {
+            moment.locale(locale);
         }
-    }
-    let showYear = changedUnit === 'year';
-
-    displayUnit = changedUnit;
-    if (unit === 'day' && interval !== 1) {
-        // Month edges are non-uniform
-        displayUnit = 'day';
-    }
-
-    switch (displayUnit) {
-        case 'millisecond': {
-            return {
-                title: `${Math.floor(date.milliseconds())}⁻³`,
-                unit: changedUnit,
-            };
+        if (date.locale() !== moment.locale()) {
+            date = date.clone();
+            date.locale(moment.locale());
         }
-        case 'second':
-            return {
-                title: date.format('LTS'),
-                unit: changedUnit,
-            };
-        case 'minute':
-            return {
-                title: date.format('LT'),
-                unit: changedUnit,
-            };
-        case 'hour': {
-            let str = date.format('LT');
-            if (!is24Hour()) {
-                // Clean up zeros
-                str = str.replace(/:00/g, '');
+        const { now = moment() } = options;
+        const [interval, unit] = dateUnitsWithDuration(duration);
+        // date = floorDate(date, interval, unit);
+        let previousDate = date.clone().subtract(duration);
+        if (date.isSame(previousDate)) {
+            return { title: '' };
+        }
+
+        let changedUnit: DateUnit = 'millisecond';
+        let displayUnit: DateUnit = 'millisecond';
+
+        for (let i = 0; i < kDateUnitsLength; i++) {
+            let dateUnit = kDateUnitsDes[i];
+            let momentUnit = kCalendaryUnitMomentMap[dateUnit];
+            if (date.get(momentUnit) !== previousDate.get(momentUnit)) {
+                // Largest unit to change
+                changedUnit = dateUnit;
+                break;
             }
-            return {
-                title: str,
-                unit: changedUnit,
-            };
         }
-        case 'day':
-            // Day of month
-            if (weekdays) {
-                // Day of week
+        let showYear = changedUnit === 'year';
+
+        displayUnit = changedUnit;
+        if (unit === 'day' && interval !== 1) {
+            // Month edges are non-uniform
+            displayUnit = 'day';
+        }
+
+        switch (displayUnit) {
+            case 'millisecond': {
                 return {
-                    title: date.format('dd'),
-                    unit: changedUnit,
-                };
-            } else {
-                return {
-                    title: formatDate(date, {
-                        unit: 'day',
-                        showYear,
-                        now,
-                        style: 'long',
-                    }),
+                    title: `${Math.floor(date.milliseconds())}⁻³`,
                     unit: changedUnit,
                 };
             }
-        case 'month':
-            return {
-                title: date.format('MMM'),
-                unit: changedUnit,
-            };
-        case 'year':
-            return {
-                title: date.format(longYearFormat()),
-                unit: changedUnit,
-            };
+            case 'second':
+                return {
+                    title: date.format('LTS'),
+                    unit: changedUnit,
+                };
+            case 'minute':
+                return {
+                    title: date.format('LT'),
+                    unit: changedUnit,
+                };
+            case 'hour': {
+                let str = date.format('LT');
+                if (!is24Hour()) {
+                    // Clean up zeros
+                    str = str.replace(/:00/g, '');
+                }
+                return {
+                    title: str,
+                    unit: changedUnit,
+                };
+            }
+            case 'day':
+                // Day of month
+                if (weekdays) {
+                    // Day of week
+                    return {
+                        title: date.format('dd'),
+                        unit: changedUnit,
+                    };
+                } else {
+                    return {
+                        title: formatDate(date, {
+                            unit: 'day',
+                            showYear,
+                            now,
+                            style: 'long',
+                        }),
+                        unit: changedUnit,
+                    };
+                }
+            case 'month':
+                return {
+                    title: date.format('MMM'),
+                    unit: changedUnit,
+                };
+            case 'year':
+                return {
+                    title: date.format(longYearFormat()),
+                    unit: changedUnit,
+                };
+        }
+    } finally {
+        moment.locale(previousLocale);
     }
 };
 

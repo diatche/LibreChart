@@ -132,6 +132,29 @@ export const isCurrentYear = (date: Moment, now: Moment, locale?: string) => {
     return true;
 };
 
+let _availableShortLocalizedDateFormat = '';
+
+export const shortLocalizedDateFormat = () => {
+    if (!_availableShortLocalizedDateFormat) {
+        let format = 'll';
+        try {
+            // Sometimes moment gets frozen and you will see
+            // "TypeError: Cannot add property ll, object is not extensible"
+            // This has been observed in the browser an in React Native.
+            // See https://github.com/moment/momentjs.com/issues/292
+            moment().format(format);
+        } catch (err) {
+            console.warn(
+                'Failed to format moment with "ll", falling back to "L". ' +
+                    err,
+            );
+            format = 'L';
+        }
+        _availableShortLocalizedDateFormat = format;
+    }
+    return _availableShortLocalizedDateFormat;
+};
+
 /**
  * Whether the month spelling changes when printing
  * the month separately and with a day.

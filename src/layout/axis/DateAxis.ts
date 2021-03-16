@@ -10,10 +10,15 @@ import {
 } from '../../utils/date';
 import { IAxisOptions } from './axisTypes';
 
+export interface IDateAxisOptions extends IAxisOptions<Moment> {
+    locale?: string;
+}
+
 export default class DateAxis extends Axis<Moment, Duration> {
+    locale?: string;
     private _tickStyles?: DateUnitMapping<TextStyle>;
 
-    constructor(options: Partial<IAxisOptions<Moment>> & IAxisExtraOptions) {
+    constructor(options: Partial<IDateAxisOptions> & IAxisExtraOptions) {
         options = {
             getTickLabel: tick => {
                 let duration = this.scaleLayout?.scale.tickScale.interval.value;
@@ -21,7 +26,9 @@ export default class DateAxis extends Axis<Moment, Duration> {
                     return '';
                 }
                 const [interval, unit] = dateUnitsWithDuration(duration);
-                let labelFormat = formatDateDelta(tick.value, duration);
+                let labelFormat = formatDateDelta(tick.value, duration, {
+                    locale: this.locale,
+                });
                 let label: ITickLabel = {
                     title: labelFormat.title,
                     style: this._tickStyles?.[labelFormat.unit || unit],
@@ -31,6 +38,7 @@ export default class DateAxis extends Axis<Moment, Duration> {
             ...options,
         };
         super(options);
+        this.locale = options.locale;
     }
 
     willUpdateLayout() {
