@@ -69,16 +69,22 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
         return (
             <Animated.View
                 {...this.props}
-                onLayout={Animated.event([
-                    {
-                        nativeEvent: {
-                            layout: {
-                                width: this.props.layout.containerSize$.x,
-                                height: this.props.layout.containerSize$.y,
+                onLayout={Animated.event(
+                    [
+                        {
+                            nativeEvent: {
+                                layout: {
+                                    width: this.props.layout.containerSize$.x,
+                                    height: this.props.layout.containerSize$.y,
+                                },
                             },
                         },
+                    ],
+                    {
+                        // listener: event => {},
+                        useNativeDriver: false,
                     },
-                ])}
+                )}
                 style={[styles.container, styleFromTheme, this.props.style]}
             >
                 {rows}
