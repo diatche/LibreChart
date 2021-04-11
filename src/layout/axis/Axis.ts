@@ -39,10 +39,20 @@ export interface IAxisExtraOptions {
     theme?: PartialChartTheme;
 }
 
+export type AsixInput<T = any> =
+    | Axis<T>
+    | (Partial<IAxisOptions<T>> & IAxisExtraOptions)
+    | boolean
+    | undefined;
+
+export type AsixInputWithType<T = any> =
+    | Axis
+    | (Partial<IAxisOptions<T>> & Omit<IAxisExtraOptions, 'axisType'>);
+
 export type AxisManyInput<X = any, Y = any, DX = any, DY = any> =
     | IAxes<X, Y, DX, DY>
     | IAxesOptionsMap<X, Y>
-    | (Axis | (Partial<IAxisOptions> & Omit<IAxisExtraOptions, 'axisType'>))[]; // | Partial<AxisTypeMapping<(Axis | IAxisOptions)>>;
+    | AsixInputWithType[];
 
 export interface IAxes<X = any, Y = any, DX = any, DY = any> {
     topAxis?: Axis<X, DX>;
@@ -52,10 +62,10 @@ export interface IAxes<X = any, Y = any, DX = any, DY = any> {
 }
 
 export interface IAxesOptionsMap<X = any, Y = any> {
-    topAxis?: Partial<IAxisOptions<X>>;
-    bottomAxis?: Partial<IAxisOptions<X>>;
-    leftAxis?: Partial<IAxisOptions<Y>>;
-    rightAxis?: Partial<IAxisOptions<Y>>;
+    topAxis?: Partial<AsixInput<X>>;
+    bottomAxis?: Partial<AsixInput<X>>;
+    leftAxis?: Partial<AsixInput<Y>>;
+    rightAxis?: Partial<AsixInput<Y>>;
 }
 
 interface IAxisLayoutInfo {
@@ -161,29 +171,40 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         }
 
         // Validate and normalize axis types
-        let axisOrOptionsArray: (
-            | Axis
-            | (Partial<IAxisOptions> & IAxisExtraOptions)
-        )[] = [];
-        let axisOrOption: Axis | (Partial<IAxisOptions> & IAxisExtraOptions);
+        let axisOrOptionsArray: AsixInputWithType[] = [];
+        let axisOrOption: AsixInputWithType;
         if (typeof axisArrayOrMap[Symbol.iterator] === 'function') {
             axisOrOptionsArray = axisArrayOrMap;
         } else {
             let axisMap: {
-                [key: string]:
-                    | Axis
-                    | (Partial<IAxisOptions> & IAxisExtraOptions);
+                [K in AxisType]: AsixInput;
             } = axisArrayOrMap;
             for (let key of Object.keys(axisMap)) {
-                axisOrOption = axisMap[key];
-                if (!axisOrOption.axisType) {
-                    if (isAxisType(key)) {
-                        // FIXME: Workaround for type error
-                        (axisOrOption as IAxisExtraOptions).axisType = key;
+                if (!isAxisType(key)) {
+                    throw new Error('Invalid axis type');
+                }
+                let axisValue = axisMap[key];
+                axisOrOption = {};
+                if (typeof axisValue === 'object') {
+                    if (axisValue instanceof Axis) {
+                        axisOrOption = axisValue;
                     } else {
-                        throw new Error('Invalid axis type');
+                        axisOrOption = { ...axisValue };
                     }
-                } else if (axisOrOption.axisType !== key) {
+                } else if (typeof axisValue === 'boolean') {
+                    if (!axisValue) {
+                        continue;
+                    }
+                    axisOrOption = {};
+                } else if (typeof axisValue === 'undefined') {
+                    continue;
+                } else {
+                    throw new Error(`Invalid "${key}" axis configuration`);
+                }
+                if (!axisOrOption.axisType) {
+                    axisOrOption.axisType = key;
+                }
+                if (axisOrOption.axisType !== key) {
                     console.warn(
                         `Axis with type "${axisOrOption.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`,
                     );
