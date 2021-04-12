@@ -4,6 +4,7 @@ import {
     LayoutChangeEvent,
     StyleSheet,
     Text,
+    TextProps,
     TextStyle,
     View,
     ViewProps,
@@ -51,6 +52,10 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             let label = this.props.getTickLabel(tick);
             if (typeof label === 'string') {
                 label = { title: label };
+            } else if (typeof label === 'function') {
+                label = { title: '', render: label };
+            } else if (typeof label === 'undefined' || label === null) {
+                label = { title: '' };
             }
             return label;
         } catch (error) {
@@ -229,16 +234,22 @@ export default class ChartAxisContent<T> extends React.PureComponent<
         let labelInnerContainers: React.ReactNode[] = [];
 
         for (let i = 0; i < labels.length; i++) {
+            const label = labels[i];
             ticks.push(<View key={i} style={tickStyle} />);
+
+            const labelProps: TextProps = {
+                selectable: false,
+                style: [labelStyle, labels[i].style],
+            };
+            const labelContent = label.render ? (
+                label.render(labelProps)
+            ) : !!label.title ? (
+                <Text {...labelProps}>{label.title}</Text>
+            ) : null;
 
             labelInnerContainers.push(
                 <View key={i} style={labelInnerContainerStyle}>
-                    <Text
-                        selectable={false}
-                        style={[labelStyle, labels[i].style]}
-                    >
-                        {labels[i].title}
-                    </Text>
+                    {labelContent}
                 </View>,
             );
         }
