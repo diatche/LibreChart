@@ -34,6 +34,7 @@ const rOutputDefaults = {
 let baseConfig = {
     input: 'src/index.ts',
     external: [
+        '@ungap/weakrefs/esm',
         'decimal.js',
         'react-native-web',
         ...Object.keys(pkg.dependencies || {}),
@@ -120,9 +121,9 @@ let rConfig = {
             // 'react-native': 'react-native-web',
             entries: [
                 { find: /^react-native$/, replacement: 'react-native-web' },
-            ]
+            ],
         }),
-    ]
+    ],
 };
 
 let tasks = [
@@ -138,12 +139,13 @@ export default args => {
             plugins: [
                 ...task.plugins,
                 copy({
-                    targets: task.output.map(output => (
-                        { src: output.dir, dest: args.copy }
-                    )),
+                    targets: task.output.map(output => ({
+                        src: output.dir,
+                        dest: args.copy,
+                    })),
                     hook: 'writeBundle', // Copy after writing to disk
                     verbose: true,
-                })
+                }),
             ],
         }));
     }
