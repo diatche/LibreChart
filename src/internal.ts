@@ -3,6 +3,7 @@ export * from './theme';
 
 export { default as ScaleController } from './scaleControllers/ScaleController';
 export * from './scaleControllers/ScaleController';
+export * from './scaleControllers/Hysteresis';
 
 export { default as ScaleLayout } from './layout/ScaleLayout';
 export * from './layout/ScaleLayout';
