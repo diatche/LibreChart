@@ -9,6 +9,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 -   [[#27](https://github.com/diatche/LibreChart/pull/27)] When specifying an axes on a plot, passing `true` for an axis-type will add a default axis, and passing `false` or `undefined` for an axis-type will not add an axis.
 -   [[#28](https://github.com/diatche/LibreChart/pull/28)] Moved content padding and hysteresis options from `AutoScaleController` to `ScaleController`, allowing `FixedScaleController` to be configured in the same way.
 -   [[#32](https://github.com/diatche/LibreChart/pull/32)] Added `syncThickness` and `unsyncThickness` methods to `Axis`, which allow synchronizing multiple axes' thicknesses.
+-   The `Axis` configuration option `getTickLabel` now accepts custom render methods.
 
 ### Bug Fixes
 
