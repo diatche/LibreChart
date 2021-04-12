@@ -72,7 +72,9 @@ export interface IAxisOptions<T = any> {
      **/
     hidden: boolean;
 
-    getTickLabel: (tick: ITickVector<T>) => string | ITickLabel;
+    getTickLabel: (
+        tick: ITickVector<T>,
+    ) => ITickLabel | ITickLabel['title'] | ITickLabel['render'];
 
     onThicknessChange?: (thickness: number, previousThickness: number) => void;
     onOptimalThicknessChange?: (

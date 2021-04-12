@@ -64,6 +64,7 @@ export interface IRectStyle extends IFillStyle, IStrokeStyle {
 export interface ITickLabel {
     title: string;
     style?: TextStyle;
+    render?: (props: any) => any;
 }
 
 export interface IDecimalPoint {
