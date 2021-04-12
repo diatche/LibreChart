@@ -13,6 +13,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 -   [[#28](https://github.com/diatche/LibreChart/pull/28)] `AutoScaleController` max limit fixed.
 -   [[#30](https://github.com/diatche/LibreChart/pull/30)] When using `pointInnerRadius` without `pointOuterRadius` on a `LineDataSource`, points were sometimes clipped before.
+-   Axis labels are no longer selectable.
 
 ### Breaking Changes
 

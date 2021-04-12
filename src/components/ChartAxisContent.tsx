@@ -233,7 +233,10 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 
             labelInnerContainers.push(
                 <View key={i} style={labelInnerContainerStyle}>
-                    <Text style={[labelStyle, labels[i].style]}>
+                    <Text
+                        selectable={false}
+                        style={[labelStyle, labels[i].style]}
+                    >
                         {labels[i].title}
                     </Text>
                 </View>,
