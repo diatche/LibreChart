@@ -19,6 +19,8 @@ export * from './scale/DiscreteScale';
 export { default as DecimalLinearScale } from './scale/DecimalLinearScale';
 export * from './scale/DecimalLinearScale';
 
+export * from './scaleControllers/Hysteresis';
+
 export { default as FixedScaleController } from './scaleControllers/FixedScaleController';
 export * from './scaleControllers/FixedScaleController';
 

@@ -1,112 +1,10 @@
 import { IPoint } from 'evergrid';
-import Scale, { ITickScaleConstraints } from '../scale/Scale';
 import DataSource from '../data/DataSource';
 import ScaleController, {
     ContentLimitOptions,
     ScaleControllerOptions,
 } from './ScaleController';
-
-export type ScaleHysteresisFunction = (
-    min: number,
-    max: number,
-    previousMin: number | undefined,
-    previousMax: number | undefined,
-) => [number, number] | null;
-
-export namespace Hysteresis {
-    export const none: ScaleHysteresisFunction = () => null;
-
-    export const step = (
-        size: number,
-        options: {
-            origin?: number;
-        } = {},
-    ): ScaleHysteresisFunction => {
-        if (size <= 0) {
-            throw new Error('Invalid step');
-        }
-        let { origin = 0 } = options;
-        return (a, b) => [
-            Math.floor((a - origin) / size) * size + origin,
-            Math.ceil((b - origin) / size) * size + origin,
-        ];
-    };
-
-    export function withScale<T = any, D = any>(
-        scale: Scale<T, D>,
-    ): ScaleHysteresisFunction {
-        let constraints: ITickScaleConstraints<D> = {
-            expand: true,
-        };
-        return (a, b) => {
-            scale.updateTickScale(
-                scale.valueAtLocation(a),
-                scale.valueAtLocation(b),
-                constraints,
-            );
-            return scale.spanLocationRange(a, b);
-        };
-    }
-
-    // export const log10 = (
-    //     options: {
-    //         step?: number;
-    //         origin?: number;
-    //     } = {},
-    // ): ScaleHysteresisFunction => {
-    //     let {
-    //         step = 1,
-    //         origin = 0,
-    //     } = options;
-    //     if (step <= 0) {
-    //         throw new Error('Invalid stepCoef');
-    //     }
-    //     return (a, b) => {
-    //         if (a === b) {
-    //             // Zero range
-    //             return null;
-    //         }
-    //         a -= origin;
-    //         b -= origin;
-    //         if (a > 0 && b < 0 || a < 0 && b > 0) {
-    //             // Different sign
-    //             return null;
-    //         }
-    //         let isNeg = a < 0;
-    //         let sign = 1;
-    //         let floor = Math.floor;
-    //         let ceil = Math.ceil;
-    //         if (isNeg) {
-    //             sign = -1;
-    //             a = -a;
-    //             b = -b;
-    //             floor = Math.ceil;
-    //             ceil = Math.floor;
-    //         }
-
-    //         let al = Math.log10(a);
-    //         if (step === 1) {
-    //             al = floor(al);
-    //         } else {
-    //             let al0 = floor(al);
-    //             al = floor((al - al0) / step) * step + al0;
-    //         }
-
-    //         let bl = Math.log10(b);
-    //         if (step === 1 || !isFinite(bl)) {
-    //             bl = ceil(bl);
-    //         } else {
-    //             let bl0 = floor(bl);
-    //             bl = ceil((bl - bl0) / step) * step + bl0;
-    //         }
-
-    //         return [
-    //             Math.pow(base, al) * sign + origin,
-    //             Math.pow(base, bl) * sign + origin,
-    //         ];
-    //     };
-    // };
-}
+import { Hysteresis } from './Hysteresis';
 
 export interface AutoScaleOptions extends ScaleControllerOptions {
     dataSources?: DataSource[];
@@ -117,7 +15,7 @@ export interface AutoScaleOptions extends ScaleControllerOptions {
     defaultMin?: number;
     defaultMax?: number;
     anchor?: number;
-    hysteresis?: ScaleHysteresisFunction;
+    hysteresis?: Hysteresis.StepFunc;
 }
 
 export default class AutoScaleController<
@@ -135,7 +33,7 @@ export default class AutoScaleController<
     readonly defaultMax: number | undefined;
     readonly anchor: number | undefined;
 
-    hysteresis?: ScaleHysteresisFunction;
+    hysteresis?: Hysteresis.StepFunc;
 
     private _dataSources?: DataSource[];
 
