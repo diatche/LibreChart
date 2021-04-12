@@ -7,6 +7,7 @@ import {
     normalizeAnimatedValue,
     weakref,
 } from 'evergrid';
+import { WeakRef } from '@ungap/weakrefs/esm';
 import {
     kAxisBackgroundReuseIDs,
     kAxisContentReuseIDs,
@@ -31,6 +32,8 @@ import { PartialChartTheme } from '../../theme';
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
 const kDefaultAxisThicknessStep = 10;
+
+let _idCounter = 0;
 
 export interface IAxisProps<T> extends IAxisOptions<T> {}
 
@@ -121,6 +124,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     private _plotWeakRef = weakref<PlotLayout>();
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates?: Observable.IObserver;
+
+    private _syncedAxisRefs: { [syncId: string]: WeakRef<Axis> } = {};
 
     constructor(options: Partial<IAxisOptions<T>> & IAxisExtraOptions) {
         let {
@@ -232,6 +237,42 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             axes[axis.axisType] = axis;
         }
         return axes;
+    }
+
+    syncThickness(axis: Axis): string {
+        const syncId = String(++_idCounter);
+        this._syncThickness(axis, syncId);
+        axis._syncThickness(this, syncId);
+        return syncId;
+    }
+
+    private _syncThickness(axis: Axis, syncId: string) {
+        this._syncedAxisRefs[syncId] = new WeakRef(axis);
+    }
+
+    unsyncThickness(syncId: string) {
+        let axis = this._getSyncedAxis(syncId);
+        this._unsyncThickness(syncId);
+        if (axis) {
+            axis._unsyncThickness(syncId);
+        }
+    }
+
+    private _unsyncThickness(syncId: string) {
+        if (syncId in this._syncedAxisRefs) {
+            delete this._syncedAxisRefs[syncId];
+            this.scheduleThicknessUpdate();
+        }
+    }
+
+    private _getSyncedAxis(syncId: string): Axis | undefined {
+        return this._syncedAxisRefs[syncId]?.deref();
+    }
+
+    private _getSyncedAxes(): Axis[] {
+        return Object.keys(this._syncedAxisRefs)
+            .map(syncId => this._getSyncedAxis(syncId))
+            .filter(x => !!x) as Axis[];
     }
 
     get plot(): PlotLayout {
@@ -376,9 +417,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         // update is triggered.
 
         // Apply thickness step
-        thickness =
-            Math.ceil(thickness / this.layoutInfo.thicknessStep) *
-            this.layoutInfo.thicknessStep;
+        thickness = this.cleanThickness(thickness);
 
         if (thickness !== this.layoutInfo.optimalThicknesses[index]) {
             let previousThickness = this.layoutInfo.optimalThicknesses[index];
@@ -412,10 +451,15 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _scheduledThicknessUpdate?: Cancelable;
 
-    updateThickness() {
-        this.cancelThicknessUpdate();
+    /** Apply thickness step. */
+    cleanThickness(thickness: number): number {
+        return (
+            Math.ceil(thickness / this.layoutInfo.thicknessStep) *
+            this.layoutInfo.thicknessStep
+        );
+    }
 
-        // Get optimal axis thickness
+    private _resolveOwnOptimalThickness() {
         let thickness = 0;
         for (let optimalThickness of Object.values(
             this.layoutInfo.optimalThicknesses,
@@ -424,10 +468,23 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 thickness = optimalThickness;
             }
         }
+        return thickness;
+    }
 
-        thickness =
-            Math.ceil(thickness / this.layoutInfo.thicknessStep) *
-            this.layoutInfo.thicknessStep;
+    updateThickness() {
+        this.cancelThicknessUpdate();
+
+        // Get optimal axis thickness
+        let thickness = this._resolveOwnOptimalThickness();
+        const syncedAxes = this._getSyncedAxes();
+        for (let axis of syncedAxes) {
+            let axisThickness = axis._resolveOwnOptimalThickness();
+            if (axisThickness > thickness) {
+                thickness = axisThickness;
+            }
+        }
+
+        thickness = this.cleanThickness(thickness);
 
         if (thickness !== this.layoutInfo.thickness) {
             // Thickness changed
@@ -448,6 +505,10 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             }
 
             this.onThicknessChange?.(thickness, previousThickness);
+
+            for (let axis of syncedAxes) {
+                axis.updateThickness();
+            }
         }
 
         this._cleanThicknessInfo();
