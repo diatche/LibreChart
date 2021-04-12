@@ -3,6 +3,7 @@ import debounce from 'lodash.debounce';
 import { InteractionManager } from 'react-native';
 import { ScaleLayout } from '../internal';
 import { Cancelable } from '../types';
+import { Hysteresis } from './Hysteresis';
 
 export interface ContentLimitOptions {
     containerSize: IPoint;
@@ -10,8 +11,14 @@ export interface ContentLimitOptions {
 }
 
 export interface ScaleControllerOptions {
+    contentPaddingAbs?: number | [number, number];
+    contentPaddingRel?: number | [number, number];
     viewPaddingAbs?: number | [number, number];
     viewPaddingRel?: number | [number, number];
+    min?: number;
+    max?: number;
+    anchor?: number;
+    hysteresis?: Hysteresis.StepFunc;
 
     /**
      * Animated by default.
@@ -20,13 +27,18 @@ export interface ScaleControllerOptions {
 }
 
 export default abstract class ScaleController<T = any, D = any> {
-    static defaultViewPaddingAbs = 0;
-    static defaultViewPaddingRel = 0;
     static updateDebounceInterval = 500;
     animationOptions?: IAnimationBaseOptions;
 
+    readonly contentPaddingAbs: [number, number];
+    readonly contentPaddingRel: [number, number];
     readonly viewPaddingAbs: [number, number];
     readonly viewPaddingRel: [number, number];
+    readonly min: number | undefined;
+    readonly max: number | undefined;
+    readonly anchor: number | undefined;
+
+    hysteresis?: Hysteresis.StepFunc;
 
     private _min = 0;
     private _max = 0;
@@ -34,12 +46,43 @@ export default abstract class ScaleController<T = any, D = any> {
     private _containerSize?: IPoint;
 
     constructor(options: ScaleControllerOptions) {
+        this.contentPaddingAbs = this.validatedPadding(
+            options.contentPaddingAbs || 0,
+        );
+        this.contentPaddingRel = this.validatedPadding(
+            options.contentPaddingRel || 0,
+        );
         this.viewPaddingAbs = this.validatedPadding(
-            options.viewPaddingAbs || ScaleController.defaultViewPaddingAbs,
+            options.viewPaddingAbs || 0,
         );
         this.viewPaddingRel = this.validatedPadding(
-            options.viewPaddingRel || ScaleController.defaultViewPaddingRel,
+            options.viewPaddingRel || 0,
         );
+        this.min = options.min;
+        this.max = options.max;
+        this.anchor = options.anchor;
+        this.hysteresis = options.hysteresis;
+
+        if (
+            typeof this.min !== 'undefined' &&
+            typeof this.max !== 'undefined' &&
+            this.max < this.min
+        ) {
+            throw new Error('Invalid min/max range');
+        }
+
+        if (typeof this.anchor !== 'undefined') {
+            if (typeof this.min !== 'undefined' && this.anchor < this.min) {
+                console.warn(
+                    `Scale anchor (${this.anchor}) is below min value (${this.min})`,
+                );
+            }
+            if (typeof this.max !== 'undefined' && this.anchor > this.max) {
+                console.warn(
+                    `Scale anchor (${this.anchor}) is above max value (${this.max})`,
+                );
+            }
+        }
 
         this.animationOptions = options.animationOptions || {
             animated: true,
@@ -160,19 +203,22 @@ export default abstract class ScaleController<T = any, D = any> {
         if (!limits) {
             return;
         }
-        let [min, max] = this.addViewPadding(
-            limits[0],
-            limits[1],
-            contentLimitOptions,
-        );
+        if (!(limits[1] >= limits[0])) {
+            console.error('Invalid scale controller content limits. Ignoring.');
+            return;
+        }
+        limits = this.limitContent(limits[0], limits[1]);
+        limits = this.addContentPadding(limits[0], limits[1]);
+        limits = this.addViewPadding(limits[0], limits[1], contentLimitOptions);
+        let [min, max] = this.applyHysteresis(limits[0], limits[1]);
         if (!containerChanged && min === this._min && max === this._max) {
             return;
         }
-        // console.debug(
-        //     `scaling to min: ${min} (from ${this._min}) max: ${max} (from ${
-        //         this._max
-        //     }) options: ${JSON.stringify(options, null, 2)}`,
-        // );
+        console.debug(
+            `scaling to min: ${min} (from ${this._min}) max: ${max} (from ${
+                this._max
+            }) options: ${JSON.stringify(options, null, 2)}`,
+        );
         this._min = min;
         this._max = max;
 
@@ -221,6 +267,50 @@ export default abstract class ScaleController<T = any, D = any> {
         }
     }
 
+    limitContent(min: number, max: number): [number, number] {
+        // Apply limits
+        if (typeof this.min !== 'undefined' && min < this.min) {
+            min = this.min;
+        }
+        if (typeof this.max !== 'undefined' && max > this.max) {
+            max = this.max;
+        }
+        return [min, max];
+    }
+
+    addContentPadding(
+        contentMin: number,
+        contentMax: number,
+    ): [number, number] {
+        const hasAnchor = typeof this.anchor !== 'undefined';
+        let anchor = this.anchor || 0;
+        let min = contentMin;
+        let max = contentMax;
+        let contentLen = contentMax - contentMin;
+
+        if (contentLen > 0) {
+            // Apply relative padding
+            min -= this.contentPaddingRel[0] * contentLen;
+            max += this.contentPaddingRel[1] * contentLen;
+        }
+
+        // Apply absolute padding
+        min -= this.contentPaddingAbs[0];
+        max += this.contentPaddingAbs[1];
+
+        if (hasAnchor && contentLen > 0) {
+            // Do not pad over anchor
+            if (contentMin >= anchor && min < anchor) {
+                min = anchor;
+            }
+            if (contentMax <= anchor && max > anchor) {
+                max = anchor;
+            }
+        }
+
+        return [min, max];
+    }
+
     addViewPadding(
         contentMin: number,
         contentMax: number,
@@ -259,6 +349,39 @@ export default abstract class ScaleController<T = any, D = any> {
             }
         }
         return [contentMin, contentMax];
+    }
+
+    applyHysteresis(min: number, max: number): [number, number] {
+        if (!this.hysteresis) {
+            return [min, max];
+        }
+        try {
+            let res = this.hysteresis(min, max, this.min, this.max);
+            if (res) {
+                if (
+                    typeof res[0] !== 'number' ||
+                    typeof res[1] !== 'number' ||
+                    isNaN(res[0]) ||
+                    isNaN(res[1]) ||
+                    !isFinite(res[0]) ||
+                    !isFinite(res[1])
+                ) {
+                    console.warn(
+                        `Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`,
+                    );
+                } else {
+                    min = res[0];
+                    max = res[1];
+                }
+            }
+        } catch (error) {
+            console.error(
+                `Uncaught error in hysteresis function: ${
+                    error?.message || error
+                }`,
+            );
+        }
+        return [min, max];
     }
 
     validatedPadding(

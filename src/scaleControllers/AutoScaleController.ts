@@ -4,78 +4,27 @@ import ScaleController, {
     ContentLimitOptions,
     ScaleControllerOptions,
 } from './ScaleController';
-import { Hysteresis } from './Hysteresis';
 
 export interface AutoScaleOptions extends ScaleControllerOptions {
     dataSources?: DataSource[];
-    contentPaddingAbs?: number | [number, number];
-    contentPaddingRel?: number | [number, number];
-    min?: number;
-    max?: number;
     defaultMin?: number;
     defaultMax?: number;
-    anchor?: number;
-    hysteresis?: Hysteresis.StepFunc;
 }
 
 export default class AutoScaleController<
     T = any,
     D = any
 > extends ScaleController<T, D> {
-    static defaultContentPaddingAbs = 0;
-    static defaultContentPaddingRel = 0.2;
-
-    readonly contentPaddingAbs: [number, number];
-    readonly contentPaddingRel: [number, number];
-    readonly min: number | undefined;
-    readonly max: number | undefined;
     readonly defaultMin: number | undefined;
     readonly defaultMax: number | undefined;
-    readonly anchor: number | undefined;
-
-    hysteresis?: Hysteresis.StepFunc;
 
     private _dataSources?: DataSource[];
 
     constructor(options: AutoScaleOptions = {}) {
         super(options);
-
-        this.contentPaddingAbs = this.validatedPadding(
-            options.contentPaddingAbs ||
-                AutoScaleController.defaultContentPaddingAbs,
-        );
-        this.contentPaddingRel = this.validatedPadding(
-            options.contentPaddingRel ||
-                AutoScaleController.defaultContentPaddingRel,
-        );
-        this.min = options.min;
-        this.max = options.max;
         let { defaultMin = options.min, defaultMax = options.max } = options;
         this.defaultMin = defaultMin;
         this.defaultMax = defaultMax;
-        this.anchor = options.anchor;
-        this.hysteresis = options.hysteresis;
-
-        if (
-            typeof this.min !== 'undefined' &&
-            typeof this.max !== 'undefined' &&
-            this.max < this.min
-        ) {
-            throw new Error('Invalid autoscale range');
-        }
-
-        if (typeof this.anchor !== 'undefined') {
-            if (typeof this.min !== 'undefined' && this.anchor < this.min) {
-                console.warn(
-                    `Autoscale anchor (${this.anchor}) is below min value (${this.min})`,
-                );
-            }
-            if (typeof this.max !== 'undefined' && this.anchor > this.max) {
-                console.warn(
-                    `Autoscale anchor (${this.anchor}) is above max value (${this.max})`,
-                );
-            }
-        }
 
         if (
             typeof this.defaultMin !== 'undefined' &&
@@ -144,8 +93,8 @@ export default class AutoScaleController<
     ): [number, number] | undefined {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
-        let minLoc = hasAnchor ? anchor : NaN;
-        let maxLoc = minLoc;
+        let min = hasAnchor ? anchor : NaN;
+        let max = min;
         let hasRange = false;
         let scaleLayout = this.scaleLayout;
         let plot = scaleLayout.plot;
@@ -163,11 +112,11 @@ export default class AutoScaleController<
             if (!range) {
                 continue;
             }
-            if (isNaN(minLoc) || range[0] < minLoc) {
-                minLoc = range[0];
+            if (isNaN(min) || range[0] < min) {
+                min = range[0];
             }
-            if (isNaN(maxLoc) || range[1] > maxLoc) {
-                maxLoc = range[1];
+            if (isNaN(max) || range[1] > max) {
+                max = range[1];
             }
             hasRange = true;
         }
@@ -176,77 +125,16 @@ export default class AutoScaleController<
                 typeof this.defaultMin !== 'undefined' &&
                 typeof this.defaultMax !== 'undefined'
             ) {
-                minLoc = this.defaultMin;
-                maxLoc = this.defaultMax;
+                min = this.defaultMin;
+                max = this.defaultMax;
             } else if (typeof this.defaultMin !== 'undefined') {
-                minLoc = this.defaultMin;
-                maxLoc = this.defaultMin;
+                min = this.defaultMin;
+                max = this.defaultMin;
             } else if (typeof this.defaultMax !== 'undefined') {
-                minLoc = this.defaultMax;
-                maxLoc = this.defaultMax;
+                min = this.defaultMax;
+                max = this.defaultMax;
             } else {
                 return undefined;
-            }
-        }
-
-        let min = minLoc;
-        let max = maxLoc;
-        let locDiff = maxLoc - minLoc;
-
-        if (locDiff > 0) {
-            // Apply relative padding
-            min -= this.contentPaddingRel[0] * locDiff;
-            max += this.contentPaddingRel[1] * locDiff;
-        }
-
-        // Apply absolute padding
-        min -= this.contentPaddingAbs[0];
-        max += this.contentPaddingAbs[1];
-
-        // Apply limits
-        if (typeof this.min !== 'undefined' && min < this.min) {
-            min = this.min;
-        }
-        if (typeof this.max !== 'undefined' && max < this.max) {
-            max = this.max;
-        }
-
-        if (hasAnchor) {
-            // Do not pad over anchor
-            if (minLoc >= anchor && min < anchor) {
-                min = anchor;
-            }
-            if (maxLoc < anchor && max > anchor) {
-                max = anchor;
-            }
-        }
-
-        if (this.hysteresis) {
-            try {
-                let res = this.hysteresis(min, max, this.min, this.max);
-                if (res) {
-                    if (
-                        typeof res[0] !== 'number' ||
-                        typeof res[1] !== 'number' ||
-                        isNaN(res[0]) ||
-                        isNaN(res[1]) ||
-                        !isFinite(res[0]) ||
-                        !isFinite(res[1])
-                    ) {
-                        console.warn(
-                            `Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`,
-                        );
-                    } else {
-                        min = res[0];
-                        max = res[1];
-                    }
-                }
-            } catch (error) {
-                console.error(
-                    `Uncaught error in hysteresis function: ${
-                        error?.message || error
-                    }`,
-                );
             }
         }
 

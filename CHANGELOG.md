@@ -7,10 +7,13 @@ Changes on the `main` branch, but not yet released, will be listed here.
 ### Features
 
 -   [[#27](https://github.com/diatche/LibreChart/pull/27)] When specifying an axes on a plot, passing `true` for an axis-type will add a default axis, and passing `false` or `undefined` for an axis-type will not add an axis.
+-   Moved content padding and hysteresis options from `AutoScaleController` to `ScaleController`, allowing `FixedScaleController` to be configured in the same way.
 
 ### Breaking Changes
 
 -   The type `ScaleHysteresisFunction` is now `Hysteresis.StepFunc`.
+-   `AutoScaleController` no longer adds content padding by default.
+-   Content padding is now applied after `min` and `max` limits on scale controllers.
 
 ## 0.5.0
 
