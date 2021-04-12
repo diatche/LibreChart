@@ -29,26 +29,35 @@ const ChartLine = React.memo(
         const defaultPointOuterColor =
             props.pointOuterColor || props.strokeColor;
 
-        if (typeof props.strokeWidth === 'object') {
-            throw new Error('Animated values no supported on ChartLine');
-        }
-        if (typeof props.pointOuterRadius === 'object') {
+        if (
+            typeof props.strokeWidth === 'object' ||
+            typeof props.pointInnerRadius === 'object' ||
+            typeof props.pointOuterRadius === 'object'
+        ) {
             throw new Error('Animated values no supported on ChartLine');
         }
 
         const viewOverlap = Math.max(
             (props.strokeWidth || 0) / 2,
+            props.pointInnerRadius || 0,
             props.pointOuterRadius || 0,
             ...Object.values(props.pointStyles || {}).map(s => {
-                if (!s?.pointOuterRadius) {
+                if (!s) {
                     return 0;
                 }
-                if (typeof s.pointOuterRadius === 'object') {
+                if (
+                    typeof s.pointInnerRadius === 'object' ||
+                    typeof s.pointOuterRadius === 'object'
+                ) {
                     throw new Error(
                         'Animated values no supported on ChartLine',
                     );
                 }
-                return s.pointOuterRadius;
+                return Math.max(
+                    s.pointInnerRadius || 0,
+                    s.pointOuterRadius || 0,
+                    0,
+                );
             }),
         );
 
