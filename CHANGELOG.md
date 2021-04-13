@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.6.0
+
+**13 Apr 2021**
+
 ### Features
 
 -   [[#27](https://github.com/diatche/LibreChart/pull/27)] When specifying an axes on a plot, passing `true` for an axis-type will add a default axis, and passing `false` or `undefined` for an axis-type will not add an axis.
