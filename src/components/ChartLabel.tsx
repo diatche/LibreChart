@@ -1,17 +1,19 @@
 import React from 'react';
 import { Animated, FlexStyle, StyleSheet, ViewProps } from 'react-native';
-import { ITickLabel, TextAlign } from '../types';
+import { ITickLabel, Alignment2D } from '../types';
 
 export interface ChartLabelProps extends ITickLabel, ViewProps {}
 
-const kAlignSelfMapX: { [K in TextAlign['x']]: FlexStyle['alignSelf'] } = {
+const kAlignSelfMapX: {
+    [K in Alignment2D['x']]: FlexStyle['alignSelf'];
+} = {
     left: 'flex-start',
     center: 'center',
     right: 'flex-end',
 };
 
 const kAlignContentMapY: {
-    [K in TextAlign['y']]: FlexStyle['justifyContent'];
+    [K in Alignment2D['y']]: FlexStyle['justifyContent'];
 } = {
     top: 'flex-start',
     center: 'center',

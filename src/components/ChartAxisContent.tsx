@@ -10,7 +10,7 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { ITickLabel, normalizedLabelSafe, TextAlign } from '../types';
+import { ITickLabel, normalizedLabelSafe, RelativeAlignment2D } from '../types';
 import {
     AxisType,
     AxisTypeMapping,
@@ -174,23 +174,18 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 
     getLabelStyle() {
         // TODO: cache style until prop change
-        let style: TextStyle = {
-            fontSize: this.props.labelFontSize,
-            color: this.props.labelColor,
-        };
+        let style: TextStyle = {};
         switch (this.props.axisType) {
             case 'topAxis':
             case 'bottomAxis':
                 style.width = this.props.labelLength;
-                style.paddingVertical = this.props.labelMargin;
                 break;
             case 'leftAxis':
             case 'rightAxis':
                 style.height = this.props.labelLength;
-                style.paddingHorizontal = this.props.labelMargin;
                 break;
         }
-        return [styles.label, style];
+        return [styles.label, this.props.labelStyle.textStyle, style];
     }
 
     onInnerContainerLayout(event: LayoutChangeEvent) {
@@ -229,7 +224,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
                 <ChartLabel
                     align={{ ...labelAlignDefault, ...label.align }}
                     {...label}
-                    textStyle={labelStyle}
+                    textStyle={[labelStyle, label.textStyle]}
                     style={labelInnerContainerStyle}
                 />
             );

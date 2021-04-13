@@ -28,6 +28,7 @@ import { Cancelable } from '../../types';
 import ScaleLayout from '../ScaleLayout';
 import { Observable } from '../../utils/observable';
 import { PartialChartTheme } from '../../theme';
+import _ from 'lodash';
 
 const kAxisUpdateDebounceInterval = 100;
 const kAxisResizeDuration = 200;
@@ -157,18 +158,19 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                     this.setOptimalThickness(thickness, index),
                 visibleContainerIndexRange: [0, 0],
             });
-        this.style = {
-            ...kAxisStyleLightDefaults,
-            ...options.theme?.axis,
-            ...style,
-            padding: normalizeAnimatedValue(style.padding),
-        };
+        this.style = _.merge(
+            {},
+            kAxisStyleLightDefaults,
+            options.theme?.axis,
+            style,
+            { padding: normalizeAnimatedValue(style.padding) }
+        );
         this.layoutSourceDefaults = layoutSourceDefaults;
     }
 
     static createMany(
         input: AxisManyInput | undefined,
-        defaults?: Partial<IAxisOptions> & Omit<IAxisExtraOptions, 'axisType'>,
+        defaults?: Partial<IAxisOptions> & Omit<IAxisExtraOptions, 'axisType'>
     ): IAxes {
         let axisArrayOrMap: any = input;
         if (!axisArrayOrMap) {
@@ -211,7 +213,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 }
                 if (axisOrOption.axisType !== key) {
                     console.warn(
-                        `Axis with type "${axisOrOption.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`,
+                        `Axis with type "${axisOrOption.axisType}" was nested in a different key "${key}". Using the axis type property of the type. Use the same type inside the axis and outside to remove this warning.`
                     );
                 }
                 axisOrOptionsArray.push(axisOrOption);
@@ -226,7 +228,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             } else {
                 if (!axisOrOption.axisType) {
                     throw new Error(
-                        'Axis is missing a type. Use an object with axis types as keys or use axis instances.',
+                        'Axis is missing a type. Use an object with axis types as keys or use axis instances.'
                     );
                 }
                 axis = new Axis({
@@ -297,11 +299,11 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         if (!this.hidden) {
             this.contentLayout = this._createContentLayoutSource(
                 this.layoutInfo,
-                this.layoutSourceDefaults,
+                this.layoutSourceDefaults
             );
             this.backgroundLayout = this._createBackgroundLayoutSource(
                 this.layoutInfo,
-                this.layoutSourceDefaults,
+                this.layoutSourceDefaults
             );
 
             const updateOptions: IItemUpdateManyOptions = {
@@ -310,7 +312,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 forceRender: true,
             };
             this._scaleLayoutUpdates = this.scaleLayout?.updates.addObserver(
-                () => this.update(updateOptions),
+                () => this.update(updateOptions)
             );
         }
     }
@@ -325,7 +327,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _createContentLayoutSource(
         layoutInfo: IAxisLayoutInfo,
-        defaults: IAxisLayoutSourceProps,
+        defaults: IAxisLayoutSourceProps
     ): FlatLayoutSource | undefined {
         let options: IAxisLayoutSourceProps & FlatLayoutSourceProps = {
             ...defaults,
@@ -342,7 +344,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _createBackgroundLayoutSource(
         layoutInfo: IAxisLayoutInfo,
-        defaults: IAxisLayoutSourceProps,
+        defaults: IAxisLayoutSourceProps
     ): FlatLayoutSource | undefined {
         return this._createLayoutSource(layoutInfo, {
             ...defaults,
@@ -357,7 +359,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _createLayoutSource(
         layoutInfo: IAxisLayoutInfo,
-        defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps,
+        defaults: IAxisLayoutSourceProps & FlatLayoutSourceProps
     ): FlatLayoutSource | undefined {
         let layoutPropsBase = defaults;
         let thickness = Animated.add(this.style.padding, layoutInfo.thickness$);
@@ -432,7 +434,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             return;
         }
         this._scheduledThicknessUpdate = InteractionManager.runAfterInteractions(
-            () => this._debouncedThicknessUpdate(),
+            () => this._debouncedThicknessUpdate()
         );
     }
 
@@ -446,7 +448,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _debouncedThicknessUpdate = debounce(
         () => this.updateThickness(),
-        kAxisUpdateDebounceInterval,
+        kAxisUpdateDebounceInterval
     );
 
     private _scheduledThicknessUpdate?: Cancelable;
@@ -462,7 +464,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     private _resolveOwnOptimalThickness() {
         let thickness = 0;
         for (let optimalThickness of Object.values(
-            this.layoutInfo.optimalThicknesses,
+            this.layoutInfo.optimalThicknesses
         )) {
             if (optimalThickness > thickness) {
                 thickness = optimalThickness;

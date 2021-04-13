@@ -1,10 +1,7 @@
-import {
-    AxisType,
-    AxisTypeMapping,
-    IAxisStyle,
-    IAxisStyleInput,
-} from './axisTypes';
+import { AxisType, AxisTypeMapping, IAxisStyle } from './axisTypes';
 import { Colors } from '../../utils/colors';
+import _ from 'lodash';
+import { Animated } from 'react-native';
 
 export const kAxisContentReuseIDs: AxisTypeMapping<string> = {
     topAxis: 'topAxisContent',
@@ -27,7 +24,13 @@ export const kVerticalAxisTypes: AxisType[] = ['rightAxis', 'leftAxis'];
 export const kAllAxisTypes = kHorizontalAxisTypes.concat(kVerticalAxisTypes);
 export const kAllAxisTypeSet = new Set(kAllAxisTypes);
 
-export const kAxisStyleBaseDefaults: IAxisStyleInput = {
+type IAxisDefaultStyle = IAxisStyle;
+type IAxisDefaultBaseStyle = Omit<
+    IAxisDefaultStyle,
+    'axisBackgroundColor' | 'axisLineColor' | 'majorTickColor'
+>;
+
+export const kAxisStyleBaseDefaults: IAxisDefaultBaseStyle = {
     axisLineThickness: 1,
 
     majorTickLength: 3,
@@ -38,43 +41,78 @@ export const kAxisStyleBaseDefaults: IAxisStyleInput = {
     minorGridLineDistanceMin: 10,
     minorIntervalCountMax: 5,
 
-    labelFontSize: 12,
-    labelMargin: 3,
-    labelFontWeight: 'normal',
-    majorLabelFontWeight: 'bold',
-    minorLabelFontWeight: 'normal',
+    labelStyle: {
+        align: {
+            mainAxis: 'center',
+            secondaryAxis: 'center',
+        },
+        textStyle: {
+            fontSize: 12,
+            padding: 3,
+        },
+    },
+    majorLabelStyle: {
+        textStyle: {
+            fontWeight: 'bold',
+        },
+    },
+    minorLabelStyle: {
+        textStyle: {},
+    },
+
+    padding: new Animated.Value(0),
 };
 
-export const kAxisStyleLightDefaults = {
-    ...kAxisStyleBaseDefaults,
+export const kAxisStyleLightDefaults: IAxisDefaultStyle = _.merge(
+    {},
+    kAxisStyleBaseDefaults,
+    {
+        axisBackgroundColor: Colors.white,
+        axisLineColor: Colors.grey400,
 
-    axisBackgroundColor: Colors.white,
-    axisLineColor: Colors.grey400,
+        majorTickColor: Colors.grey300,
 
-    majorTickColor: Colors.grey300,
+        labelStyle: {
+            textStyle: {
+                color: Colors.grey600,
+            },
+        },
+        majorLabelStyle: {
+            textStyle: {
+                color: Colors.grey800,
+            },
+        },
+        minorLabelStyle: {
+            textStyle: {
+                color: Colors.grey400,
+            },
+        },
+    } as IAxisDefaultStyle
+);
 
-    majorGridLineColor: Colors.grey300,
+export const kAxisStyleDarkDefaults: IAxisDefaultStyle = _.merge(
+    {},
+    kAxisStyleBaseDefaults,
+    {
+        axisBackgroundColor: Colors.black,
+        axisLineColor: Colors.grey600,
 
-    minorGridLineColor: Colors.grey100,
+        majorTickColor: Colors.grey700,
 
-    labelColor: Colors.grey600,
-    majorLabelColor: Colors.grey800,
-    minorLabelColor: Colors.grey400,
-} as IAxisStyle;
-
-export const kAxisStyleDarkDefaults = {
-    ...kAxisStyleBaseDefaults,
-
-    axisBackgroundColor: Colors.black,
-    axisLineColor: Colors.grey600,
-
-    majorTickColor: Colors.grey700,
-
-    majorGridLineColor: Colors.grey700,
-
-    minorGridLineColor: Colors.grey900,
-
-    labelColor: Colors.grey400,
-    majorLabelColor: Colors.grey200,
-    minorLabelColor: Colors.grey600,
-} as IAxisStyle;
+        labelStyle: {
+            textStyle: {
+                color: Colors.grey400,
+            },
+        },
+        majorLabelStyle: {
+            textStyle: {
+                color: Colors.grey200,
+            },
+        },
+        minorLabelStyle: {
+            textStyle: {
+                color: Colors.grey600,
+            },
+        },
+    } as IAxisDefaultStyle
+);
