@@ -211,8 +211,10 @@ export default class ChartAxisContent<T> extends React.PureComponent<
         let ticks: React.ReactNode[] = [];
         let labelInnerContainers: React.ReactNode[] = [];
 
-        let labelAlignDefault =
-            kDefaultAxisLabelAlignments[this.props.axisType];
+        let labelAlignDefault = {
+            ...kDefaultAxisLabelAlignments[this.props.axisType],
+            ...this.props.labelStyle.align,
+        };
 
         for (let i = 0; i < labels.length; i++) {
             const label = labels[i];
