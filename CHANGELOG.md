@@ -14,6 +14,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 -   [[#28](https://github.com/diatche/LibreChart/pull/28)] Moved content padding and hysteresis options from `AutoScaleController` to `ScaleController`, allowing `FixedScaleController` to be configured in the same way.
 -   [[#32](https://github.com/diatche/LibreChart/pull/32)] Added `syncThickness` and `unsyncThickness` methods to `Axis`, which allow synchronizing multiple axes' thicknesses.
 -   [[#33](https://github.com/diatche/LibreChart/pull/33)] The `Axis` configuration option `getTickLabel` now accepts custom render methods.
+-   Added `LabelDataSource` which allows adding text labels to the chart.
 
 ### Bug Fixes
 
