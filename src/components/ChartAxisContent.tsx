@@ -10,7 +10,7 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { ITickLabel } from '../types';
+import { ITickLabel, normalizedLabelSafe } from '../types';
 import {
     AxisType,
     AxisTypeMapping,
@@ -48,22 +48,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 > {
     getTickLabel(tick: ITickVector<T>): ITickLabel {
         // TODO: cache labels until prop change
-        try {
-            let label = this.props.getTickLabel(tick);
-            if (typeof label === 'string') {
-                label = { title: label };
-            } else if (typeof label === 'function') {
-                label = { title: '', render: label };
-            } else if (typeof label === 'undefined' || label === null) {
-                label = { title: '' };
-            }
-            return label;
-        } catch (error) {
-            console.error(
-                'Uncaught error while getting tick label: ' + error.message,
-            );
-            return { title: '' };
-        }
+        return normalizedLabelSafe(this.props.getTickLabel(tick));
     }
 
     getTickLabels(): ITickLabel[] {
@@ -239,7 +224,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 
             const labelProps: TextProps = {
                 selectable: false,
-                style: [labelStyle, labels[i].style],
+                style: [labelStyle, label.style],
             };
             const labelContent = label.render ? (
                 label.render(labelProps)

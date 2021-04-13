@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { GridLayoutSourceProps, IPoint } from 'evergrid';
+import { GridLayoutSourceProps, IAnimatedPointInput, IPoint } from 'evergrid';
 import { Animated, TextStyle } from 'react-native';
 
 export type AnimatedValueAny =
@@ -61,10 +61,42 @@ export interface IRectStyle extends IFillStyle, IStrokeStyle {
     paddingBottom?: AnimatedValueAny;
 }
 
-export interface ITickLabel {
-    title: string;
+export interface ILabelStyle {
+    anchor?: Partial<IPoint>;
+    viewOffset?: Partial<IAnimatedPointInput>;
     style?: TextStyle;
+}
+
+export interface ITickLabel extends ILabelStyle {
+    title: string;
     render?: (props: any) => any;
+}
+
+export type TickLabelInput =
+    | ITickLabel
+    | ITickLabel['title']
+    | ITickLabel['render'];
+
+export function normalizedLabel(label: TickLabelInput): ITickLabel {
+    if (typeof label === 'string') {
+        label = { title: label };
+    } else if (typeof label === 'function') {
+        label = { title: '', render: label };
+    } else if (typeof label === 'undefined' || label === null) {
+        label = { title: '' };
+    }
+    return label;
+}
+
+export function normalizedLabelSafe(label: TickLabelInput): ITickLabel {
+    try {
+        return normalizedLabel(label);
+    } catch (error) {
+        console.error(
+            'Uncaught error while getting tick label: ' + error.message,
+        );
+        return { title: '' };
+    }
 }
 
 export interface IDecimalPoint {
@@ -85,6 +117,6 @@ export interface IChartGridStyle extends Required<IChartGridStyleInput> {}
 export interface IGridLayoutSourceProps
     extends Omit<GridLayoutSourceProps, 'shouldRenderItem'> {}
 
-export type ChartDataType = 'path' | 'point' | 'bar' | 'rect';
+export type ChartDataType = 'path' | 'point' | 'bar' | 'rect' | 'label';
 
 export type Cancelable = { cancel: () => void };
