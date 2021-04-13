@@ -10,7 +10,7 @@ import {
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { ITickLabel, normalizedLabelSafe } from '../types';
+import { ITickLabel, normalizedLabelSafe, TextAlign } from '../types';
 import {
     AxisType,
     AxisTypeMapping,
@@ -18,6 +18,8 @@ import {
     IAxisStyle,
 } from '../layout/axis/axisTypes';
 import { ITickVector } from '../scale/Scale';
+import ChartLabel from './ChartLabel';
+import { kDefaultAxisLabelAlignments } from '../const';
 
 export interface ChartAxisContentProps<T>
     extends ViewProps,
@@ -180,14 +182,12 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             case 'topAxis':
             case 'bottomAxis':
                 style.width = this.props.labelLength;
-                style.marginHorizontal = -this.props.labelLength / 2;
-                style.marginVertical = this.props.labelMargin;
+                style.paddingVertical = this.props.labelMargin;
                 break;
             case 'leftAxis':
             case 'rightAxis':
                 style.height = this.props.labelLength;
-                style.marginHorizontal = this.props.labelMargin;
-                style.marginVertical = -this.props.labelLength / 2;
+                style.paddingHorizontal = this.props.labelMargin;
                 break;
         }
         return [styles.label, style];
@@ -218,42 +218,38 @@ export default class ChartAxisContent<T> extends React.PureComponent<
         let ticks: React.ReactNode[] = [];
         let labelInnerContainers: React.ReactNode[] = [];
 
+        let labelAlignDefault =
+            kDefaultAxisLabelAlignments[this.props.axisType];
+
         for (let i = 0; i < labels.length; i++) {
             const label = labels[i];
             ticks.push(<View key={i} style={tickStyle} />);
 
-            const labelProps: TextProps = {
-                selectable: false,
-                style: [labelStyle, label.style],
-            };
-            const labelContent = label.render ? (
-                label.render(labelProps)
-            ) : !!label.title ? (
-                <Text {...labelProps}>{label.title}</Text>
-            ) : null;
-
             labelInnerContainers.push(
-                <View key={i} style={labelInnerContainerStyle}>
-                    {labelContent}
-                </View>,
+                <ChartLabel
+                    align={{ ...labelAlignDefault, ...label.align }}
+                    {...label}
+                    textStyle={labelStyle}
+                    style={labelInnerContainerStyle}
+                />
             );
         }
 
         return (
-            <View style={this.getContainerStyle()}>
-                <View
+            <Animated.View style={this.getContainerStyle()}>
+                <Animated.View
                     style={this.getInnerContainerStyle()}
                     onLayout={event => this.onInnerContainerLayout(event)}
                 >
-                    <View style={this.getTickContainerStyle()}>
+                    <Animated.View style={this.getTickContainerStyle()}>
                         {ticks}
                         <View style={styles.placeholder} />
-                    </View>
+                    </Animated.View>
                     <Animated.View style={this.getLabelContainerStyle()}>
                         {labelInnerContainers}
                     </Animated.View>
-                </View>
-            </View>
+                </Animated.View>
+            </Animated.View>
         );
     }
 }
@@ -283,14 +279,10 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 110, 230, 0.5)',
     },
     labelInnerContainer: {
-        flex: 1,
-        alignItems: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(100, 210, 130, 0.5)',
     },
     label: {
-        width: '100%',
-        textAlign: 'center',
         // borderWidth: 2,
         // borderColor: 'rgba(200, 110, 130, 0.5)',
     },
@@ -315,9 +307,7 @@ const axisStyles: AxisTypeMapping<any> = {
         labelContainer: {
             flexDirection: 'row',
         },
-        labelInnerContainer: {
-            flexDirection: 'column-reverse',
-        },
+        labelInnerContainer: {},
     }),
     bottomAxis: StyleSheet.create({
         container: {
@@ -333,9 +323,7 @@ const axisStyles: AxisTypeMapping<any> = {
         labelContainer: {
             flexDirection: 'row',
         },
-        labelInnerContainer: {
-            flexDirection: 'column',
-        },
+        labelInnerContainer: {},
     }),
     leftAxis: StyleSheet.create({
         container: {
@@ -352,9 +340,7 @@ const axisStyles: AxisTypeMapping<any> = {
             flexDirection: 'column',
             justifyContent: 'center',
         },
-        labelInnerContainer: {
-            flexDirection: 'row-reverse',
-        },
+        labelInnerContainer: {},
     }),
     rightAxis: StyleSheet.create({
         container: {
@@ -371,8 +357,6 @@ const axisStyles: AxisTypeMapping<any> = {
             flexDirection: 'column',
             justifyContent: 'center',
         },
-        labelInnerContainer: {
-            flexDirection: 'row',
-        },
+        labelInnerContainer: {},
     }),
 };

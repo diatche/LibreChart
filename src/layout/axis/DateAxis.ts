@@ -31,7 +31,7 @@ export default class DateAxis extends Axis<Moment, Duration> {
                 });
                 let label: ITickLabel = {
                     title: labelFormat.title,
-                    style: this._tickStyles?.[labelFormat.unit || unit],
+                    textStyle: this._tickStyles?.[labelFormat.unit || unit],
                 };
                 return label;
             },

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Animated, FlexStyle, StyleSheet } from 'react-native';
+import { Animated, FlexStyle, StyleSheet, ViewProps } from 'react-native';
 import { ITickLabel, TextAlign } from '../types';
 
-export interface ChartLabelProps extends ITickLabel {}
+export interface ChartLabelProps extends ITickLabel, ViewProps {}
 
 const kAlignSelfMapX: { [K in TextAlign['x']]: FlexStyle['alignSelf'] } = {
     left: 'flex-start',
@@ -19,7 +19,8 @@ const kAlignContentMapY: {
 };
 
 const ChartLabel = React.memo((props: ChartLabelProps) => {
-    const { align, title, style, render, ...otherProps } = props;
+    const { align, title, textStyle, style, render, ...otherProps } = props;
+    const alignX = align?.x || 'center';
     if (render) {
         return render(props);
     }
@@ -31,14 +32,13 @@ const ChartLabel = React.memo((props: ChartLabelProps) => {
                 {
                     justifyContent: kAlignContentMapY[align?.y || 'center'],
                 },
+                style,
             ]}
         >
-            <Animated.View
-                style={{ alignSelf: kAlignSelfMapX[align?.x || 'center'] }}
-            >
+            <Animated.View style={{ alignSelf: kAlignSelfMapX[alignX] }}>
                 <Animated.Text
                     selectable={false}
-                    style={style}
+                    style={[{ textAlign: alignX }, textStyle]}
                     numberOfLines={1}
                 >
                     {title || ''}

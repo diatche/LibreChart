@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { GridLayoutSourceProps, IAnimatedPointInput, IPoint } from 'evergrid';
-import { Animated, TextStyle, ViewProps } from 'react-native';
+import { Animated, StyleProp, TextStyle, ViewProps } from 'react-native';
 
 export type AnimatedValueAny =
     | number
@@ -69,7 +69,7 @@ export type TextAlign = {
 export interface ILabelStyle {
     align?: Partial<TextAlign>;
     viewOffset?: Partial<IAnimatedPointInput>;
-    style?: TextStyle;
+    textStyle?: StyleProp<TextStyle>;
 }
 
 export interface ITickLabel extends ILabelStyle {
@@ -98,7 +98,7 @@ export function normalizedLabelSafe(label: TickLabelInput): ITickLabel {
         return normalizedLabel(label);
     } catch (error) {
         console.error(
-            'Uncaught error while getting tick label: ' + error.message,
+            'Uncaught error while getting tick label: ' + error.message
         );
         return { title: '' };
     }

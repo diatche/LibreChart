@@ -1,4 +1,5 @@
-import { IChartGridStyle, IChartGridStyleInput } from './types';
+import { AxisType } from './layout/axis/axisTypes';
+import { IChartGridStyle, IChartGridStyleInput, TextAlign } from './types';
 import { Colors } from './utils/colors';
 
 export const kRefLayoutReuseID = 'ref';
@@ -20,3 +21,10 @@ export const kChartGridStyleDarkDefaults = {
     majorGridLineColor: Colors.grey700,
     minorGridLineColor: Colors.grey900,
 } as IChartGridStyle;
+
+export const kDefaultAxisLabelAlignments: { [A in AxisType]: TextAlign } = {
+    topAxis: { x: 'center', y: 'bottom' },
+    bottomAxis: { x: 'center', y: 'top' },
+    leftAxis: { x: 'right', y: 'center' },
+    rightAxis: { x: 'left', y: 'center' },
+};
