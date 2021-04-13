@@ -61,20 +61,13 @@ export interface IRectStyle extends IFillStyle, IStrokeStyle {
     paddingBottom?: AnimatedValueAny;
 }
 
-export type RelativeAlignment = 'start' | 'center' | 'end';
-
-export type RelativeAlignment2D = {
-    mainAxis: RelativeAlignment;
-    secondaryAxis: RelativeAlignment;
-};
-
 export type Alignment2D = {
     x: 'left' | 'center' | 'right';
     y: 'top' | 'center' | 'bottom';
 };
 
 export interface ILabelStyle {
-    align?: Partial<Alignment2D | RelativeAlignment2D>;
+    align?: Partial<Alignment2D>;
     viewOffset?: Partial<IAnimatedPointInput>;
     textStyle?: StyleProp<TextStyle>;
 }

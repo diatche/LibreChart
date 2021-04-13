@@ -3,14 +3,12 @@ import {
     Animated,
     LayoutChangeEvent,
     StyleSheet,
-    Text,
-    TextProps,
     TextStyle,
     View,
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { ITickLabel, normalizedLabelSafe, RelativeAlignment2D } from '../types';
+import { ITickLabel, normalizedLabelSafe } from '../types';
 import {
     AxisType,
     AxisTypeMapping,

@@ -42,10 +42,6 @@ export const kAxisStyleBaseDefaults: IAxisDefaultBaseStyle = {
     minorIntervalCountMax: 5,
 
     labelStyle: {
-        align: {
-            mainAxis: 'center',
-            secondaryAxis: 'center',
-        },
         textStyle: {
             fontSize: 12,
             padding: 3,
