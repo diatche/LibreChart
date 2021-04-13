@@ -65,7 +65,7 @@ export default class LabelDataSource<T = any, X = number, Y = number>
             reuseID: this.itemReuseID,
             ...props,
             getItemLayout: i => this.getItemLayout(i),
-            willUseItemViewLayout: (itemViewLayout, index) => {
+            willUseItemViewLayout: (itemViewLayout, index, layoutSource) => {
                 let itemStyle = this.itemStyle?.(this.data[index], index);
                 let offsetX =
                     itemStyle?.viewOffset?.x || this.style.viewOffset?.x;
@@ -83,6 +83,11 @@ export default class LabelDataSource<T = any, X = number, Y = number>
                         offsetY,
                     );
                 }
+                props?.willUseItemViewLayout?.(
+                    itemViewLayout,
+                    index,
+                    layoutSource,
+                );
             },
             getVisibleIndexSet: pointRange =>
                 new Set(this.getItemsIndexesInLocationRange(pointRange)),
