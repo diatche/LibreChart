@@ -61,8 +61,13 @@ export interface IRectStyle extends IFillStyle, IStrokeStyle {
     paddingBottom?: AnimatedValueAny;
 }
 
+export type TextAlign = {
+    x: 'left' | 'center' | 'right';
+    y: 'top' | 'center' | 'bottom';
+};
+
 export interface ILabelStyle {
-    anchor?: Partial<IPoint>;
+    align?: Partial<TextAlign>;
     viewOffset?: Partial<IAnimatedPointInput>;
     style?: TextStyle;
 }
