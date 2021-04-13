@@ -44,6 +44,9 @@ export * from './data/PointDataSource';
 export { default as RectDataSource } from './data/RectDataSource';
 export * from './data/RectDataSource';
 
+export { default as LabelDataSource } from './data/LabelDataSource';
+export * from './data/LabelDataSource';
+
 import Chart from './components/Chart';
 export default Chart;
 

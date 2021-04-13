@@ -5,7 +5,7 @@ import Evergrid, {
     IPoint,
     ItemRenderMap,
 } from 'evergrid';
-import { Axis, PlotLayout } from '../internal';
+import { Axis, normalizedLabelSafe, PlotLayout } from '../internal';
 import ChartGrid from './ChartGrid';
 import ChartPoint from './ChartPoint';
 import ChartAxisContent from './ChartAxisContent';
@@ -15,6 +15,8 @@ import ChartLine from './ChartLine';
 import { axisTypeMap } from '../layout/axis/axisUtil';
 import RectDataSource from '../data/RectDataSource';
 import ChartRect from './ChartRect';
+import LabelDataSource from '../data/LabelDataSource';
+import ChartLabel from './ChartLabel';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -116,6 +118,13 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                         context: dataSource as RectDataSource,
                     };
                     break;
+                case 'label':
+                    itemRenderMap[dataSource.layout.id] = {
+                        renderItem: (item, layoutSource, context) =>
+                            this.renderLabel(item, context),
+                        context: dataSource as LabelDataSource,
+                    };
+                    break;
                 default:
                     throw new Error(
                         `Unsupported data source type: ${dataSource.type}`,
@@ -201,6 +210,21 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 {...dataSource.itemStyle?.(dataItem, item.index)}
             />
         );
+    }
+
+    renderLabel(
+        item: IItem<number>,
+        dataSource: LabelDataSource,
+    ): React.ReactNode {
+        let dataItem = dataSource.data[item.index];
+        let itemStyle = {
+            ...dataSource.style,
+            ...dataSource.itemStyle?.(dataItem, item.index),
+        };
+        let label = normalizedLabelSafe(
+            dataSource.getLabel(dataItem, itemStyle),
+        );
+        return <ChartLabel {...itemStyle} {...label} />;
     }
 
     renderAxisContent(
