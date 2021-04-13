@@ -2,7 +2,9 @@ import React from 'react';
 import { Animated, FlexStyle, StyleSheet, ViewProps } from 'react-native';
 import { ITickLabel, Alignment2D } from '../types';
 
-export interface ChartLabelProps extends Omit<ITickLabel, 'align'>, ViewProps {
+export interface ChartLabelProps
+    extends Omit<ITickLabel, 'align'>,
+        Animated.AnimatedProps<ViewProps> {
     alignX?: Alignment2D['x'];
     alignY?: Alignment2D['y'];
 }

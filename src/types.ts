@@ -82,7 +82,7 @@ export interface ILabelStyle {
 export interface ITickLabel extends Omit<ILabelStyle, 'align'> {
     align?: Partial<Alignment2D>;
     title: string;
-    render?: (props: ViewProps) => any;
+    render?: (props: Animated.AnimatedProps<ViewProps>) => any;
 }
 
 export type TickLabelInput =
