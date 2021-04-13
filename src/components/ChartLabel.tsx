@@ -2,7 +2,10 @@ import React from 'react';
 import { Animated, FlexStyle, StyleSheet, ViewProps } from 'react-native';
 import { ITickLabel, Alignment2D } from '../types';
 
-export interface ChartLabelProps extends ITickLabel, ViewProps {}
+export interface ChartLabelProps extends Omit<ITickLabel, 'align'>, ViewProps {
+    alignX?: Alignment2D['x'];
+    alignY?: Alignment2D['y'];
+}
 
 const kAlignSelfMapX: {
     [K in Alignment2D['x']]: FlexStyle['alignSelf'];
@@ -21,8 +24,15 @@ const kAlignContentMapY: {
 };
 
 const ChartLabel = React.memo((props: ChartLabelProps) => {
-    const { align, title, textStyle, style, render, ...otherProps } = props;
-    const alignX = align?.x || 'center';
+    const {
+        alignX = 'center',
+        alignY = 'center',
+        title,
+        textStyle,
+        style,
+        render,
+        ...otherProps
+    } = props;
     if (render) {
         return render(props);
     }
@@ -32,7 +42,7 @@ const ChartLabel = React.memo((props: ChartLabelProps) => {
             style={[
                 styles.container,
                 {
-                    justifyContent: kAlignContentMapY[align?.y || 'center'],
+                    justifyContent: kAlignContentMapY[alignY],
                 },
                 style,
             ]}

@@ -222,8 +222,9 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 
             labelInnerContainers.push(
                 <ChartLabel
-                    align={{ ...labelAlignDefault, ...label.align }}
                     {...label}
+                    alignX={label.align?.x || labelAlignDefault.x}
+                    alignY={label.align?.y || labelAlignDefault.y}
                     textStyle={[labelStyle, label.textStyle]}
                     style={labelInnerContainerStyle}
                 />
