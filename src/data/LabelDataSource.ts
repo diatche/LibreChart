@@ -10,6 +10,7 @@ import {
     ILabelStyle,
     ITickLabel,
 } from '../types';
+import { Animated } from 'react-native';
 
 export interface LabelDataSourceInput<T, X = number, Y = number>
     extends DataSourceInput<T, X, Y> {
@@ -64,6 +65,25 @@ export default class LabelDataSource<T = any, X = number, Y = number>
             reuseID: this.itemReuseID,
             ...props,
             getItemLayout: i => this.getItemLayout(i),
+            willUseItemViewLayout: (itemViewLayout, index) => {
+                let itemStyle = this.itemStyle?.(this.data[index], index);
+                let offsetX =
+                    itemStyle?.viewOffset?.x || this.style.viewOffset?.x;
+                if (offsetX) {
+                    itemViewLayout.offset.x = Animated.add(
+                        itemViewLayout.offset.x,
+                        offsetX,
+                    );
+                }
+                let offsetY =
+                    itemStyle?.viewOffset?.y || this.style.viewOffset?.y;
+                if (offsetY) {
+                    itemViewLayout.offset.y = Animated.add(
+                        itemViewLayout.offset.y,
+                        offsetY,
+                    );
+                }
+            },
             getVisibleIndexSet: pointRange =>
                 new Set(this.getItemsIndexesInLocationRange(pointRange)),
             shouldRenderItem: () => false,

@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { GridLayoutSourceProps, IPoint } from 'evergrid';
+import { GridLayoutSourceProps, IAnimatedPointInput, IPoint } from 'evergrid';
 import { Animated, TextStyle } from 'react-native';
 
 export type AnimatedValueAny =
@@ -63,6 +63,7 @@ export interface IRectStyle extends IFillStyle, IStrokeStyle {
 
 export interface ILabelStyle {
     anchor?: Partial<IPoint>;
+    viewOffset?: Partial<IAnimatedPointInput>;
     style?: TextStyle;
 }
 
