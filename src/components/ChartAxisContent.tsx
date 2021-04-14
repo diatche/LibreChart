@@ -307,7 +307,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
                 ...label.align,
             });
             labelInnerContainers.push(
-                <Animated.View style={labelInnerContainerStyle}>
+                <Animated.View key={i} style={labelInnerContainerStyle}>
                     <ChartLabel
                         {...label}
                         alignX={align.x}
