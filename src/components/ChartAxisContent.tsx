@@ -210,7 +210,10 @@ export default class ChartAxisContent<T> extends React.PureComponent<
      */
     getLabelInnerContainerStyle() {
         // TODO: cache style until prop change
-        let style: TextStyle = {};
+        let style: Animated.AnimatedProps<ViewProps>['style'] = {
+            marginLeft: this.props.labelStyle.viewOffset?.x,
+            marginTop: this.props.labelStyle.viewOffset?.y,
+        };
         switch (this.props.axisType) {
             case 'topAxis':
             case 'bottomAxis':
@@ -278,7 +281,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
     }
 
     render() {
-        let labelInnerContainerStyle = this.getLabelInnerContainerStyle();
+        let labelInnerContainerBaseStyle = this.getLabelInnerContainerStyle();
         let tickStyle = this.getTickStyle();
         let labelStyle = this.getLabelStyle();
         let labels = this.getTickLabels();
@@ -292,19 +295,26 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             const label = labels[i];
             ticks.push(<View key={i} style={tickStyle} />);
 
+            let labelInnerContainerStyle = [
+                labelInnerContainerBaseStyle,
+                {
+                    marginLeft: label.viewOffset?.x,
+                    marginTop: label.viewOffset?.y,
+                },
+            ];
             let align = this.displayLabelAlignment({
                 ...defaultLabelAlignment,
                 ...label.align,
             });
             labelInnerContainers.push(
-                <View style={labelInnerContainerStyle}>
+                <Animated.View style={labelInnerContainerStyle}>
                     <ChartLabel
                         {...label}
                         alignX={align.x}
                         alignY={align.y}
                         textStyle={[labelStyle, label.textStyle]}
                     />
-                </View>
+                </Animated.View>
             );
         }
 
