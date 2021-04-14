@@ -17,10 +17,18 @@ export interface LabelDataSourceInput<T, X = number, Y = number>
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     getLabel: (
         item: T,
-        style: ILabelStyle,
+        style: ILabelStyle | undefined
     ) => ITickLabel | ITickLabel['title'] | ITickLabel['render'];
     style?: ILabelStyle;
-    itemStyle?: (item: T, index: number) => ILabelStyle | undefined;
+    /**
+     * If specifying a `viewOffset` which changes accross labels, use an `Animated.Value`
+     * to avoid issues related to reusing views.
+     */
+    itemStyle?: (
+        item: T,
+        index: number,
+        previous: ILabelStyle | undefined
+    ) => ILabelStyle | undefined;
 }
 
 export default class LabelDataSource<T = any, X = number, Y = number>
@@ -29,7 +37,8 @@ export default class LabelDataSource<T = any, X = number, Y = number>
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     getLabel: LabelDataSourceInput<T, X, Y>['getLabel'];
     style: ILabelStyle;
-    itemStyle?: (item: T, index: number) => ILabelStyle | undefined;
+    itemStyle?: LabelDataSourceInput<T, X, Y>['itemStyle'];
+    private _itemStyles: { [index: number]: ILabelStyle | undefined };
 
     constructor(input: LabelDataSourceInput<T, X, Y>) {
         super(input);
@@ -37,6 +46,7 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         this.getLabel = input.getLabel;
         this.style = { ...input.style };
         this.itemStyle = input.itemStyle;
+        this._itemStyles = {};
     }
 
     get type(): ChartDataType {
@@ -59,6 +69,42 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         };
     }
 
+    getItemStyle(index: number): ILabelStyle | undefined {
+        if (!this.itemStyle) {
+            return this.style;
+        }
+        let itemStyle = this._itemStyles[index];
+        if (!itemStyle) {
+            this.updateItemStyle(index);
+            itemStyle = this._itemStyles[index];
+        }
+        return { ...this.style, ...itemStyle };
+    }
+
+    updateItemStyle(index: number) {
+        if (!this.itemStyle) {
+            return;
+        }
+        let itemStyle = this._itemStyles[index];
+        itemStyle = this.itemStyle(this.data[index], index, itemStyle);
+        if (itemStyle) {
+            this._itemStyles[index] = itemStyle;
+        } else {
+            delete this._itemStyles[index];
+        }
+    }
+
+    private _moveItemStyle(fromIndex: number, toIndex: number) {
+        if (!this.itemStyle) {
+            return;
+        }
+        let temp = this._itemStyles[fromIndex];
+        delete this._itemStyles[fromIndex];
+        if (temp) {
+            this._itemStyles[toIndex] = temp;
+        }
+    }
+
     createLayoutSource(props?: LayoutSourceProps<number>) {
         return new CustomLayoutSource({
             ...this.plot.getLayoutSourceOptions(),
@@ -66,13 +112,15 @@ export default class LabelDataSource<T = any, X = number, Y = number>
             ...props,
             getItemLayout: i => this.getItemLayout(i),
             willUseItemViewLayout: (itemViewLayout, index, layoutSource) => {
-                let itemStyle = this.itemStyle?.(this.data[index], index);
+                // Setup newly created item
+                this.updateItemStyle(index);
+                let itemStyle = this.getItemStyle(index);
                 let offsetX =
                     itemStyle?.viewOffset?.x || this.style.viewOffset?.x;
                 if (offsetX) {
                     itemViewLayout.offset.x = Animated.add(
                         itemViewLayout.offset.x,
-                        offsetX,
+                        offsetX
                     );
                 }
                 let offsetY =
@@ -80,18 +128,26 @@ export default class LabelDataSource<T = any, X = number, Y = number>
                 if (offsetY) {
                     itemViewLayout.offset.y = Animated.add(
                         itemViewLayout.offset.y,
-                        offsetY,
+                        offsetY
                     );
                 }
                 props?.willUseItemViewLayout?.(
                     itemViewLayout,
                     index,
-                    layoutSource,
+                    layoutSource
                 );
+            },
+            shouldRenderItem: (item, previous) => {
+                // Prepare to reuse item
+                this._moveItemStyle(previous.index, item.index);
+                return true;
+            },
+            willShowItem: item => {
+                // Update item style if needed
+                this.updateItemStyle(item.index);
             },
             getVisibleIndexSet: pointRange =>
                 new Set(this.getItemsIndexesInLocationRange(pointRange)),
-            shouldRenderItem: () => false,
         });
     }
 }

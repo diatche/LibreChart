@@ -217,10 +217,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         dataSource: LabelDataSource
     ): React.ReactNode {
         let dataItem = dataSource.data[item.index];
-        let itemStyle = {
-            ...dataSource.style,
-            ...dataSource.itemStyle?.(dataItem, item.index),
-        };
+        let itemStyle = dataSource.getItemStyle(item.index);
         let label = normalizedLabelSafe(
             dataSource.getLabel(dataItem, itemStyle)
         );
@@ -228,8 +225,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             <ChartLabel
                 {...itemStyle}
                 {...label}
-                alignX={itemStyle.align?.x || label.align?.x}
-                alignY={itemStyle.align?.y || label.align?.y}
+                alignX={itemStyle?.align?.x || label.align?.x}
+                alignY={itemStyle?.align?.y || label.align?.y}
             />
         );
     }
