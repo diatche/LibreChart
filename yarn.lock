@@ -2855,10 +2855,10 @@ eventemitter3@^3.0.0:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-3.1.2.tgz#2d3d48f9c346698fce83a85d7d664e98535df6e7"
   integrity sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==
 
-evergrid@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/evergrid/-/evergrid-0.0.1.tgz#dc0a3c519485eb34cdad87350f8332f22793e84b"
-  integrity sha512-ApifiHj9/zS77iKgHpFBfbaJj9fAPMui+Vq0fLCpfsqC8ugMSijHpoUJhB8Wta1cGQCzXWhAwtT98fKB9cpmOA==
+evergrid@~0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/evergrid/-/evergrid-0.1.0.tgz#429900afa6289e14f34c54775e537846be2d92fb"
+  integrity sha512-+zo6amZIhZGwWeo9CdoM3phYfPbV9yVG992+1IRspLeZRm8jzUCOPRU6VlhM6bU3tS9oLS+cEoujjSskTGOoHg==
 
 exec-sh@^0.3.2:
   version "0.3.4"

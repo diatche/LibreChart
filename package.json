@@ -37,7 +37,7 @@
     "homepage": "https://github.com/diatche/librechart#readme",
     "peerDependencies": {
         "decimal.js": "^10.2.1",
-        "evergrid": "0.0.1",
+        "evergrid": "~0.1.0",
         "react": ">=16.11.0",
         "react-native": ">=0.62.0 <1.0.0",
         "react-native-svg": "^12.0.0"
@@ -53,7 +53,7 @@
         "acorn": "^6.4.2",
         "acorn-jsx": "^5.3.1",
         "decimal.js": "^10.2.1",
-        "evergrid": "0.0.1",
+        "evergrid": "~0.1.0",
         "jest": "^26.5.2",
         "moment-timezone": "^0.5.32",
         "react-native": "^0.63.0",
