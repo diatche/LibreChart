@@ -16,7 +16,7 @@ import {
     IAxisStyle,
 } from '../layout/axis/axisTypes';
 import { ITickVector } from '../scale/Scale';
-import ChartLabel from './ChartLabel';
+import ChartLabel, { ChartLabelProps } from './ChartLabel';
 import { kDefaultAxisLabelAlignments } from '../const';
 
 export interface ChartAxisContentProps<T>
@@ -48,6 +48,17 @@ export default class ChartAxisContent<T> extends React.PureComponent<
     ChartAxisContentProps<T>,
     ChartAxisContentState
 > {
+    get isHorizontal(): boolean {
+        switch (this.props.axisType) {
+            case 'topAxis':
+            case 'bottomAxis':
+                return true;
+            case 'leftAxis':
+            case 'rightAxis':
+                return false;
+        }
+    }
+
     getTickLabel(tick: ITickVector<T>): ITickLabel {
         // TODO: cache labels until prop change
         return normalizedLabelSafe(this.props.getTickLabel(tick));
@@ -290,6 +301,12 @@ export default class ChartAxisContent<T> extends React.PureComponent<
         let labelInnerContainers: React.ReactNode[] = [];
 
         const defaultLabelAlignment = this.getDefaultLabelAlignment();
+        const isHorizontal = this.isHorizontal;
+        const labelDefaults: Partial<ChartLabelProps> = {
+            ignoreBounds: true,
+            textWidth: isHorizontal ? this.props.labelLength : 0,
+            textHeight: isHorizontal ? 0 : this.props.labelLength,
+        };
 
         for (let i = 0; i < labels.length; i++) {
             const label = labels[i];
@@ -309,6 +326,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             labelInnerContainers.push(
                 <Animated.View key={i} style={labelInnerContainerStyle}>
                     <ChartLabel
+                        {...labelDefaults}
                         {...label}
                         alignX={align.x}
                         alignY={align.y}

@@ -13,6 +13,8 @@ export interface ChartLabelProps
         Animated.AnimatedProps<ViewProps> {
     alignX?: Alignment2D['x'];
     alignY?: Alignment2D['y'];
+    textWidth?: number;
+    textHeight?: number;
     ignoreBounds?: boolean;
 }
 
@@ -20,7 +22,8 @@ const ChartLabel = (props: ChartLabelProps) => {
     const {
         alignX = 'center',
         alignY = 'center',
-        ignoreBounds = false,
+        textWidth,
+        textHeight,
         title,
         numberOfLines,
         textStyle,
@@ -28,6 +31,11 @@ const ChartLabel = (props: ChartLabelProps) => {
         render,
         ...otherProps
     } = props;
+
+    const isFixedWidth = (textWidth || 0) > 0;
+    const isFixedHeight = (textHeight || 0) > 0;
+
+    const { ignoreBounds = isFixedWidth || isFixedHeight } = props;
 
     const textProps: Animated.AnimatedProps<TextProps> = {
         selectable: false,
@@ -48,11 +56,11 @@ const ChartLabel = (props: ChartLabelProps) => {
             ]}
         >
             <Animated.View
-                style={
-                    ignoreBounds
-                        ? { alignSelf: kAlignSelfMapX[alignX] }
-                        : styles.innerContainerBounded
-                }
+                style={[
+                    ignoreBounds ? { alignSelf: kAlignSelfMapX[alignX] } : {},
+                    isFixedWidth ? { width: textWidth } : {},
+                    isFixedHeight ? { height: textHeight } : {},
+                ]}
             >
                 {render ? (
                     render(textProps)
@@ -67,9 +75,6 @@ const ChartLabel = (props: ChartLabelProps) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    innerContainerBounded: {
-        maxWidth: '100%',
     },
 });
 
