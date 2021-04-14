@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { GridLayoutSourceProps, IAnimatedPointInput, IPoint } from 'evergrid';
-import { Animated, StyleProp, TextStyle, ViewProps } from 'react-native';
+import { Animated, StyleProp, TextProps, TextStyle } from 'react-native';
 
 export type AnimatedValueAny =
     | number
@@ -76,7 +76,7 @@ export interface ITickLabel extends Omit<ILabelStyle, 'align'> {
     align?: Partial<Alignment2D>;
     title: string;
     numberOfLines?: number;
-    render?: (props: Animated.AnimatedProps<ViewProps>) => any;
+    render?: (props: Animated.AnimatedProps<TextProps>) => any;
 }
 
 export type TickLabelInput =

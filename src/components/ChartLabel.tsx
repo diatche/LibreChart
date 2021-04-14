@@ -1,5 +1,11 @@
 import React from 'react';
-import { Animated, FlexStyle, StyleSheet, ViewProps } from 'react-native';
+import {
+    Animated,
+    FlexStyle,
+    StyleSheet,
+    TextProps,
+    ViewProps,
+} from 'react-native';
 import { ITickLabel, Alignment2D } from '../types';
 
 export interface ChartLabelProps
@@ -22,9 +28,13 @@ const ChartLabel = (props: ChartLabelProps) => {
         render,
         ...otherProps
     } = props;
-    if (render) {
-        return render(props);
-    }
+
+    const textProps: Animated.AnimatedProps<TextProps> = {
+        selectable: false,
+        style: [{ textAlign: alignX }, textStyle],
+        numberOfLines,
+    };
+
     return (
         <Animated.View
             {...otherProps}
@@ -44,13 +54,11 @@ const ChartLabel = (props: ChartLabelProps) => {
                         : styles.innerContainerBounded
                 }
             >
-                <Animated.Text
-                    selectable={false}
-                    style={[{ textAlign: alignX }, textStyle]}
-                    numberOfLines={numberOfLines}
-                >
-                    {title || ''}
-                </Animated.Text>
+                {render ? (
+                    render(textProps)
+                ) : (
+                    <Animated.Text {...textProps}>{title || ''}</Animated.Text>
+                )}
             </Animated.View>
         </Animated.View>
     );
