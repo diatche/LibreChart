@@ -217,7 +217,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         dataSource: LabelDataSource
     ): React.ReactNode {
         let dataItem = dataSource.data[item.index];
-        let itemStyle = dataSource.getItemStyle(item.index);
+        let itemStyle = dataSource.getItemStyle(item);
         let label = normalizedLabelSafe(
             dataSource.getLabel(dataItem, itemStyle)
         );

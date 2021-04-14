@@ -1,5 +1,6 @@
 import {
     CustomLayoutSource,
+    IItem,
     IItemCustomLayout,
     LayoutSourceProps,
 } from 'evergrid';
@@ -39,7 +40,7 @@ export default class LabelDataSource<T = any, X = number, Y = number>
     getLabel: LabelDataSourceInput<T, X, Y>['getLabel'];
     style: ILabelStyle;
     itemStyle?: LabelDataSourceInput<T, X, Y>['itemStyle'];
-    private _itemStyles: { [index: number]: ILabelStyle | undefined };
+    private _itemStyles: { [viewKey: string]: ILabelStyle | undefined };
 
     constructor(input: LabelDataSourceInput<T, X, Y>) {
         super(input);
@@ -70,44 +71,41 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         };
     }
 
-    getItemStyle(index: number): ILabelStyle | undefined {
+    getItemStyle(item: IItem<number>): ILabelStyle | undefined {
         if (!this.itemStyle) {
             return this.style;
         }
-        let itemStyle = this._itemStyles[index] || this.updateItemStyle(index);
+        let itemStyle =
+            this._itemStyles[item.viewKey] || this.updateItemStyle(item);
+        if (!itemStyle) {
+            return this.style;
+        }
         return {
             align: { ...this.style.align, ...itemStyle?.align },
             viewOffset: {
                 x: itemStyle?.viewOffset?.x || this.style.viewOffset?.x,
                 y: itemStyle?.viewOffset?.y || this.style.viewOffset?.y,
             },
-            textStyle: [itemStyle?.textStyle, this.style.textStyle],
+            textStyle: [this.style.textStyle, itemStyle?.textStyle],
         };
     }
 
-    updateItemStyle(index: number): ILabelStyle | undefined {
+    updateItemStyle(item: IItem<number>): ILabelStyle | undefined {
         if (!this.itemStyle) {
             return undefined;
         }
-        let itemStyle = this._itemStyles[index];
-        itemStyle = this.itemStyle(this.data[index], index, itemStyle);
+        let itemStyle = this._itemStyles[item.viewKey];
+        itemStyle = this.itemStyle(
+            this.data[item.index],
+            item.index,
+            itemStyle
+        );
         if (itemStyle) {
-            this._itemStyles[index] = itemStyle;
+            this._itemStyles[item.viewKey] = itemStyle;
         } else {
-            delete this._itemStyles[index];
+            delete this._itemStyles[item.viewKey];
         }
         return itemStyle;
-    }
-
-    private _moveItemStyle(fromIndex: number, toIndex: number) {
-        if (!this.itemStyle || toIndex === fromIndex) {
-            return;
-        }
-        let temp = this._itemStyles[fromIndex];
-        delete this._itemStyles[fromIndex];
-        if (temp) {
-            this._itemStyles[toIndex] = temp;
-        }
     }
 
     createLayoutSource(props?: LayoutSourceProps<number>) {
@@ -116,40 +114,31 @@ export default class LabelDataSource<T = any, X = number, Y = number>
             reuseID: this.itemReuseID,
             ...props,
             getItemLayout: i => this.getItemLayout(i),
-            willUseItemViewLayout: (itemViewLayout, index, layoutSource) => {
-                // Setup newly created item
-                this.updateItemStyle(index);
-                let itemStyle = this.getItemStyle(index);
-                let offsetX =
-                    itemStyle?.viewOffset?.x || this.style.viewOffset?.x;
-                if (offsetX) {
-                    itemViewLayout.offset.x = Animated.add(
-                        itemViewLayout.offset.x,
-                        offsetX
-                    );
-                }
-                let offsetY =
-                    itemStyle?.viewOffset?.y || this.style.viewOffset?.y;
-                if (offsetY) {
-                    itemViewLayout.offset.y = Animated.add(
-                        itemViewLayout.offset.y,
-                        offsetY
-                    );
-                }
-                props?.willUseItemViewLayout?.(
-                    itemViewLayout,
-                    index,
-                    layoutSource
-                );
-            },
-            shouldRenderItem: (item, previous) => {
-                // Prepare to reuse item
-                this._moveItemStyle(previous.index, item.index);
-                return previous.index !== item.index;
-            },
-            willShowItem: item => {
+            shouldRenderItem: () => true,
+            willShowItem: (item, options) => {
                 // Update item style if needed
-                this.updateItemStyle(item.index);
+                this.updateItemStyle(item);
+
+                if (options.created) {
+                    // Link offset with item
+                    let itemStyle = this.getItemStyle(item);
+                    let offsetX =
+                        itemStyle?.viewOffset?.x || this.style.viewOffset?.x;
+                    if (offsetX) {
+                        item.animated.viewLayout.offset.x = Animated.add(
+                            item.animated.viewLayout.offset.x,
+                            offsetX
+                        );
+                    }
+                    let offsetY =
+                        itemStyle?.viewOffset?.y || this.style.viewOffset?.y;
+                    if (offsetY) {
+                        item.animated.viewLayout.offset.y = Animated.add(
+                            item.animated.viewLayout.offset.y,
+                            offsetY
+                        );
+                    }
+                }
             },
             getVisibleIndexSet: pointRange =>
                 new Set(this.getItemsIndexesInLocationRange(pointRange)),
