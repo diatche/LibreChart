@@ -227,6 +227,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 {...label}
                 alignX={itemStyle?.align?.x || label.align?.x}
                 alignY={itemStyle?.align?.y || label.align?.y}
+                ignoreBounds
             />
         );
     }
