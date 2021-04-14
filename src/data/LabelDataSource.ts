@@ -11,6 +11,7 @@ import {
     ITickLabel,
 } from '../types';
 import { Animated } from 'react-native';
+import _ from 'lodash';
 
 export interface LabelDataSourceInput<T, X = number, Y = number>
     extends DataSourceInput<T, X, Y> {
@@ -73,17 +74,20 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         if (!this.itemStyle) {
             return this.style;
         }
-        let itemStyle = this._itemStyles[index];
-        if (!itemStyle) {
-            this.updateItemStyle(index);
-            itemStyle = this._itemStyles[index];
-        }
-        return { ...this.style, ...itemStyle };
+        let itemStyle = this._itemStyles[index] || this.updateItemStyle(index);
+        return {
+            align: { ...this.style.align, ...itemStyle?.align },
+            viewOffset: {
+                x: itemStyle?.viewOffset?.x || this.style.viewOffset?.x,
+                y: itemStyle?.viewOffset?.y || this.style.viewOffset?.y,
+            },
+            textStyle: [itemStyle?.textStyle, this.style.textStyle],
+        };
     }
 
-    updateItemStyle(index: number) {
+    updateItemStyle(index: number): ILabelStyle | undefined {
         if (!this.itemStyle) {
-            return;
+            return undefined;
         }
         let itemStyle = this._itemStyles[index];
         itemStyle = this.itemStyle(this.data[index], index, itemStyle);
@@ -92,10 +96,11 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         } else {
             delete this._itemStyles[index];
         }
+        return itemStyle;
     }
 
     private _moveItemStyle(fromIndex: number, toIndex: number) {
-        if (!this.itemStyle) {
+        if (!this.itemStyle || toIndex === fromIndex) {
             return;
         }
         let temp = this._itemStyles[fromIndex];
@@ -140,7 +145,7 @@ export default class LabelDataSource<T = any, X = number, Y = number>
             shouldRenderItem: (item, previous) => {
                 // Prepare to reuse item
                 this._moveItemStyle(previous.index, item.index);
-                return true;
+                return previous.index !== item.index;
             },
             willShowItem: item => {
                 // Update item style if needed

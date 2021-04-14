@@ -25,7 +25,7 @@ const kAlignContentMapY: {
     bottom: 'flex-end',
 };
 
-const ChartLabel = React.memo((props: ChartLabelProps) => {
+const ChartLabel = (props: ChartLabelProps) => {
     const {
         alignX = 'center',
         alignY = 'center',
@@ -60,7 +60,7 @@ const ChartLabel = React.memo((props: ChartLabelProps) => {
             </Animated.View>
         </Animated.View>
     );
-});
+};
 
 const styles = StyleSheet.create({
     container: {
