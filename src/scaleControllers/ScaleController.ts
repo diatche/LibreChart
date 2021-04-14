@@ -47,16 +47,16 @@ export default abstract class ScaleController<T = any, D = any> {
 
     constructor(options: ScaleControllerOptions) {
         this.contentPaddingAbs = this.validatedPadding(
-            options.contentPaddingAbs || 0,
+            options.contentPaddingAbs || 0
         );
         this.contentPaddingRel = this.validatedPadding(
-            options.contentPaddingRel || 0,
+            options.contentPaddingRel || 0
         );
         this.viewPaddingAbs = this.validatedPadding(
-            options.viewPaddingAbs || 0,
+            options.viewPaddingAbs || 0
         );
         this.viewPaddingRel = this.validatedPadding(
-            options.viewPaddingRel || 0,
+            options.viewPaddingRel || 0
         );
         this.min = options.min;
         this.max = options.max;
@@ -74,12 +74,12 @@ export default abstract class ScaleController<T = any, D = any> {
         if (typeof this.anchor !== 'undefined') {
             if (typeof this.min !== 'undefined' && this.anchor < this.min) {
                 console.warn(
-                    `Scale anchor (${this.anchor}) is below min value (${this.min})`,
+                    `Scale anchor (${this.anchor}) is below min value (${this.min})`
                 );
             }
             if (typeof this.max !== 'undefined' && this.anchor > this.max) {
                 console.warn(
-                    `Scale anchor (${this.anchor}) is above max value (${this.max})`,
+                    `Scale anchor (${this.anchor}) is above max value (${this.max})`
                 );
             }
         }
@@ -93,7 +93,7 @@ export default abstract class ScaleController<T = any, D = any> {
     }
 
     abstract getContentLimits(
-        options: ContentLimitOptions,
+        options: ContentLimitOptions
     ): [number, number] | undefined;
 
     get scaleLayout(): ScaleLayout<T, D> {
@@ -214,11 +214,6 @@ export default abstract class ScaleController<T = any, D = any> {
         if (!containerChanged && min === this._min && max === this._max) {
             return;
         }
-        console.debug(
-            `scaling to min: ${min} (from ${this._min}) max: ${max} (from ${
-                this._max
-            }) options: ${JSON.stringify(options, null, 2)}`,
-        );
         this._min = min;
         this._max = max;
 
@@ -280,7 +275,7 @@ export default abstract class ScaleController<T = any, D = any> {
 
     addContentPadding(
         contentMin: number,
-        contentMax: number,
+        contentMax: number
     ): [number, number] {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
@@ -314,7 +309,7 @@ export default abstract class ScaleController<T = any, D = any> {
     addViewPadding(
         contentMin: number,
         contentMax: number,
-        options: ContentLimitOptions,
+        options: ContentLimitOptions
     ): [number, number] {
         if (this.viewPaddingRel[0] || this.viewPaddingRel[1]) {
             let diff = contentMax - contentMin;
@@ -367,7 +362,7 @@ export default abstract class ScaleController<T = any, D = any> {
                     !isFinite(res[1])
                 ) {
                     console.warn(
-                        `Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`,
+                        `Ignoring invalid hysteresis output: [${res[0]}, ${res[1]}]`
                     );
                 } else {
                     min = res[0];
@@ -378,14 +373,14 @@ export default abstract class ScaleController<T = any, D = any> {
             console.error(
                 `Uncaught error in hysteresis function: ${
                     error?.message || error
-                }`,
+                }`
             );
         }
         return [min, max];
     }
 
     validatedPadding(
-        padding: number | [number, number] | undefined,
+        padding: number | [number, number] | undefined
     ): [number, number] {
         switch (typeof padding) {
             case 'undefined':
