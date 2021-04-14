@@ -224,7 +224,14 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         let label = normalizedLabelSafe(
             dataSource.getLabel(dataItem, itemStyle)
         );
-        return <ChartLabel {...itemStyle} {...label} />;
+        return (
+            <ChartLabel
+                {...itemStyle}
+                {...label}
+                alignX={itemStyle.align?.x || label.align?.x}
+                alignY={itemStyle.align?.y || label.align?.y}
+            />
+        );
     }
 
     renderAxisContent(
@@ -255,8 +262,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
-                labelOffset={
-                    scaleLayout.layoutInfo.negHalfMajorViewInterval$ || 0
+                majorViewInterval={
+                    scaleLayout.layoutInfo.majorViewInterval$ || 0
                 }
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness =>

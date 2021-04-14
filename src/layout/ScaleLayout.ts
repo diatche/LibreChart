@@ -45,18 +45,40 @@ interface IScaleLayoutLengthBaseInfo {
 interface IScaleLayoutInfo extends IScaleLayoutLengthBaseInfo {
     /** Animated axis container length in content coordinates. */
     readonly containerLength$: Animated.Value;
+
+    /**
+     * This value equals one major
+     * tick interval (in content coordinates).
+     *
+     * This is used to syncronize the grid with labels.
+     **/
+    readonly majorInterval$: Animated.Value;
+
+    /**
+     * This value equals one major
+     * tick interval (in view coordinates).
+     *
+     * This is used to syncronize the grid with labels.
+     **/
+    majorViewInterval$?: Animated.AnimatedInterpolation;
+
     /**
      * This value equals negative half of major
      * tick interval (in content coordinates).
      *
      * This is used to syncronize the grid with labels.
+     *
+     * @deprecated Use majorInterval$ instead.
      **/
     readonly negHalfMajorInterval$: Animated.Value;
+
     /**
      * This value equals negative half of major
      * tick interval (in view coordinates).
      *
      * This is used to syncronize the grid with labels.
+     *
+     * @deprecated Use majorViewInterval$ instead.
      **/
     negHalfMajorViewInterval$?: Animated.AnimatedInterpolation;
 }
@@ -95,6 +117,7 @@ export default class ScaleLayout<T = number, D = T> {
             containerLength: 0,
             recenteringOffset: 0,
             containerLength$: new Animated.Value(0),
+            majorInterval$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
         };
         this.style = {
@@ -126,7 +149,7 @@ export default class ScaleLayout<T = number, D = T> {
         plot: PlotLayout,
         config: {
             isHorizontal: boolean;
-        },
+        }
     ) {
         this.plot = plot;
         if (
@@ -138,9 +161,15 @@ export default class ScaleLayout<T = number, D = T> {
         this.isHorizontal = config.isHorizontal;
         this.custom = plot.index.x !== 0 || plot.index.y !== 0;
 
+        let majorViewInterval = Animated.multiply(
+            this.layoutInfo.majorInterval$,
+            this.plot.scale$[this.isHorizontal ? 'x' : 'y']
+        );
+        this.layoutInfo.majorViewInterval$ = majorViewInterval;
+
         let negHalfMajorViewInterval = Animated.multiply(
             this.layoutInfo.negHalfMajorInterval$,
-            this.plot.scale$[this.isHorizontal ? 'x' : 'y'],
+            this.plot.scale$[this.isHorizontal ? 'x' : 'y']
         );
         this.layoutInfo.negHalfMajorViewInterval$ = negHalfMajorViewInterval;
 
@@ -162,11 +191,12 @@ export default class ScaleLayout<T = number, D = T> {
         Object.assign(this.layoutInfo, axisLengthInfo);
 
         this.layoutInfo.containerLength$.setValue(
-            axisLengthInfo.containerLength,
+            axisLengthInfo.containerLength
         );
 
-        let negHalfMajorInterval = -this.scale.tickScale.interval.location / 2;
-        this.layoutInfo.negHalfMajorInterval$.setValue(negHalfMajorInterval);
+        let majorInterval = this.scale.tickScale.interval.location;
+        this.layoutInfo.majorInterval$.setValue(majorInterval);
+        this.layoutInfo.negHalfMajorInterval$.setValue(-majorInterval / 2);
 
         this.didChangeLayout();
         return true;
@@ -230,21 +260,21 @@ export default class ScaleLayout<T = number, D = T> {
         let valueRange = this.scale.spanValueRange(startValue, endValue);
         let majorCount = this.scale.countTicksInValueRange(
             valueRange[0],
-            valueRange[1],
+            valueRange[1]
         );
         let minorCount = 0;
         let minorInterval = this.scale.minorTickScales[0].interval.location;
         if (majorCount && minorInterval !== 0) {
             minorCount =
                 Math.round(
-                    this.scale.tickScale.interval.location / minorInterval,
+                    this.scale.tickScale.interval.location / minorInterval
                 ) - 1;
         }
 
         // Get container length
         let locationRange = this.scale.spanLocationRange(
             startLocation,
-            endLocation,
+            endLocation
         );
         let containerLength = locationRange[1] - locationRange[0];
 
