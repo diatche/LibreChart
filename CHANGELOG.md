@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.7.0
+
+**15 Apr 2021**
+
 ### Features
 
 -   [[#35](https://github.com/diatche/LibreChart/pull/35)] Added `align` to `ILabelStyle`, which allows setting an alignment edge for labels on the chart and axes.
