@@ -127,7 +127,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                     break;
                 default:
                     throw new Error(
-                        `Unsupported data source type: ${dataSource.type}`,
+                        `Unsupported data source type: ${dataSource.type}`
                     );
             }
         }
@@ -149,7 +149,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
 
     renderPath(
         item: IItem<IPoint>,
-        dataSource: LineDataSource,
+        dataSource: LineDataSource
     ): React.ReactNode {
         if (!dataSource.layout) {
             return null;
@@ -170,7 +170,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             pointStyles = points.map(p => {
                 let itemStyle = dataSource.itemStyle!(
                     dataSource.data[p.dataIndex],
-                    p,
+                    p
                 );
                 if (
                     !hasItemStyle &&
@@ -201,7 +201,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
 
     renderRect(
         item: IItem<number>,
-        dataSource: RectDataSource,
+        dataSource: RectDataSource
     ): React.ReactNode {
         let dataItem = dataSource.data[item.index];
         return (
@@ -214,22 +214,27 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
 
     renderLabel(
         item: IItem<number>,
-        dataSource: LabelDataSource,
+        dataSource: LabelDataSource
     ): React.ReactNode {
         let dataItem = dataSource.data[item.index];
-        let itemStyle = {
-            ...dataSource.style,
-            ...dataSource.itemStyle?.(dataItem, item.index),
-        };
+        let itemStyle = dataSource.getItemStyle(item);
         let label = normalizedLabelSafe(
-            dataSource.getLabel(dataItem, itemStyle),
+            dataSource.getLabel(dataItem, itemStyle)
         );
-        return <ChartLabel {...itemStyle} {...label} />;
+        return (
+            <ChartLabel
+                {...itemStyle}
+                {...label}
+                alignX={itemStyle?.align?.x || label.align?.x}
+                alignY={itemStyle?.align?.y || label.align?.y}
+                ignoreBounds
+            />
+        );
     }
 
     renderAxisContent(
         { index, reuseID }: IItem<any>,
-        axis: Axis,
+        axis: Axis
     ): React.ReactNode {
         if (axis.hidden) {
             return null;
@@ -241,14 +246,13 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         let range = scaleLayout.getContainerRangeAtIndex(index);
         let ticks = scaleLayout.scale.getTicksInLocationRange(
             range[0],
-            range[1],
+            range[1]
         );
         let isInverted = scaleLayout.isInverted();
         let labelLength =
             (scaleLayout.layoutInfo.containerLength *
                 scaleLayout.layoutInfo.viewScale) /
-                ticks.length -
-            axis.style.labelMargin * 2;
+            ticks.length;
         return (
             <ChartAxisContent
                 {...axis.style}
@@ -256,8 +260,8 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
-                labelOffset={
-                    scaleLayout.layoutInfo.negHalfMajorViewInterval$ || 0
+                majorViewInterval={
+                    scaleLayout.layoutInfo.majorViewInterval$ || 0
                 }
                 isInverted={isInverted}
                 onOptimalThicknessChange={thickness =>

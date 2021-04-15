@@ -4,6 +4,15 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Features
+
+-   [[#35](https://github.com/diatche/LibreChart/pull/35)] Added `align` to `ILabelStyle`, which allows setting an alignment edge for labels on the chart and axes.
+
+### Breaking Changes
+
+-   [[#35](https://github.com/diatche/LibreChart/pull/35)] Renamed `style` on `ILabelStyle` to `textStyle`.
+-   [[#35](https://github.com/diatche/LibreChart/pull/35)] Removed axis style properties: `labelFontSize`, `labelMargin`, `labelFontWeight`, `labelColor` and their minor and major variants. These are now configured using: `labelStyle`, `majorLabelStyle`, `minorLabelStyle`.
+
 ## 0.6.0
 
 **13 Apr 2021**

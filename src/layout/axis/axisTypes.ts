@@ -1,6 +1,6 @@
 import { AnimatedValueInput, FlatLayoutSourceProps } from 'evergrid';
 import { Animated, TextStyle } from 'react-native';
-import { ITickLabel } from '../../types';
+import { ILabelStyle, ITickLabel } from '../../types';
 import { ITickVector } from '../../scale/Scale';
 
 export type AxisType = 'topAxis' | 'rightAxis' | 'bottomAxis' | 'leftAxis';
@@ -9,18 +9,12 @@ export type Direction = 'horizontal' | 'vertical';
 export type AxisTypeMapping<T> = { [K in AxisType]: T };
 
 export interface IAxisContentLayoutStyle {
-    labelFontSize?: number;
-    labelMargin?: number;
-    labelFontWeight?: TextStyle['fontWeight'];
-    majorLabelFontWeight?: TextStyle['fontWeight'];
-    minorLabelFontWeight?: TextStyle['fontWeight'];
+    labelStyle?: ILabelStyle;
+    majorLabelStyle?: ILabelStyle;
+    minorLabelStyle?: ILabelStyle;
 }
 
-export interface IAxisContentStyleInput extends IAxisContentLayoutStyle {
-    labelColor?: string;
-    majorLabelColor?: string;
-    minorLabelColor?: string;
-}
+export interface IAxisContentStyleInput extends IAxisContentLayoutStyle {}
 
 export interface IAxisContentStyle extends Required<IAxisContentStyleInput> {}
 
@@ -73,13 +67,13 @@ export interface IAxisOptions<T = any> {
     hidden: boolean;
 
     getTickLabel: (
-        tick: ITickVector<T>,
+        tick: ITickVector<T>
     ) => ITickLabel | ITickLabel['title'] | ITickLabel['render'];
 
     onThicknessChange?: (thickness: number, previousThickness: number) => void;
     onOptimalThicknessChange?: (
         thickness: number,
-        previousThickness: number,
+        previousThickness: number
     ) => void;
 
     layoutSourceDefaults: IAxisLayoutSourceProps;
