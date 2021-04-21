@@ -4,6 +4,14 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.7.1
+
+**22 Apr 2021**
+
+### Bug Fixes
+
+-   Using default `@ungap/weakrefs` import path to avoid issues in native builds.
+
 ## 0.7.0
 
 **15 Apr 2021**
