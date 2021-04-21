@@ -7,7 +7,7 @@ import {
     normalizeAnimatedValue,
     weakref,
 } from 'evergrid';
-import { WeakRef } from '@ungap/weakrefs/esm';
+import { WeakRef } from '@ungap/weakrefs';
 import {
     kAxisBackgroundReuseIDs,
     kAxisContentReuseIDs,
