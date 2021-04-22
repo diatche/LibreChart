@@ -4,6 +4,20 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Features
+
+-   `ILabelStyle` now has a `viewLayout` property, which contains `offset`, `size` and `anchor` properties.
+
+### Bug Fixes
+
+-   Text labels were not showing on iOS.
+
+### Breaking Changes
+
+-   `LabelDataSource` now expects separate view and text alignments, specified by `ILabelStyle.viewLayout.anchor` and `ILabelStyle.align` respectively.
+-   Removed `viewOffset` from `ILabelStyle`. Use `viewLayout.offset` instead.
+-   Removed `numberOfLines` from `ILabelStyle`. Use `viewLayout.size` to limit the size.
+
 ## 0.7.1
 
 **22 Apr 2021**

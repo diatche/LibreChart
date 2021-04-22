@@ -1,5 +1,10 @@
 import Decimal from 'decimal.js';
-import { GridLayoutSourceProps, IAnimatedPointInput, IPoint } from 'evergrid';
+import {
+    GridLayoutSourceProps,
+    IAnimatedPointInput,
+    IPartialLayout,
+    IPoint,
+} from 'evergrid';
 import { Animated, StyleProp, TextProps, TextStyle } from 'react-native';
 
 export type AnimatedValueAny =
@@ -68,14 +73,13 @@ export type Alignment2D = {
 
 export interface ILabelStyle {
     align?: Partial<Alignment2D>;
-    viewOffset?: Partial<IAnimatedPointInput>;
+    viewLayout?: IPartialLayout<IAnimatedPointInput>;
     textStyle?: StyleProp<TextStyle>;
 }
 
 export interface ITickLabel extends Omit<ILabelStyle, 'align'> {
     align?: Partial<Alignment2D>;
     title: string;
-    numberOfLines?: number;
     render?: (props: Animated.AnimatedProps<TextProps>) => any;
 }
 

@@ -18,6 +18,7 @@ import {
 import { ITickVector } from '../scale/Scale';
 import ChartLabel, { ChartLabelProps } from './ChartLabel';
 import { kDefaultAxisLabelAlignments } from '../const';
+import _ from 'lodash';
 
 export interface ChartAxisContentProps<T>
     extends ViewProps,
@@ -222,8 +223,8 @@ export default class ChartAxisContent<T> extends React.PureComponent<
     getLabelInnerContainerStyle() {
         // TODO: cache style until prop change
         let style: Animated.AnimatedProps<ViewProps>['style'] = {
-            marginLeft: this.props.labelStyle.viewOffset?.x,
-            marginTop: this.props.labelStyle.viewOffset?.y,
+            marginLeft: this.props.labelStyle.viewLayout?.offset?.x,
+            marginTop: this.props.labelStyle.viewLayout?.offset?.y,
         };
         switch (this.props.axisType) {
             case 'topAxis':
@@ -303,9 +304,11 @@ export default class ChartAxisContent<T> extends React.PureComponent<
         const defaultLabelAlignment = this.getDefaultLabelAlignment();
         const isHorizontal = this.isHorizontal;
         const labelDefaults: Partial<ChartLabelProps> = {
-            ignoreBounds: true,
-            textWidth: isHorizontal ? this.props.labelLength : 0,
-            textHeight: isHorizontal ? 0 : this.props.labelLength,
+            viewLayout: {
+                size: isHorizontal
+                    ? { x: this.props.labelLength }
+                    : { y: this.props.labelLength },
+            },
         };
 
         for (let i = 0; i < labels.length; i++) {
@@ -315,8 +318,8 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             let labelInnerContainerStyle = [
                 labelInnerContainerBaseStyle,
                 {
-                    marginLeft: label.viewOffset?.x,
-                    marginTop: label.viewOffset?.y,
+                    marginLeft: label.viewLayout?.offset?.x,
+                    marginTop: label.viewLayout?.offset?.y,
                 },
             ];
             let align = this.displayLabelAlignment({
@@ -326,8 +329,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             labelInnerContainers.push(
                 <Animated.View key={i} style={labelInnerContainerStyle}>
                     <ChartLabel
-                        {...labelDefaults}
-                        {...label}
+                        {..._.merge({}, labelDefaults, label)}
                         alignX={align.x}
                         alignY={align.y}
                         textStyle={[labelStyle, label.textStyle]}

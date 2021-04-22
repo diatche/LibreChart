@@ -3,6 +3,7 @@ import {
     IItem,
     IItemCustomLayout,
     LayoutSourceProps,
+    normalizeAnimatedValueOrInterpolation,
 } from 'evergrid';
 import DataSource, { DataSourceInput } from './DataSource';
 import {
@@ -13,6 +14,13 @@ import {
 } from '../types';
 import { Animated } from 'react-native';
 import _ from 'lodash';
+
+const kDefaultLabelStyle: ILabelStyle = {
+    viewLayout: {
+        size: { x: 100, y: 100 },
+        anchor: { x: 0.5, y: 0.5 },
+    },
+};
 
 export interface LabelDataSourceInput<T, X = number, Y = number>
     extends DataSourceInput<T, X, Y> {
@@ -46,7 +54,7 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         super(input);
         this.transform = input.transform;
         this.getLabel = input.getLabel;
-        this.style = { ...input.style };
+        this.style = _.merge({}, kDefaultLabelStyle, input.style || {});
         this.itemStyle = input.itemStyle;
         this._itemStyles = {};
     }
@@ -82,10 +90,11 @@ export default class LabelDataSource<T = any, X = number, Y = number>
         }
         return {
             align: { ...this.style.align, ...itemStyle?.align },
-            viewOffset: {
-                x: itemStyle?.viewOffset?.x || this.style.viewOffset?.x,
-                y: itemStyle?.viewOffset?.y || this.style.viewOffset?.y,
-            },
+            viewLayout: _.merge(
+                {},
+                this.style.viewLayout || {},
+                itemStyle.viewLayout || {}
+            ),
             textStyle: [this.style.textStyle, itemStyle?.textStyle],
         };
     }
@@ -122,20 +131,36 @@ export default class LabelDataSource<T = any, X = number, Y = number>
                 if (options.created) {
                     // Link offset with item
                     let itemStyle = this.getItemStyle(item);
-                    let offsetX =
-                        itemStyle?.viewOffset?.x || this.style.viewOffset?.x;
-                    if (offsetX) {
+                    if (itemStyle?.viewLayout?.offset?.x) {
                         item.animated.viewLayout.offset.x = Animated.add(
                             item.animated.viewLayout.offset.x,
-                            offsetX
+                            itemStyle.viewLayout.offset.x
                         );
                     }
-                    let offsetY =
-                        itemStyle?.viewOffset?.y || this.style.viewOffset?.y;
-                    if (offsetY) {
+                    if (itemStyle?.viewLayout?.offset?.y) {
                         item.animated.viewLayout.offset.y = Animated.add(
                             item.animated.viewLayout.offset.y,
-                            offsetY
+                            itemStyle.viewLayout.offset.y
+                        );
+                    }
+                    if (itemStyle?.viewLayout?.size?.x) {
+                        item.animated.viewLayout.size.x = normalizeAnimatedValueOrInterpolation(
+                            itemStyle.viewLayout.size.x
+                        );
+                    }
+                    if (itemStyle?.viewLayout?.size?.y) {
+                        item.animated.viewLayout.size.y = normalizeAnimatedValueOrInterpolation(
+                            itemStyle.viewLayout.size.y
+                        );
+                    }
+                    if (itemStyle?.viewLayout?.anchor?.x) {
+                        item.animated.viewLayout.anchor.x = normalizeAnimatedValueOrInterpolation(
+                            itemStyle.viewLayout.anchor.x
+                        );
+                    }
+                    if (itemStyle?.viewLayout?.anchor?.y) {
+                        item.animated.viewLayout.anchor.y = normalizeAnimatedValueOrInterpolation(
+                            itemStyle.viewLayout.anchor.y
                         );
                     }
                 }
