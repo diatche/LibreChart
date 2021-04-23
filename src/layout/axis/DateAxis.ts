@@ -1,5 +1,5 @@
 import { Duration, Moment } from 'moment';
-import { StyleProp, TextStyle } from 'react-native';
+import { Animated, TextProps } from 'react-native';
 import { ITickLabel } from '../../types';
 import Axis, { IAxisExtraOptions } from './Axis';
 import {
@@ -16,7 +16,9 @@ export interface IDateAxisOptions extends IAxisOptions<Moment> {
 
 export default class DateAxis extends Axis<Moment, Duration> {
     locale?: string;
-    private _tickStyles?: DateUnitMapping<StyleProp<TextStyle>>;
+    private _tickStyles?: DateUnitMapping<
+        Animated.AnimatedProps<TextProps>['style']
+    >;
 
     constructor(options: Partial<IDateAxisOptions> & IAxisExtraOptions) {
         options = {

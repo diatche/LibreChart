@@ -1,4 +1,4 @@
-import { StyleProp, TextStyle } from 'react-native';
+import { Animated, TextProps } from 'react-native';
 import { IAxisStyle } from '../../layout/axis/axisTypes';
 import {
     DateUnit,
@@ -13,7 +13,7 @@ import { getUniformMs } from './duration';
 export const getTickStyles = (
     duration: moment.Duration,
     style: IAxisStyle
-): DateUnitMapping<StyleProp<TextStyle>> => {
+): DateUnitMapping<Animated.AnimatedProps<TextProps>['style']> => {
     // Find unit which has a regular label style
     let uniformMs = getUniformMs(duration);
     let regularIndex = 0;
@@ -38,8 +38,13 @@ export const getTickStyles = (
     }
 
     return mapDateUnits(
-        (dateUnit: DateUnit, index: number): StyleProp<TextStyle> => {
-            let labelStyle: StyleProp<TextStyle> = [style.labelStyle.textStyle];
+        (
+            dateUnit: DateUnit,
+            index: number
+        ): Animated.AnimatedProps<TextProps>['style'] => {
+            let labelStyle: Animated.AnimatedProps<TextProps>['style'] = [
+                style.labelStyle.textStyle,
+            ];
             if (index === regularIndex || index === otherRegularIndex) {
                 // Regular style
             } else if (index > regularIndex) {
