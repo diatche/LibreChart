@@ -74,7 +74,7 @@ export type Alignment2D = {
 export interface ILabelStyle {
     align?: Partial<Alignment2D>;
     viewLayout?: IPartialLayout<IAnimatedPointInput>;
-    textStyle?: StyleProp<TextStyle>;
+    textStyle?: Animated.AnimatedProps<TextProps>['style'];
 }
 
 export interface ITickLabel extends Omit<ILabelStyle, 'align'> {

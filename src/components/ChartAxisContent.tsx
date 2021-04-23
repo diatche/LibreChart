@@ -3,12 +3,16 @@ import {
     Animated,
     LayoutChangeEvent,
     StyleSheet,
-    TextStyle,
     View,
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { Alignment2D, ITickLabel, normalizedLabelSafe } from '../types';
+import {
+    Alignment2D,
+    ILabelStyle,
+    ITickLabel,
+    normalizedLabelSafe,
+} from '../types';
 import {
     AxisType,
     AxisTypeMapping,
@@ -16,7 +20,7 @@ import {
     IAxisStyle,
 } from '../layout/axis/axisTypes';
 import { ITickVector } from '../scale/Scale';
-import ChartLabel, { ChartLabelProps } from './ChartLabel';
+import ChartLabel from './ChartLabel';
 import { kDefaultAxisLabelAlignments } from '../const';
 import _ from 'lodash';
 
@@ -303,13 +307,10 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 
         const defaultLabelAlignment = this.getDefaultLabelAlignment();
         const isHorizontal = this.isHorizontal;
-        const labelDefaults: Partial<ChartLabelProps> = {
-            viewLayout: {
-                size: isHorizontal
-                    ? { x: this.props.labelLength }
-                    : { y: this.props.labelLength },
-            },
-        };
+        const labelTextStyle: ILabelStyle['textStyle'] = isHorizontal
+            ? { width: this.props.majorViewInterval }
+            : { height: this.props.majorViewInterval };
+        labelStyle = [labelStyle, labelTextStyle];
 
         for (let i = 0; i < labels.length; i++) {
             const label = labels[i];
@@ -329,10 +330,14 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             labelInnerContainers.push(
                 <Animated.View key={i} style={labelInnerContainerStyle}>
                     <ChartLabel
-                        {..._.merge({}, labelDefaults, label)}
+                        {...label}
                         alignX={align.x}
                         alignY={align.y}
-                        textStyle={[labelStyle, label.textStyle]}
+                        textStyle={[
+                            label.textStyle,
+                            labelStyle,
+                            labelTextStyle,
+                        ]}
                     />
                 </Animated.View>
             );

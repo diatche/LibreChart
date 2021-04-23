@@ -7,6 +7,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 ### Features
 
 -   `ILabelStyle` now has a `viewLayout` property, which contains `offset`, `size` and `anchor` properties.
+-   `ILabelStyle.textStyle` now takes animated values.
 
 ### Bug Fixes
 

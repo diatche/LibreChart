@@ -58,26 +58,8 @@ const ChartLabel = (props: ChartLabelProps) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+    container: {},
 });
-
-const kAlignItemsMapX: {
-    [K in Alignment2D['x']]: FlexStyle['alignItems'];
-} = {
-    left: 'flex-start',
-    center: 'center',
-    right: 'flex-end',
-};
-
-const kAlignSelfMapX: {
-    [K in Alignment2D['x']]: FlexStyle['alignSelf'];
-} = {
-    left: 'flex-start',
-    center: 'center',
-    right: 'flex-end',
-};
 
 const kAlignContentMapY: {
     [K in Alignment2D['y']]: FlexStyle['justifyContent'];
