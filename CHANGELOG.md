@@ -4,11 +4,7 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
-### Bug Fixes
-
--   [[#37](https://github.com/diatche/LibreChart/pull/37)] Fixed an error related to `Text` component with some `LineDataSource` style configurations.
-
-## 0.8.0
+## 0.8.0 - 0.8.1
 
 **26 Apr 2021**
 
@@ -22,6 +18,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 -   [[#36](https://github.com/diatche/LibreChart/pull/36)] Text labels were not showing on iOS.
 -   [[#36](https://github.com/diatche/LibreChart/pull/36)] Axes were not showing on iOS.
+-   [[#37](https://github.com/diatche/LibreChart/pull/37)] Fixed an error related to `Text` component with some `LineDataSource` style configurations.
 
 ### Breaking Changes
 
