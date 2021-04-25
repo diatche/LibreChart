@@ -50,15 +50,15 @@ const ChartLine = React.memo(
                     typeof s.pointOuterRadius === 'object'
                 ) {
                     throw new Error(
-                        'Animated values no supported on ChartLine',
+                        'Animated values no supported on ChartLine'
                     );
                 }
                 return Math.max(
                     s.pointInnerRadius || 0,
                     s.pointOuterRadius || 0,
-                    0,
+                    0
                 );
-            }),
+            })
         );
 
         const rectWidthWithOverlap = props.rect[2] + viewOverlap * 2;
@@ -143,7 +143,7 @@ const ChartLine = React.memo(
                             </LinearGradient>
                         </Defs>
                     )}
-                    {drawLine && (
+                    {drawLine ? (
                         <Path
                             d={props.path}
                             fill='none'
@@ -163,55 +163,57 @@ const ChartLine = React.memo(
                                     : ''
                             }
                         />
-                    )}
+                    ) : null}
                     {(props.pointStyles || defaultPointOuterColor) &&
-                        props.pointOuterRadius &&
-                        props.points.map((p, i) => {
-                            if (p.clipped) {
-                                return null;
-                            }
-                            let pointStyle = props.pointStyles?.[i];
-                            let pointOuterColor = pointStyle
-                                ? pointStyle.pointOuterColor ||
-                                  pointStyle.strokeColor
-                                : defaultPointOuterColor;
+                    props.pointOuterRadius
+                        ? props.points.map((p, i) => {
+                              if (p.clipped) {
+                                  return null;
+                              }
+                              let pointStyle = props.pointStyles?.[i];
+                              let pointOuterColor = pointStyle
+                                  ? pointStyle.pointOuterColor ||
+                                    pointStyle.strokeColor
+                                  : defaultPointOuterColor;
 
-                            return (
-                                <Circle
-                                    key={`o${i}`}
-                                    cx={p.x}
-                                    cy={p.y}
-                                    r={
-                                        (pointStyle?.pointOuterRadius ||
-                                            props.pointOuterRadius) as number
-                                    }
-                                    fill={pointOuterColor}
-                                />
-                            );
-                        })}
+                              return (
+                                  <Circle
+                                      key={`o${i}`}
+                                      cx={p.x}
+                                      cy={p.y}
+                                      r={
+                                          (pointStyle?.pointOuterRadius ||
+                                              props.pointOuterRadius) as number
+                                      }
+                                      fill={pointOuterColor}
+                                  />
+                              );
+                          })
+                        : null}
                     {(props.pointStyles || props.pointInnerColor) &&
-                        props.pointInnerRadius &&
-                        props.points.map((p, i) => {
-                            if (p.clipped) {
-                                return null;
-                            }
-                            let pointStyle = props.pointStyles?.[i];
-                            return (
-                                <Circle
-                                    key={`i${i}`}
-                                    cx={p.x}
-                                    cy={p.y}
-                                    r={
-                                        (pointStyle?.pointInnerRadius ||
-                                            props.pointInnerRadius) as number
-                                    }
-                                    fill={
-                                        pointStyle?.pointInnerColor ||
-                                        props.pointInnerColor
-                                    }
-                                />
-                            );
-                        })}
+                    props.pointInnerRadius
+                        ? props.points.map((p, i) => {
+                              if (p.clipped) {
+                                  return null;
+                              }
+                              let pointStyle = props.pointStyles?.[i];
+                              return (
+                                  <Circle
+                                      key={`i${i}`}
+                                      cx={p.x}
+                                      cy={p.y}
+                                      r={
+                                          (pointStyle?.pointInnerRadius ||
+                                              props.pointInnerRadius) as number
+                                      }
+                                      fill={
+                                          pointStyle?.pointInnerColor ||
+                                          props.pointInnerColor
+                                      }
+                                  />
+                              );
+                          })
+                        : null}
                     {/* <Circle cx={props.rect[0]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />
                 <Circle cx={props.rect[0] + props.rect[2]} cy={props.rect[1]} r={props.strokeWidth! * 2} fill='red' />
                 <Circle cx={props.rect[0]} cy={props.rect[1] + props.rect[3]} r={props.strokeWidth! * 2} fill='red' />
@@ -260,7 +262,7 @@ const ChartLine = React.memo(
         }
     }
     return true;
-}*/,
+}*/
 );
 
 export default ChartLine;

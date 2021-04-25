@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Bug Fixes
+
+-   Fixed an error related to `Text` component with some `LineDataSource` style configurations.
+
 ## 0.8.0
 
 **26 Apr 2021**
