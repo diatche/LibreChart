@@ -33,6 +33,14 @@ export interface IAxisBackgroundLayoutStyle {
 }
 
 export interface IAxisBackgroundStyleInput extends IAxisBackgroundLayoutStyle {
+    /**
+     * The thickness of the axis.
+     *
+     * Specifying this value overrides automatic
+     * axis thickness layout (currently available
+     * only on web).
+     */
+    axisThickness?: AnimatedValueInput;
     axisBackgroundColor?: string;
     axisLineColor?: string;
     axisLineThickness?: number;
@@ -42,7 +50,9 @@ export interface IAxisBackgroundStyleInput extends IAxisBackgroundLayoutStyle {
 }
 
 export interface IAxisBackgroundStyle
-    extends Required<IAxisBackgroundStyleInput> {}
+    extends Required<Omit<IAxisBackgroundStyleInput, 'axisThickness'>> {
+    axisThickness?: Animated.Value;
+}
 
 export interface IAxisStyleInput
     extends IAxisContentStyleInput,
@@ -50,8 +60,11 @@ export interface IAxisStyleInput
     padding?: AnimatedValueInput;
 }
 
-export interface IAxisStyle extends Required<IAxisStyleInput> {
+export interface IAxisStyle
+    extends Required<Omit<IAxisStyleInput, 'axisThickness'>> {
     padding: Animated.Value;
+    /** See {@link IAxisBackgroundStyleInput.axisThickness} */
+    axisThickness?: Animated.Value;
 }
 
 export interface IAxisLayoutSourceProps

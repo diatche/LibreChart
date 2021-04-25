@@ -8,10 +8,12 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 -   `ILabelStyle` now has a `viewLayout` property, which contains `offset`, `size` and `anchor` properties.
 -   `ILabelStyle.textStyle` now takes animated values.
+-   Added `axisThickness` to `IAxisStyle`, which fixes the axis thickness to a value or animated value.
 
 ### Bug Fixes
 
 -   Text labels were not showing on iOS.
+-   Axes were not showing on iOS.
 
 ### Breaking Changes
 

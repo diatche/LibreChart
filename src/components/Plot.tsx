@@ -1,4 +1,5 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import Evergrid, {
     EvergridProps,
     IItem,
@@ -225,6 +226,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             <ChartLabel
                 {...itemStyle}
                 {...label}
+                style={styles.flex}
                 alignX={itemStyle?.align?.x || label.align?.x}
                 alignY={itemStyle?.align?.y || label.align?.y}
             />
@@ -256,6 +258,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
             <ChartAxisContent
                 {...axis.style}
                 axisType={axis.axisType}
+                targetThickness={axis.layoutInfo.targetThickness}
                 ticks={ticks}
                 getTickLabel={tick => axis?.getTickLabel(tick) || ''}
                 labelLength={labelLength}
@@ -297,3 +300,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         );
     }
 }
+
+const styles = StyleSheet.create({
+    flex: { flex: 1 },
+});

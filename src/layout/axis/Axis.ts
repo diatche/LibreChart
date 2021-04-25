@@ -73,7 +73,9 @@ export interface IAxesOptionsMap<X = any, Y = any> {
 }
 
 interface IAxisLayoutInfo {
-    /** The axis thickness. */
+    /** The target axis thickness. */
+    targetThickness?: number;
+    /** The current axis thickness. */
     thickness: number;
     /**
      * To reduce the number of layout updates,
@@ -125,6 +127,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     private _plotWeakRef = weakref<PlotLayout>();
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates?: Observable.IObserver;
+    private _axisThicknessUpdates?: string;
 
     private _syncedAxisRefs: { [syncId: string]: WeakRef<Axis> } = {};
 
@@ -148,23 +151,36 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         this.getTickLabel = getTickLabel;
         this.onOptimalThicknessChange = onOptimalThicknessChange;
         this.onThicknessChange = onThicknessChange;
-        (this.isHorizontal = isAxisHorizontal(this.axisType)),
-            (this.layoutInfo = {
-                thickness: 0,
-                thicknessStep: kDefaultAxisThicknessStep,
-                thickness$: new Animated.Value(0),
-                optimalThicknesses: {},
-                setOptimalThickness: (thickness, index) =>
-                    this.setOptimalThickness(thickness, index),
-                visibleContainerIndexRange: [0, 0],
-            });
-        this.style = _.merge(
+        let inheritedStyle = _.merge(
             {},
             kAxisStyleLightDefaults,
             options.theme?.axis,
-            style,
-            { padding: normalizeAnimatedValue(style.padding) }
+            style
         );
+        this.style = _.merge({}, inheritedStyle, {
+            padding: normalizeAnimatedValue(style.padding, {
+                defaults: normalizeAnimatedValue(inheritedStyle.padding),
+            }),
+            axisThickness:
+                typeof style.axisThickness !== 'undefined' ||
+                typeof inheritedStyle.axisThickness !== 'undefined'
+                    ? normalizeAnimatedValue(style.axisThickness, {
+                          defaults: normalizeAnimatedValue(
+                              inheritedStyle.axisThickness
+                          ),
+                      })
+                    : undefined,
+        });
+        this.isHorizontal = isAxisHorizontal(this.axisType);
+        this.layoutInfo = {
+            thickness: 0,
+            thicknessStep: kDefaultAxisThicknessStep,
+            thickness$: new Animated.Value(0),
+            optimalThicknesses: {},
+            setOptimalThickness: (thickness, index) =>
+                this.setOptimalThickness(thickness, index),
+            visibleContainerIndexRange: [0, 0],
+        };
         this.layoutSourceDefaults = layoutSourceDefaults;
     }
 
@@ -314,6 +330,14 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             this._scaleLayoutUpdates = this.scaleLayout?.updates.addObserver(
                 () => this.update(updateOptions)
             );
+
+            if (this.style.axisThickness) {
+                this._axisThicknessUpdates = this.style.axisThickness.addListener(
+                    ({ value }) => this.setThickness(value)
+                );
+                // @ts-ignore: _value is private
+                this.setThickness(this.style.axisThickness._value);
+            }
         }
     }
 
@@ -323,6 +347,12 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
         this._scaleLayoutUpdates?.cancel();
         this._scaleLayoutUpdates = undefined;
+
+        if (this._axisThicknessUpdates) {
+            this.style.axisThickness?.removeListener(
+                this._axisThicknessUpdates
+            );
+        }
     }
 
     private _createContentLayoutSource(
@@ -414,12 +444,26 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     willUpdateLayout() {}
 
+    /**
+     * Sets the thickness of the axis.
+     *
+     * Calling this method directly is not recommended,
+     * use {@link IAxisStyle.axisThickness} instead.
+     */
+    setThickness(thickness: number) {
+        if (thickness === this.layoutInfo.targetThickness) {
+            return;
+        }
+        this.layoutInfo.targetThickness = thickness;
+        this.updateThickness();
+    }
+
     setOptimalThickness(thickness: number, index: number) {
         // Save optimal thicknesses until an
         // update is triggered.
 
         // Apply thickness step
-        thickness = this.cleanThickness(thickness);
+        thickness = this.cleanOptimalThickness(thickness);
 
         if (thickness !== this.layoutInfo.optimalThicknesses[index]) {
             let previousThickness = this.layoutInfo.optimalThicknesses[index];
@@ -453,11 +497,25 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
 
     private _scheduledThicknessUpdate?: Cancelable;
 
+    roundThickness(thickness: number | undefined): number | undefined {
+        if (typeof thickness === 'undefined') {
+            return undefined;
+        }
+        return Math.round(thickness);
+    }
+
     /** Apply thickness step. */
-    cleanThickness(thickness: number): number {
+    cleanOptimalThickness(thickness: number): number {
         return (
             Math.ceil(thickness / this.layoutInfo.thicknessStep) *
             this.layoutInfo.thicknessStep
+        );
+    }
+
+    private _resolveOwnThickness() {
+        return (
+            this.roundThickness(this.layoutInfo.targetThickness) ||
+            this.cleanOptimalThickness(this._resolveOwnOptimalThickness())
         );
     }
 
@@ -476,17 +534,14 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     updateThickness() {
         this.cancelThicknessUpdate();
 
-        // Get optimal axis thickness
-        let thickness = this._resolveOwnOptimalThickness();
+        let thickness = this._resolveOwnThickness();
         const syncedAxes = this._getSyncedAxes();
         for (let axis of syncedAxes) {
-            let axisThickness = axis._resolveOwnOptimalThickness();
+            let axisThickness = axis._resolveOwnThickness();
             if (axisThickness > thickness) {
                 thickness = axisThickness;
             }
         }
-
-        thickness = this.cleanThickness(thickness);
 
         if (thickness !== this.layoutInfo.thickness) {
             // Thickness changed

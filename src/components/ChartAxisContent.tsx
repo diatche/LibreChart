@@ -26,8 +26,9 @@ import _ from 'lodash';
 
 export interface ChartAxisContentProps<T>
     extends ViewProps,
-        Required<IAxisStyle> {
+        Required<Omit<IAxisStyle, 'axisThickness'>> {
     axisType: AxisType;
+    targetThickness?: number;
     /** Tick locations in ascending order in content coordinates. */
     ticks: ITickVector<T>[];
     /** Set to `true` if the axis scale is negative. */
@@ -95,9 +96,18 @@ export default class ChartAxisContent<T> extends React.PureComponent<
      */
     getInnerContainerStyle() {
         // TODO: cache style until prop change
+        let style: Animated.AnimatedProps<ViewStyle> = {};
+        if (this.props.targetThickness) {
+            if (this.isHorizontal) {
+                style.height = this.props.targetThickness;
+            } else {
+                style.width = this.props.targetThickness;
+            }
+        }
         return [
             styles.innerContainer,
             axisStyles[this.props.axisType].innerContainer,
+            style,
         ];
     }
 
@@ -312,8 +322,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             : { height: this.props.majorViewInterval };
         labelStyle = [labelStyle, labelTextStyle];
 
-        for (let i = 0; i < labels.length; i++) {
-            const label = labels[i];
+        labels.forEach((label, i) => {
             ticks.push(<View key={i} style={tickStyle} />);
 
             let labelInnerContainerStyle = [
@@ -341,7 +350,7 @@ export default class ChartAxisContent<T> extends React.PureComponent<
                     />
                 </Animated.View>
             );
-        }
+        });
 
         return (
             <Animated.View style={this.getContainerStyle()}>
@@ -392,8 +401,7 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 210, 130, 0.5)',
     },
     label: {
-        // borderWidth: 2,
-        // borderColor: 'rgba(200, 110, 130, 0.5)',
+        // backgroundColor: 'rgba(200, 110, 130, 0.5)',
     },
     placeholder: {
         width: 0,
