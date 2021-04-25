@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.8.0
+
+**26 Apr 2021**
+
 ### Features
 
 -   [[#36](https://github.com/diatche/LibreChart/pull/36)] `ILabelStyle` now has a `viewLayout` property, which contains `offset`, `size` and `anchor` properties.
