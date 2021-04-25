@@ -1,7 +1,7 @@
 import { AxisType, AxisTypeMapping, IAxisStyle } from './axisTypes';
 import { Colors } from '../../utils/colors';
 import _ from 'lodash';
-import { Animated } from 'react-native';
+import { Animated, Platform } from 'react-native';
 
 export const kAxisContentReuseIDs: AxisTypeMapping<string> = {
     topAxis: 'topAxisContent',
@@ -31,6 +31,8 @@ type IAxisDefaultBaseStyle = Omit<
 >;
 
 export const kAxisStyleBaseDefaults: IAxisDefaultBaseStyle = {
+    // Web measures text in a way that is compatible with automatic axis thickness.
+    axisThickness: Platform.OS === 'web' ? undefined : new Animated.Value(35),
     axisLineThickness: 1,
 
     majorTickLength: 3,

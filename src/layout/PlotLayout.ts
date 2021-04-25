@@ -105,7 +105,7 @@ export default class PlotLayout<
         input: PlotLayoutManyInput | undefined,
         options?: {
             columns?: boolean;
-        },
+        }
     ): PlotLayout[] {
         if (!input) {
             return [];
@@ -140,7 +140,7 @@ export default class PlotLayout<
             let indexStr = `{ x: ${index.x}, y: ${index.y} }`;
             if (indexes.has(indexStr)) {
                 throw new Error(
-                    `There are more than one plot at index: ${indexStr}`,
+                    `There are more than one plot at index: ${indexStr}`
                 );
             }
             indexes.add(indexStr);
@@ -238,7 +238,7 @@ export default class PlotLayout<
         }
 
         this._scheduledPlotUpdate = InteractionManager.runAfterInteractions(
-            () => this._debouncedPlotUpdate(),
+            () => this._debouncedPlotUpdate()
         );
     }
 
@@ -254,7 +254,7 @@ export default class PlotLayout<
 
     private _debouncedPlotUpdate = debounce(
         () => this.updatePlot(kDefaultUpdateInfo),
-        kGridUpdateDebounceInterval,
+        kGridUpdateDebounceInterval
     );
 
     didUpdate(info: IUpdateInfo) {
@@ -281,7 +281,7 @@ export default class PlotLayout<
     scrollToValueRange(
         start: { x?: X; y?: Y },
         end: { x?: X; y?: Y },
-        options: IAnimationBaseOptions,
+        options: IAnimationBaseOptions
     ) {
         return this.scrollTo({
             ...options,
@@ -399,7 +399,7 @@ export default class PlotLayout<
     }
 
     private _validatedAxes(
-        props: PlotLayoutOptions | undefined,
+        props: PlotLayoutOptions | undefined
     ): IAxes<X, Y, DX, DY> {
         return Axis.createMany(props?.axes, { theme: props?.theme });
     }

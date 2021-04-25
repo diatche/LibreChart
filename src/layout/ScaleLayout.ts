@@ -9,6 +9,7 @@ import { Observable } from '../utils/observable';
 import ScaleController from '../scaleControllers/ScaleController';
 import DiscreteScale from '../scale/DiscreteScale';
 import AutoScaleController from '../scaleControllers/AutoScaleController';
+import _ from 'lodash';
 
 export interface IScaleLayoutOptions<T = any, D = T> {
     /**
@@ -120,11 +121,21 @@ export default class ScaleLayout<T = number, D = T> {
             majorInterval$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
         };
-        this.style = {
-            ...kAxisStyleLightDefaults,
-            ...style,
-            padding: normalizeAnimatedValue(style.padding),
-        };
+        let inheritedStyle = kAxisStyleLightDefaults;
+        this.style = _.merge({}, inheritedStyle, {
+            padding: normalizeAnimatedValue(style.padding, {
+                defaults: normalizeAnimatedValue(inheritedStyle.padding),
+            }),
+            axisThickness:
+                typeof style.axisThickness !== 'undefined' ||
+                typeof inheritedStyle.axisThickness !== 'undefined'
+                    ? normalizeAnimatedValue(style.axisThickness, {
+                          defaults: normalizeAnimatedValue(
+                              inheritedStyle.axisThickness
+                          ),
+                      })
+                    : undefined,
+        });
 
         if (!controller && scale instanceof DiscreteScale) {
             controller = new AutoScaleController({

@@ -3,12 +3,16 @@ import {
     Animated,
     LayoutChangeEvent,
     StyleSheet,
-    TextStyle,
     View,
     ViewProps,
     ViewStyle,
 } from 'react-native';
-import { Alignment2D, ITickLabel, normalizedLabelSafe } from '../types';
+import {
+    Alignment2D,
+    ILabelStyle,
+    ITickLabel,
+    normalizedLabelSafe,
+} from '../types';
 import {
     AxisType,
     AxisTypeMapping,
@@ -16,13 +20,15 @@ import {
     IAxisStyle,
 } from '../layout/axis/axisTypes';
 import { ITickVector } from '../scale/Scale';
-import ChartLabel, { ChartLabelProps } from './ChartLabel';
+import ChartLabel from './ChartLabel';
 import { kDefaultAxisLabelAlignments } from '../const';
+import _ from 'lodash';
 
 export interface ChartAxisContentProps<T>
     extends ViewProps,
-        Required<IAxisStyle> {
+        Required<Omit<IAxisStyle, 'axisThickness'>> {
     axisType: AxisType;
+    targetThickness?: number;
     /** Tick locations in ascending order in content coordinates. */
     ticks: ITickVector<T>[];
     /** Set to `true` if the axis scale is negative. */
@@ -90,9 +96,18 @@ export default class ChartAxisContent<T> extends React.PureComponent<
      */
     getInnerContainerStyle() {
         // TODO: cache style until prop change
+        let style: Animated.AnimatedProps<ViewStyle> = {};
+        if (this.props.targetThickness) {
+            if (this.isHorizontal) {
+                style.height = this.props.targetThickness;
+            } else {
+                style.width = this.props.targetThickness;
+            }
+        }
         return [
             styles.innerContainer,
             axisStyles[this.props.axisType].innerContainer,
+            style,
         ];
     }
 
@@ -222,8 +237,8 @@ export default class ChartAxisContent<T> extends React.PureComponent<
     getLabelInnerContainerStyle() {
         // TODO: cache style until prop change
         let style: Animated.AnimatedProps<ViewProps>['style'] = {
-            marginLeft: this.props.labelStyle.viewOffset?.x,
-            marginTop: this.props.labelStyle.viewOffset?.y,
+            marginLeft: this.props.labelStyle.viewLayout?.offset?.x,
+            marginTop: this.props.labelStyle.viewLayout?.offset?.y,
         };
         switch (this.props.axisType) {
             case 'topAxis':
@@ -302,21 +317,19 @@ export default class ChartAxisContent<T> extends React.PureComponent<
 
         const defaultLabelAlignment = this.getDefaultLabelAlignment();
         const isHorizontal = this.isHorizontal;
-        const labelDefaults: Partial<ChartLabelProps> = {
-            ignoreBounds: true,
-            textWidth: isHorizontal ? this.props.labelLength : 0,
-            textHeight: isHorizontal ? 0 : this.props.labelLength,
-        };
+        const labelTextStyle: ILabelStyle['textStyle'] = isHorizontal
+            ? { width: this.props.majorViewInterval }
+            : { height: this.props.majorViewInterval };
+        labelStyle = [labelStyle, labelTextStyle];
 
-        for (let i = 0; i < labels.length; i++) {
-            const label = labels[i];
+        labels.forEach((label, i) => {
             ticks.push(<View key={i} style={tickStyle} />);
 
             let labelInnerContainerStyle = [
                 labelInnerContainerBaseStyle,
                 {
-                    marginLeft: label.viewOffset?.x,
-                    marginTop: label.viewOffset?.y,
+                    marginLeft: label.viewLayout?.offset?.x,
+                    marginTop: label.viewLayout?.offset?.y,
                 },
             ];
             let align = this.displayLabelAlignment({
@@ -326,15 +339,18 @@ export default class ChartAxisContent<T> extends React.PureComponent<
             labelInnerContainers.push(
                 <Animated.View key={i} style={labelInnerContainerStyle}>
                     <ChartLabel
-                        {...labelDefaults}
                         {...label}
                         alignX={align.x}
                         alignY={align.y}
-                        textStyle={[labelStyle, label.textStyle]}
+                        textStyle={[
+                            label.textStyle,
+                            labelStyle,
+                            labelTextStyle,
+                        ]}
                     />
                 </Animated.View>
             );
-        }
+        });
 
         return (
             <Animated.View style={this.getContainerStyle()}>
@@ -385,8 +401,7 @@ const styles = StyleSheet.create({
         // borderColor: 'rgba(100, 210, 130, 0.5)',
     },
     label: {
-        // borderWidth: 2,
-        // borderColor: 'rgba(200, 110, 130, 0.5)',
+        // backgroundColor: 'rgba(200, 110, 130, 0.5)',
     },
     placeholder: {
         width: 0,

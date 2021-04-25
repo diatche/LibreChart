@@ -13,86 +13,112 @@ export interface ChartLabelProps
         Animated.AnimatedProps<ViewProps> {
     alignX?: Alignment2D['x'];
     alignY?: Alignment2D['y'];
-    textWidth?: number;
-    textHeight?: number;
-    ignoreBounds?: boolean;
+    numberOfLines?: number;
+    // onTextLayout?: (size: { width: number; height: number }) => void;
 }
 
 const ChartLabel = (props: ChartLabelProps) => {
     const {
         alignX = 'center',
         alignY = 'center',
-        textWidth,
-        textHeight,
-        title,
         numberOfLines,
+        title,
         textStyle,
         style,
         render,
+        // onTextLayout: onTextLayoutProp,
         ...otherProps
     } = props;
 
-    const isFixedWidth = (textWidth || 0) > 0;
-    const isFixedHeight = (textHeight || 0) > 0;
+    // const titleSize = React.useRef(new Animated.ValueXY()).current;
+    // const [titleSize, setTitleSize] = React.useState({ text: '', x: 0, y: 0 });
 
-    const { ignoreBounds = isFixedWidth || isFixedHeight } = props;
+    // const titleSizeTextRef = React.useRef('');
 
     const textProps: Animated.AnimatedProps<TextProps> = {
         selectable: false,
-        style: [{ textAlign: alignX }, textStyle],
+        style: [
+            {
+                textAlign: alignX,
+                // width: titleSize.x,
+                // height: titleSize.y,
+            },
+            // titleSize.text === title
+            //     ? {
+            //           width: titleSize.x,
+            //           height: titleSize.y,
+            //       }
+            //     : undefined,
+            textStyle,
+        ],
         numberOfLines,
     };
+
+    // const onTextLayout = React.useCallback(
+    //     (event: NativeSyntheticEvent<TextLayoutEventData>) => {
+    //         let text = event.nativeEvent.lines.map(x => x.text).join('\n');
+    //         if (text === titleSizeTextRef.current) {
+    //             // Measure title text only once
+    //             return;
+    //         }
+    //         let width = 0;
+    //         let height = 0;
+    //         for (let line of event.nativeEvent.lines) {
+    //             if (line.width > width) {
+    //                 width = line.width;
+    //             }
+    //             height += line.height;
+    //         }
+    //         titleSizeTextRef.current = text;
+    //         onTextLayoutProp?.({
+    //             width: Math.ceil(width) + 6,
+    //             height: Math.ceil(height),
+    //         });
+    //         // setTitleSize({
+    //         //     text,
+    //         //     x: Math.ceil(width) + 6,
+    //         //     y: Math.ceil(height),
+    //         // });
+    //     },
+    //     [onTextLayoutProp]
+    // );
+
+    let content: React.ReactNode;
+    if (render) {
+        content = render(textProps);
+        if (typeof content === 'string') {
+            throw new Error(
+                'Use the title prop to display a basic text string'
+            );
+        }
+    } else {
+        content = (
+            <Animated.Text
+                {...textProps}
+                // onTextLayout={Platform.OS !== 'web' ? onTextLayout : undefined}
+            >
+                {title || ''}
+            </Animated.Text>
+        );
+    }
 
     return (
         <Animated.View
             {...otherProps}
             style={[
                 styles.container,
-                {
-                    alignItems: kAlignItemsMapX[alignX],
-                    justifyContent: kAlignContentMapY[alignY],
-                },
+                { justifyContent: kAlignContentMapY[alignY] },
                 style,
             ]}
         >
-            <Animated.View
-                style={[
-                    ignoreBounds ? { alignSelf: kAlignSelfMapX[alignX] } : {},
-                    isFixedWidth ? { width: textWidth } : {},
-                    isFixedHeight ? { height: textHeight } : {},
-                ]}
-            >
-                {render ? (
-                    render(textProps)
-                ) : (
-                    <Animated.Text {...textProps}>{title || ''}</Animated.Text>
-                )}
-            </Animated.View>
+            <Animated.View>{content}</Animated.View>
         </Animated.View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+    container: {},
 });
-
-const kAlignItemsMapX: {
-    [K in Alignment2D['x']]: FlexStyle['alignItems'];
-} = {
-    left: 'flex-start',
-    center: 'center',
-    right: 'flex-end',
-};
-
-const kAlignSelfMapX: {
-    [K in Alignment2D['x']]: FlexStyle['alignSelf'];
-} = {
-    left: 'flex-start',
-    center: 'center',
-    right: 'flex-end',
-};
 
 const kAlignContentMapY: {
     [K in Alignment2D['y']]: FlexStyle['justifyContent'];

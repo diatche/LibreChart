@@ -4,6 +4,23 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Features
+
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] `ILabelStyle` now has a `viewLayout` property, which contains `offset`, `size` and `anchor` properties.
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] `ILabelStyle.textStyle` now takes animated values.
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] Added `axisThickness` to `IAxisStyle`, which fixes the axis thickness to a value or animated value.
+
+### Bug Fixes
+
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] Text labels were not showing on iOS.
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] Axes were not showing on iOS.
+
+### Breaking Changes
+
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] `LabelDataSource` now expects separate view and text alignments, specified by `ILabelStyle.viewLayout.anchor` and `ILabelStyle.align` respectively.
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] Removed `viewOffset` from `ILabelStyle`. Use `viewLayout.offset` instead.
+-   [[#36](https://github.com/diatche/LibreChart/pull/36)] Removed `numberOfLines` from `ILabelStyle`. Use `viewLayout.size` to limit the size.
+
 ## 0.7.1
 
 **22 Apr 2021**
