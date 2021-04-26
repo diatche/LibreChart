@@ -373,10 +373,18 @@ export default class PlotLayout<
 
     getAxisInsets(): Partial<IInsets<number>> {
         return {
-            top: this.axes.topAxis?.layoutInfo.thickness,
-            bottom: this.axes.bottomAxis?.layoutInfo.thickness,
-            left: this.axes.leftAxis?.layoutInfo.thickness,
-            right: this.axes.rightAxis?.layoutInfo.thickness,
+            top:
+                this.axes.topAxis?.layoutInfo.targetThickness ||
+                this.axes.topAxis?.layoutInfo.thickness,
+            bottom:
+                this.axes.bottomAxis?.layoutInfo.targetThickness ||
+                this.axes.bottomAxis?.layoutInfo.thickness,
+            left:
+                this.axes.leftAxis?.layoutInfo.targetThickness ||
+                this.axes.leftAxis?.layoutInfo.thickness,
+            right:
+                this.axes.rightAxis?.layoutInfo.targetThickness ||
+                this.axes.rightAxis?.layoutInfo.thickness,
         };
     }
 
