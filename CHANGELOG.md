@@ -4,6 +4,11 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Bug Fixes
+
+-   [[#38](https://github.com/diatche/LibreChart/pull/38)] When a background is specified on a label's `textStyle`, it no longer spans the whole item container width.
+-   [[#38](https://github.com/diatche/LibreChart/pull/38)] Fixed merging of axis label text styles.
+
 ## 0.8.0 - 0.8.1
 
 **26 Apr 2021**

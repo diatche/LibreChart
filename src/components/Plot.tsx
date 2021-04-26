@@ -17,7 +17,8 @@ import { axisTypeMap } from '../layout/axis/axisUtil';
 import RectDataSource from '../data/RectDataSource';
 import ChartRect from './ChartRect';
 import LabelDataSource from '../data/LabelDataSource';
-import ChartLabel from './ChartLabel';
+import ChartLabel, { ChartLabelProps } from './ChartLabel';
+import _ from 'lodash';
 
 type ForwardEvergridProps = Partial<EvergridProps>;
 
@@ -222,11 +223,12 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         let label = normalizedLabelSafe(
             dataSource.getLabel(dataItem, itemStyle)
         );
+        let props: ChartLabelProps = _.merge({}, itemStyle, label);
+
+        props.textStyle = [itemStyle?.textStyle, label.textStyle];
         return (
             <ChartLabel
-                {...itemStyle}
-                {...label}
-                style={styles.flex}
+                {...props}
                 alignX={itemStyle?.align?.x || label.align?.x}
                 alignY={itemStyle?.align?.y || label.align?.y}
             />

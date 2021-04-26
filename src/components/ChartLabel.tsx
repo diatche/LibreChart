@@ -111,14 +111,36 @@ const ChartLabel = (props: ChartLabelProps) => {
                 style,
             ]}
         >
-            <Animated.View>{content}</Animated.View>
+            <Animated.View
+                style={[
+                    styles.innerContainer,
+                    { justifyContent: kAlignContentMapX[alignX] },
+                ]}
+            >
+                {content}
+            </Animated.View>
         </Animated.View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {},
+    container: {
+        flex: 1,
+        flexDirection: 'column',
+        overflow: 'hidden',
+    },
+    innerContainer: {
+        flexDirection: 'row',
+    },
 });
+
+const kAlignContentMapX: {
+    [K in Alignment2D['x']]: FlexStyle['justifyContent'];
+} = {
+    left: 'flex-start',
+    center: 'center',
+    right: 'flex-end',
+};
 
 const kAlignContentMapY: {
     [K in Alignment2D['y']]: FlexStyle['justifyContent'];

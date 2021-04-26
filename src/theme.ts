@@ -7,12 +7,8 @@ import {
     kAxisStyleLightDefaults,
 } from './layout/axis/axisConst';
 import { IAxisStyle } from './layout/axis/axisTypes';
-import { IChartGridStyle } from './types';
+import { DeepPartial, IChartGridStyle } from './types';
 import { Colors } from './utils/colors';
-
-type DeepPartial<T> = {
-    [P in keyof T]?: DeepPartial<T[P]>;
-};
 
 export interface ChartTheme {
     backgroundColor?: string;
