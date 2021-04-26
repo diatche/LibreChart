@@ -131,3 +131,7 @@ export interface IGridLayoutSourceProps
 export type ChartDataType = 'path' | 'point' | 'bar' | 'rect' | 'label';
 
 export type Cancelable = { cancel: () => void };
+
+export type DeepPartial<T> = {
+    [P in keyof T]?: DeepPartial<T[P]>;
+};

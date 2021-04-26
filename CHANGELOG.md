@@ -20,6 +20,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 -   [[#36](https://github.com/diatche/LibreChart/pull/36)] Axes were not showing on iOS.
 -   [[#37](https://github.com/diatche/LibreChart/pull/37)] Fixed an error related to `Text` component with some `LineDataSource` style configurations.
 -   When a background is specified on a label's `textStyle`, it no longer spans the whole item container width.
+-   Fixed merging of axis label text styles.
 
 ### Breaking Changes
 

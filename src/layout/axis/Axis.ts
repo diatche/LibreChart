@@ -23,7 +23,7 @@ import {
 } from './axisTypes';
 import { ITickVector } from '../../scale/Scale';
 import { PlotLayout } from '../../internal';
-import { isAxisHorizontal, isAxisType } from './axisUtil';
+import { isAxisHorizontal, isAxisType, mergeAxisStyles } from './axisUtil';
 import { Cancelable } from '../../types';
 import ScaleLayout from '../ScaleLayout';
 import { Observable } from '../../utils/observable';
@@ -151,26 +151,11 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         this.getTickLabel = getTickLabel;
         this.onOptimalThicknessChange = onOptimalThicknessChange;
         this.onThicknessChange = onThicknessChange;
-        let inheritedStyle = _.merge(
-            {},
+        this.style = mergeAxisStyles(
             kAxisStyleLightDefaults,
             options.theme?.axis,
             style
         );
-        this.style = _.merge({}, inheritedStyle, {
-            padding: normalizeAnimatedValue(style.padding, {
-                defaults: normalizeAnimatedValue(inheritedStyle.padding),
-            }),
-            axisThickness:
-                typeof style.axisThickness !== 'undefined' ||
-                typeof inheritedStyle.axisThickness !== 'undefined'
-                    ? normalizeAnimatedValue(style.axisThickness, {
-                          defaults: normalizeAnimatedValue(
-                              inheritedStyle.axisThickness
-                          ),
-                      })
-                    : undefined,
-        });
         this.isHorizontal = isAxisHorizontal(this.axisType);
         this.layoutInfo = {
             thickness: 0,
