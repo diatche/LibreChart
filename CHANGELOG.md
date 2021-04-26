@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Bug Fixes
+
+-   Fixed applying and merging of scale layout styles.
+
 ## 0.8.0 - 0.8.2
 
 **26 Apr 2021**

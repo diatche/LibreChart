@@ -10,6 +10,7 @@ import ScaleController from '../scaleControllers/ScaleController';
 import DiscreteScale from '../scale/DiscreteScale';
 import AutoScaleController from '../scaleControllers/AutoScaleController';
 import _ from 'lodash';
+import { mergeAxisStyles } from './axis/axisUtil';
 
 export interface IScaleLayoutOptions<T = any, D = T> {
     /**
@@ -121,21 +122,7 @@ export default class ScaleLayout<T = number, D = T> {
             majorInterval$: new Animated.Value(0),
             negHalfMajorInterval$: new Animated.Value(0),
         };
-        let inheritedStyle = kAxisStyleLightDefaults;
-        this.style = _.merge({}, inheritedStyle, {
-            padding: normalizeAnimatedValue(style.padding, {
-                defaults: normalizeAnimatedValue(inheritedStyle.padding),
-            }),
-            axisThickness:
-                typeof style.axisThickness !== 'undefined' ||
-                typeof inheritedStyle.axisThickness !== 'undefined'
-                    ? normalizeAnimatedValue(style.axisThickness, {
-                          defaults: normalizeAnimatedValue(
-                              inheritedStyle.axisThickness
-                          ),
-                      })
-                    : undefined,
-        });
+        this.style = mergeAxisStyles(kAxisStyleLightDefaults, style);
 
         if (!controller && scale instanceof DiscreteScale) {
             controller = new AutoScaleController({
