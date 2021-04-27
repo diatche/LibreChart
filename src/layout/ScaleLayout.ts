@@ -184,7 +184,10 @@ export default class ScaleLayout<T = number, D = T> {
             // No changes
             return false;
         }
-        // console.debug(`axisLengthInfo ${this.isHorizontal ? 'H' : 'V'}: ` + JSON.stringify(axisLengthInfo, null, 2));
+        // console.debug(
+        //     `axisLengthInfo ${this.isHorizontal ? 'H' : 'V'}: ` +
+        //         JSON.stringify(axisLengthInfo, null, 2)
+        // );
 
         Object.assign(this.layoutInfo, axisLengthInfo);
 
