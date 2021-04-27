@@ -7,6 +7,12 @@ Changes on the `main` branch, but not yet released, will be listed here.
 ### Bug Fixes
 
 -   Fixed applying and merging of scale layout styles.
+-   When zooming out, the plot no longer performs unecessary renders.
+-   `LineDataSource` now redraws after a small scale changes.
+
+### Breaking Changes
+
+-   Using Evergrid v0.2.0. See [breaking changes](https://github.com/diatche/evergrid/blob/master/CHANGELOG.md#020).
 
 ## 0.8.0 - 0.8.2
 
