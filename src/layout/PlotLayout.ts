@@ -209,7 +209,6 @@ export default class PlotLayout<
     }
 
     didChangeViewportSize() {
-        super.didChangeViewportSize();
         this.didChangePlotSize();
     }
 
@@ -219,15 +218,39 @@ export default class PlotLayout<
         this.yLayout?.controller?.setNeedsUpdate();
     }
 
-    didChangeScale() {
-        super.didChangeScale();
-        this.schedulePlotUpdate();
-        this.xLayout?.controller?.setNeedsUpdate();
-        this.yLayout?.controller?.setNeedsUpdate();
+    willChangeScale(oldScale: IPoint, newScale: IPoint) {
+        // Only pre-update when zooming out (reducing scale),
+        // to avoid drawing extra item views
+        if (Math.abs(newScale.x) < Math.abs(oldScale.x)) {
+            this.xLayout.update();
+            this.xLayout?.controller?.setNeedsUpdate();
+        }
+        if (Math.abs(newScale.y) < Math.abs(oldScale.y)) {
+            this.yLayout.update();
+            this.yLayout?.controller?.setNeedsUpdate();
+        }
     }
 
-    didChangeLocation() {
-        super.didChangeLocation();
+    didChangeScale(oldScale: IPoint, newScale: IPoint) {
+        this.schedulePlotUpdate();
+        if (newScale.x !== oldScale.x) {
+            this.xLayout?.controller?.setNeedsUpdate();
+        }
+        if (newScale.y !== oldScale.y) {
+            this.yLayout?.controller?.setNeedsUpdate();
+        }
+    }
+
+    willChangeLocationOffsetBase(oldLocation: IPoint, newLocation: IPoint) {
+        if (newLocation.x !== oldLocation.x) {
+            this.xLayout?.controller?.update();
+        }
+        if (newLocation.y !== oldLocation.y) {
+            this.yLayout?.controller?.update();
+        }
+    }
+
+    didChangeLocationOffsetBase(oldLocation: IPoint, newLocation: IPoint) {
         this.xLayout?.controller?.setNeedsUpdate();
         this.yLayout?.controller?.setNeedsUpdate();
     }
@@ -373,10 +396,18 @@ export default class PlotLayout<
 
     getAxisInsets(): Partial<IInsets<number>> {
         return {
-            top: this.axes.topAxis?.layoutInfo.thickness,
-            bottom: this.axes.bottomAxis?.layoutInfo.thickness,
-            left: this.axes.leftAxis?.layoutInfo.thickness,
-            right: this.axes.rightAxis?.layoutInfo.thickness,
+            top:
+                this.axes.topAxis?.layoutInfo.targetThickness ||
+                this.axes.topAxis?.layoutInfo.thickness,
+            bottom:
+                this.axes.bottomAxis?.layoutInfo.targetThickness ||
+                this.axes.bottomAxis?.layoutInfo.thickness,
+            left:
+                this.axes.leftAxis?.layoutInfo.targetThickness ||
+                this.axes.leftAxis?.layoutInfo.thickness,
+            right:
+                this.axes.rightAxis?.layoutInfo.targetThickness ||
+                this.axes.rightAxis?.layoutInfo.thickness,
         };
     }
 
