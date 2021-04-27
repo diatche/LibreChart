@@ -6,6 +6,9 @@ import DataSource, {
 import { ChartDataType, IDataRect, IPointStyle, IStrokeStyle } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 import { LinePath, PathCurve, CanvasUtil } from '../utils/canvas';
+import PlotLayout from '../layout/PlotLayout';
+import _ from 'lodash';
+import { Animated } from 'react-native';
 
 export interface ILinePoint extends IDataRect {
     clipped: boolean;
@@ -29,6 +32,10 @@ export default class LineDataSource<
 > extends DataSource<T, X, Y> {
     style: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
+    renderOnScaleDebounceInterval = 50;
+
+    private _scale$?: Animated.ValueXY;
+    private _scaleUpdates?: string;
 
     constructor(input: LineDataSourceInput<T, X, Y>) {
         super(input);
@@ -44,9 +51,29 @@ export default class LineDataSource<
         return this.id + '_path';
     }
 
+    configure(plot: PlotLayout<X, Y>) {
+        super.configure(plot);
+        this._scale$ = plot.scale$;
+        this._scaleUpdates = this._scale$.addListener(() =>
+            this._updateOnScaleDebounced()
+        );
+    }
+
+    unconfigure() {
+        super.unconfigure();
+        if (this._scaleUpdates) {
+            this._scale$?.removeListener(this._scaleUpdates);
+        }
+    }
+
+    private _updateOnScaleDebounced = _.debounce(
+        () => this.update({ visible: true, forceRender: true }),
+        this.renderOnScaleDebounceInterval
+    );
+
     getDataRectsInRange(
         pointRange: [IPoint, IPoint],
-        options?: IItemsInLocationRangeOptions,
+        options?: IItemsInLocationRangeOptions
     ): ILinePoint[] {
         const c = this.data.length;
         if (c === 0) {
@@ -73,7 +100,7 @@ export default class LineDataSource<
                 pointRange[0].x,
                 pointRange[0].y,
                 pointRange[1].x,
-                pointRange[1].y,
+                pointRange[1].y
             );
             if (line) {
                 let isPoint = line[0] === line[2] && line[1] === line[3];
@@ -87,7 +114,7 @@ export default class LineDataSource<
                             dataIndex: i - 1,
                             clipped: !VectorUtil.isPointInClosedRange(
                                 r0,
-                                pointRange,
+                                pointRange
                             ),
                             originalPoint: r0,
                         });
@@ -101,7 +128,7 @@ export default class LineDataSource<
                         dataIndex: i,
                         clipped: !VectorUtil.isPointInClosedRange(
                             r,
-                            pointRange,
+                            pointRange
                         ),
                         originalPoint: r,
                     });
