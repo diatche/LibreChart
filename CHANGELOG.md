@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.9.0
+
+**27 Apr 2021**
+
 ### Bug Fixes
 
 -   [[#39](https://github.com/diatche/LibreChart/pull/39)] Fixed applying and merging of scale layout styles.
