@@ -1,12 +1,7 @@
-import {
-    findCommonFactors,
-    findFactors,
-} from '../../src/utils/factors';
+import { findCommonFactors, findFactors } from '../../src/utils/factors';
 
 describe('factors', () => {
-
     describe('findFactors', () => {
-
         it('should find all factors of 2', () => {
             let factors = findFactors(2);
             expect(factors).toEqual([1, 2]);
@@ -54,7 +49,6 @@ describe('factors', () => {
     });
 
     describe('findCommonFactors', () => {
-
         it('should find all factors of 8 and 12', () => {
             let factors = findCommonFactors(8, 12);
             expect(factors).toEqual([1, 2, 4]);

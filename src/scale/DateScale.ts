@@ -66,7 +66,7 @@ export default class DateScale
     maxStepFractionDenominator = kMaxStepFractionDenominator;
 
     constructor(
-        options: IDateScaleOptions & IScaleOptions<Moment, Duration> = {},
+        options: IDateScaleOptions & IScaleOptions<Moment, Duration> = {}
     ) {
         super(options);
 
@@ -112,7 +112,7 @@ export default class DateScale
     getTickScale(
         startDate: Moment,
         endDate: Moment,
-        constraints?: ITickScaleConstraints<Duration>,
+        constraints?: ITickScaleConstraints<Duration>
     ): DateTickScaleType {
         if (endDate.isSameOrBefore(startDate)) {
             return this.emptyScale();
@@ -137,7 +137,7 @@ export default class DateScale
                 min.asMilliseconds() <= 0
             ) {
                 throw new Error(
-                    'Minimum duration must be finite and with a positive length',
+                    'Minimum duration must be finite and with a positive length'
                 );
             }
             minDuration = min;
@@ -147,7 +147,7 @@ export default class DateScale
             let min = constraints.minInterval.location;
             if (min < 0 || isNaN(min) || !isFinite(min)) {
                 throw new Error(
-                    'Minimum interval must be finite and with a positive length',
+                    'Minimum interval must be finite and with a positive length'
                 );
             }
             minIntervalTemp = min;
@@ -160,7 +160,7 @@ export default class DateScale
             }
             if (maxCount < 0 || isNaN(maxCount)) {
                 throw new Error(
-                    'Max count must be greater than or equal to zero',
+                    'Max count must be greater than or equal to zero'
                 );
             }
             let len = moment
@@ -182,7 +182,7 @@ export default class DateScale
 
         if (minDuration.asMilliseconds() === 0) {
             throw new Error(
-                'Must specify either a minimum interval, or a minimum duration, or a maximum interval count',
+                'Must specify either a minimum interval, or a minimum duration, or a maximum interval count'
             );
         }
 
@@ -252,7 +252,7 @@ export default class DateScale
             let linearScale = this.linearScale.getTickScale(
                 tickStart,
                 tickEnd,
-                unitLinearConstraints,
+                unitLinearConstraints
             );
             if (linearScale.interval.value === 0) {
                 continue;
@@ -278,7 +278,7 @@ export default class DateScale
 
     floorValue(date: Moment): Moment {
         let [value, unit] = dateUnitsWithDuration(
-            this.tickScale.interval.value,
+            this.tickScale.interval.value
         );
         return floorDate(date, value, unit, {
             originDate: this.tickScale.origin.value,
@@ -287,7 +287,7 @@ export default class DateScale
 
     locationOfValue(date: Moment): number {
         let [interval, unit] = dateUnitsWithDuration(
-            this.tickScale.interval.value,
+            this.tickScale.interval.value
         );
         let steps =
             dateIntervalLength(this.tickScale.origin.value, date, unit) /
@@ -298,7 +298,7 @@ export default class DateScale
 
     valueAtLocation(location: number): Moment {
         let [interval, unit] = dateUnitsWithDuration(
-            this.tickScale.interval.value,
+            this.tickScale.interval.value
         );
         let steps =
             ((location - this.tickScale.origin.location) /
@@ -317,7 +317,7 @@ export default class DateScale
 
     private _dateScaleWithLinearScale(
         linearScale: ITickScale<number>,
-        unit: DateUnit,
+        unit: DateUnit
     ): DateTickScaleType {
         if (linearScale.interval.value === 0) {
             return this.emptyScale();
@@ -330,7 +330,7 @@ export default class DateScale
         if (unit !== this.baseUnit) {
             // Re-scale interval
             let coef = kDateUnitUniformDecimalMs[unit].div(
-                kDateUnitUniformDecimalMs[this.baseUnit],
+                kDateUnitUniformDecimalMs[this.baseUnit]
             );
 
             let intervalFraction = new Decimal(linearScale.interval.value)
@@ -343,7 +343,7 @@ export default class DateScale
                 {
                     origin: { location: 0 },
                     interval: { location },
-                },
+                }
             );
         }
 

@@ -5,7 +5,7 @@ export namespace Hysteresis {
         min: number,
         max: number,
         previousMin: number | undefined,
-        previousMax: number | undefined,
+        previousMax: number | undefined
     ) => [number, number] | null;
 
     export const none: StepFunc = () => null;
@@ -14,7 +14,7 @@ export namespace Hysteresis {
         size: number,
         options: {
             origin?: number;
-        } = {},
+        } = {}
     ): StepFunc => {
         if (size <= 0) {
             throw new Error('Invalid step');
@@ -34,7 +34,7 @@ export namespace Hysteresis {
             scale.updateTickScale(
                 scale.valueAtLocation(a),
                 scale.valueAtLocation(b),
-                constraints,
+                constraints
             );
             return scale.spanLocationRange(a, b);
         };

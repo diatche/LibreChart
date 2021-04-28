@@ -10,26 +10,20 @@ import {
 const k1 = new Decimal(1);
 
 describe('DecimalLinearScale', () => {
-
     describe('updateTickScale', () => {
-
         // radix 24
 
         it('should should update scale correctly with interval of 12 with radix 24', () => {
             let scale = new DecimalLinearScale();
 
-            scale.updateTickScale(
-                $(-55.317),
-                $(79.3),
-                {
-                    minInterval: {
-                        value: $(9.6),
-                    },
-                    expand: true,
-                    radix: 24,
-                    excludeFactors: [2, 4, 8],
+            scale.updateTickScale($(-55.317), $(79.3), {
+                minInterval: {
+                    value: $(9.6),
                 },
-            );
+                expand: true,
+                radix: 24,
+                excludeFactors: [2, 4, 8],
+            });
 
             expect(scale.tickScale.origin.value.toNumber()).toEqual(-60);
             expect(scale.tickScale.origin.location).toBe(-60);
@@ -43,9 +37,13 @@ describe('DecimalLinearScale', () => {
         // divide 1
 
         it('should divide 1 into intervals of 0.1 with min distance when not expanding', () => {
-            let input: DecimalLinearTickInput = { start: 0, end: 1, stride: 0.1 };
+            let input: DecimalLinearTickInput = {
+                start: 0,
+                end: 1,
+                stride: 0.1,
+            };
             expect(getDecimalLinearTicks(input)).toEqual(
-                getExpectedDecimalLinearTicks(input),
+                getExpectedDecimalLinearTicks(input)
             );
         });
 
@@ -57,7 +55,7 @@ describe('DecimalLinearScale', () => {
                 constraints: { maxCount: 10 },
             };
             expect(getDecimalLinearTicks(input)).toEqual(
-                getExpectedDecimalLinearTicks(input),
+                getExpectedDecimalLinearTicks(input)
             );
         });
 
@@ -67,7 +65,7 @@ describe('DecimalLinearScale', () => {
                     minInterval: { value: $(0.5) },
                     maxCount: Infinity,
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
 
@@ -76,7 +74,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(1), {
                     minInterval: { value: $(0.11) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.2', '0.4', '0.6', '0.8', '1']);
         });
 
@@ -85,7 +83,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(1), {
                     minInterval: { value: $(0.21) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
 
@@ -94,7 +92,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(1), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -105,7 +103,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(5), {
                     minInterval: { value: k1 },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3', '4', '5']);
         });
 
@@ -114,7 +112,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(5), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '5']);
         });
 
@@ -123,7 +121,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(5), {
                     minInterval: { value: $(5.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -134,7 +132,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(3), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3']);
         });
 
@@ -143,7 +141,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(3), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -152,7 +150,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(3), {
                     minInterval: { value: $(3.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -163,7 +161,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(4), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3', '4']);
         });
 
@@ -172,7 +170,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(4), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '2', '4']);
         });
 
@@ -181,7 +179,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(4), {
                     minInterval: { value: $(4.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -192,7 +190,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(7), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '1', '2', '3', '4', '5', '6', '7']);
         });
 
@@ -201,7 +199,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(7), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -210,7 +208,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0), $(7), {
                     minInterval: { value: $(7.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -221,7 +219,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0.0), $(0.5), {
                     minInterval: { value: $(0.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.1', '0.2', '0.3', '0.4', '0.5']);
         });
 
@@ -230,7 +228,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0.0), $(0.5), {
                     minInterval: { value: $(0.11) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.5']);
         });
 
@@ -239,7 +237,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0.0), $(0.5), {
                     minInterval: { value: $(0.51) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -256,7 +254,7 @@ describe('DecimalLinearScale', () => {
                 },
             };
             expect(getDecimalLinearTicks(input)).toEqual(
-                getExpectedDecimalLinearTicks(input),
+                getExpectedDecimalLinearTicks(input)
             );
         });
 
@@ -265,7 +263,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0.0), $(1.5), {
                     minInterval: { value: $(0.11) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1', '1.5']);
         });
 
@@ -274,7 +272,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(0.0), $(1.5), {
                     minInterval: { value: $(1.51) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -285,7 +283,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(10), $(15), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['10', '11', '12', '13', '14', '15']);
         });
 
@@ -294,7 +292,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(10), $(15), {
                     minInterval: { value: $(1.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['10', '15']);
         });
 
@@ -303,7 +301,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(10), $(15), {
                     minInterval: { value: $(5.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['10']);
         });
 
@@ -314,7 +312,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(-10), $(-5), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['-10', '-9', '-8', '-7', '-6', '-5']);
         });
 
@@ -325,7 +323,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(-10), $(10), {
                     minInterval: { value: $(1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             let expectedStride = 1;
             let expectedTicks: string[] = [];
             for (let i = -10; i <= 10; i += expectedStride) {
@@ -342,7 +340,7 @@ describe('DecimalLinearScale', () => {
                 constraints: { minInterval: { value: $(1.1) } },
             };
             expect(getDecimalLinearTicks(input)).toEqual(
-                getExpectedDecimalLinearTicks(input),
+                getExpectedDecimalLinearTicks(input)
             );
         });
 
@@ -354,7 +352,7 @@ describe('DecimalLinearScale', () => {
                 constraints: { minInterval: { value: $(2.1) } },
             };
             expect(getDecimalLinearTicks(input)).toEqual(
-                getExpectedDecimalLinearTicks(input),
+                getExpectedDecimalLinearTicks(input)
             );
         });
 
@@ -363,7 +361,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(-10), $(10), {
                     minInterval: { value: $(5.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['-10', '0', '10']);
         });
 
@@ -372,7 +370,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(-10), $(10), {
                     minInterval: { value: $(10.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -381,7 +379,7 @@ describe('DecimalLinearScale', () => {
                 .getTicks($(-10), $(10), {
                     minInterval: { value: $(20.1) },
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0']);
         });
 
@@ -411,7 +409,7 @@ describe('DecimalLinearScale', () => {
                     minInterval: { value: $(1.1) },
                     expand: true,
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '2', '4', '6']);
         });
 
@@ -423,7 +421,7 @@ describe('DecimalLinearScale', () => {
                     minInterval: { value: $(10) },
                     radix: 24,
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '12', '24']);
         });
 
@@ -435,7 +433,7 @@ describe('DecimalLinearScale', () => {
                     minInterval: { value: $(30) },
                     radix: 60,
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '30', '60']);
         });
 
@@ -447,7 +445,7 @@ describe('DecimalLinearScale', () => {
                     minInterval: { value: $(0.11) },
                     excludeFactors: [2],
                 })
-                .map((x) => x.value.toString());
+                .map(x => x.value.toString());
             expect(x).toEqual(['0', '0.5', '1']);
         });
     });

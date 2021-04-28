@@ -57,7 +57,7 @@ export const findFactors = (value: Decimal.Value): Decimal[] => {
 
 export const findCommonFactors = (
     v1: Decimal.Value,
-    v2: Decimal.Value,
+    v2: Decimal.Value
 ): Decimal[] => {
     // let xOrig1 = new Decimal(v1);
     // let xOrig2 = new Decimal(v2);

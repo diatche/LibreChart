@@ -85,10 +85,10 @@ export default class Grid {
         // FIXME: Do only one update if both x and y layouts change.
         this._scaleLayoutUpdates = {
             x: plot.xLayout.updates.addObserver(() =>
-                this.update(updateOptions),
+                this.update(updateOptions)
             ),
             y: plot.yLayout.updates.addObserver(() =>
-                this.update(updateOptions),
+                this.update(updateOptions)
             ),
         };
     }

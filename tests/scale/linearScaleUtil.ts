@@ -21,18 +21,20 @@ export const getExpectedLinearTicks = (input: LinearTickInput): string[] => {
     }
     expect(expectedTicks.length).toBeGreaterThan(0);
     return expectedTicks;
-}
+};
 
 export const getLinearTicks = (input: LinearTickInput): string[] => {
-    return new LinearScale().getTicks(
-        $(input.start),
-        $(input.end),
-        input.constraints || {
-            minInterval: {
-                value: $(input.stride),
-            },
-        }
-    ).map(x => x.value.toString());
-}
+    return new LinearScale()
+        .getTicks(
+            $(input.start),
+            $(input.end),
+            input.constraints || {
+                minInterval: {
+                    value: $(input.stride),
+                },
+            }
+        )
+        .map(x => x.value.toString());
+};
 
 export const $ = (x: number) => x;

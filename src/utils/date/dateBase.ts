@@ -65,7 +65,7 @@ export const kCalendaryUnitMomentMap: ImmutableCalendarUnitMapping<moment.unitOf
  * @param iterator
  */
 export const mapDateUnits = <T>(
-    iterator: (dateUnit: DateUnit, index: number) => T,
+    iterator: (dateUnit: DateUnit, index: number) => T
 ): DateUnitMapping<T> => {
     let mapped: Partial<DateUnitMapping<T>> = {};
     for (let i = 0; i < kDateUnitsLength; i++) {
@@ -76,7 +76,7 @@ export const mapDateUnits = <T>(
 
 export const mapDateUnitObject = <U, V>(
     obj: DateUnitMapping<U>,
-    iterator: (value: U, dateUnit: DateUnit) => V,
+    iterator: (value: U, dateUnit: DateUnit) => V
 ): DateUnitMapping<V> => {
     let mapped: Partial<DateUnitMapping<V>> = {};
     for (let dateUnit of kDateUnitsAsc) {
@@ -106,7 +106,7 @@ export const kDateUnitUniformMs: DateUnitMapping<number> = {
  */
 export const kDateUnitUniformDecimalMs = mapDateUnitObject(
     kDateUnitUniformMs,
-    x => new Decimal(x),
+    x => new Decimal(x)
 );
 
 /**

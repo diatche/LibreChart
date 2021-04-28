@@ -24,7 +24,7 @@ export default class FixedScaleController<
     }
 
     getContentLimits(
-        options: ContentLimitOptions,
+        options: ContentLimitOptions
     ): [number, number] | undefined {
         return [this.min, this.max];
     }

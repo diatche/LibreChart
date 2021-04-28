@@ -9,7 +9,9 @@ export interface DecimalLinearTickInput {
     constraints?: ITickScaleConstraints<Decimal>;
 }
 
-export const getExpectedDecimalLinearTicks = (input: DecimalLinearTickInput): string[] => {
+export const getExpectedDecimalLinearTicks = (
+    input: DecimalLinearTickInput
+): string[] => {
     let start = $(input.start);
     let end = $(input.end);
     let stride = $(input.stride);
@@ -22,18 +24,22 @@ export const getExpectedDecimalLinearTicks = (input: DecimalLinearTickInput): st
     }
     expect(expectedTicks.length).toBeGreaterThan(0);
     return expectedTicks;
-}
+};
 
-export const getDecimalLinearTicks = (input: DecimalLinearTickInput): string[] => {
-    return new DecimalLinearScale().getTicks(
-        $(input.start),
-        $(input.end),
-        input.constraints || {
-            minInterval: {
-                value: $(input.stride),
-            },
-        }
-    ).map(x => x.value.toString());
-}
+export const getDecimalLinearTicks = (
+    input: DecimalLinearTickInput
+): string[] => {
+    return new DecimalLinearScale()
+        .getTicks(
+            $(input.start),
+            $(input.end),
+            input.constraints || {
+                minInterval: {
+                    value: $(input.stride),
+                },
+            }
+        )
+        .map(x => x.value.toString());
+};
 
 export const $ = (x: Decimal.Value) => new Decimal(x);

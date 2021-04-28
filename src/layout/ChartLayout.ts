@@ -75,7 +75,7 @@ export default class ChartLayout {
             {
                 relativeLength: this.containerSize$.x,
                 count: plotIndexRange?.[1].x || 1,
-            },
+            }
         );
     }
 
@@ -110,7 +110,7 @@ export default class ChartLayout {
         options: {
             count: number;
             relativeLength: Animated.Value;
-        },
+        }
     ): PlotLayoutSizeComponent[] {
         let { count } = options;
         if (count < 1) {
@@ -120,7 +120,7 @@ export default class ChartLayout {
         let flexTotal = count - sizes.length;
 
         const getFlex = (
-            size: PlotLayoutSizeComponentInput | undefined,
+            size: PlotLayoutSizeComponentInput | undefined
         ): number | undefined => {
             if (typeof size === 'undefined') {
                 return 1;
@@ -152,7 +152,7 @@ export default class ChartLayout {
     }
 
     private _validatedPlotLayouts(
-        props: ChartLayoutProps | undefined,
+        props: ChartLayoutProps | undefined
     ): PlotLayout[] {
         return PlotLayout.createMany(props?.plots);
     }
@@ -162,7 +162,7 @@ export default class ChartLayout {
      * Start is inclusive, end is exclusive.
      */
     private _getPlotLayoutIndexRange(
-        plots: PlotLayout[],
+        plots: PlotLayout[]
     ): [IPoint, IPoint] | undefined {
         if (plots.length === 0) {
             return undefined;

@@ -5,7 +5,7 @@ export default class DiscreteScale extends LinearScale {
     getTickScale(
         start: number,
         end: number,
-        constraints?: ITickScaleConstraints<number>,
+        constraints?: ITickScaleConstraints<number>
     ): ITickScale<number> {
         start = Math.floor(start);
         return {

@@ -42,7 +42,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
     getTickScale(
         start: Decimal,
         end: Decimal,
-        constraints?: ITickScaleConstraints<Decimal>,
+        constraints?: ITickScaleConstraints<Decimal>
     ): DecimalLinearTickScaleType {
         if (end.lte(start)) {
             return this.emptyScale();
@@ -69,7 +69,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
             let min = constraints.minInterval.value;
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error(
-                    'Minimum interval must be finite and with a positive length',
+                    'Minimum interval must be finite and with a positive length'
                 );
             }
             if (min.gt(minInterval)) {
@@ -81,7 +81,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
             let min = new Decimal(constraints.minInterval.location);
             if (min.lt(0) || min.isNaN() || !min.isFinite()) {
                 throw new Error(
-                    'Minimum interval must be finite and with a positive length',
+                    'Minimum interval must be finite and with a positive length'
                 );
             }
             if (min.gt(minInterval)) {
@@ -96,7 +96,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
             }
             if (maxCount.lt(0) || maxCount.isNaN()) {
                 throw new Error(
-                    'Max count must be greater than or equal to zero',
+                    'Max count must be greater than or equal to zero'
                 );
             }
             let min = len.div(maxCount);
@@ -107,7 +107,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
 
         if (minInterval.lte(0)) {
             throw new Error(
-                'Must specify either a minimum interval or a maximum interval count',
+                'Must specify either a minimum interval or a maximum interval count'
             );
         }
 
@@ -129,7 +129,7 @@ export default class DecimalLinearScale extends Scale<Decimal> {
         }
 
         let exponent = radix.pow(
-            Decimal.log10(minInterval).div(radixLog10).floor(),
+            Decimal.log10(minInterval).div(radixLog10).floor()
         );
         let startScaled = start.div(exponent).floor();
         let endScaled = end.div(exponent).ceil();

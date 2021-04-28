@@ -42,7 +42,7 @@ export namespace VectorUtil {
         xmin: number,
         ymin: number,
         xmax: number,
-        ymax: number,
+        ymax: number
     ): [number, number, number, number] | undefined => {
         if (xmin > xmax || ymin > ymax) {
             return undefined;
@@ -131,7 +131,7 @@ export namespace VectorUtil {
         xmin: number,
         ymin: number,
         xmax: number,
-        ymax: number,
+        ymax: number
     ): number => {
         // initialised as being inside of clip window
         let code = INSIDE;
@@ -166,7 +166,7 @@ export namespace VectorUtil {
      */
     export const isPointInClosedRange = (
         p: IPoint,
-        r: [IPoint, IPoint],
+        r: [IPoint, IPoint]
     ): boolean => {
         return p.x >= r[0].x && p.x <= r[1].x && p.y >= r[0].y && p.y <= r[1].y;
     };
@@ -189,7 +189,7 @@ export namespace VectorUtil {
         x2: number,
         y2: number,
         w2: number,
-        h2: number,
+        h2: number
     ): boolean => {
         return (
             (isFinite(w1) ? x2 < x1 + w1 : w1 > 0) &&

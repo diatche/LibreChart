@@ -54,14 +54,14 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
 
                 // Render plot inside row
                 rowPlots.push(
-                    <Plot key={j} layout={plot} style={columnStyle} />,
+                    <Plot key={j} layout={plot} style={columnStyle} />
                 );
             }
             // Render row
             rows.push(
                 <Animated.View key={i} style={[styles.row, rowStyle]}>
                     {rowPlots}
-                </Animated.View>,
+                </Animated.View>
             );
         }
 
@@ -83,7 +83,7 @@ export default class Chart extends React.PureComponent<ChartProps, ChartState> {
                     {
                         // listener: event => {},
                         useNativeDriver: false,
-                    },
+                    }
                 )}
                 style={[styles.container, styleFromTheme, this.props.style]}
             >

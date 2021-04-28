@@ -22,7 +22,7 @@ export namespace Observable {
                     } catch (error) {
                         console.error(
                             'Uncaught error in observer: ' +
-                                (error?.message || error),
+                                (error?.message || error)
                         );
                     }
                 }

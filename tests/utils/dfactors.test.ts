@@ -1,13 +1,8 @@
 import Decimal from 'decimal.js';
-import {
-    findCommonFactors,
-    findFactors,
-} from '../../src/utils/dfactors';
+import { findCommonFactors, findFactors } from '../../src/utils/dfactors';
 
 describe('dfactors', () => {
-
     describe('findFactors', () => {
-
         it('should find all factors of 2', () => {
             let factors = findFactors(2).map(x => x.toNumber());
             expect(factors).toEqual([1, 2]);
@@ -55,7 +50,6 @@ describe('dfactors', () => {
     });
 
     describe('findCommonFactors', () => {
-
         it('should find all factors of 8 and 12', () => {
             let factors = findCommonFactors(8, 12).map(x => x.toNumber());
             expect(factors).toEqual([1, 2, 4]);

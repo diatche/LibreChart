@@ -37,7 +37,7 @@ export default class LinearScale extends Scale<number> {
     getTickScale(
         start: number,
         end: number,
-        constraints?: ITickScaleConstraints<number>,
+        constraints?: ITickScaleConstraints<number>
     ): LinearTickScaleType {
         if (end <= start) {
             return this.emptyScale();
@@ -59,7 +59,7 @@ export default class LinearScale extends Scale<number> {
             let min = constraints.minInterval.value;
             if (min < 0 || isNaN(min) || !isFinite(min)) {
                 throw new Error(
-                    'Minimum interval must be finite and with a positive length',
+                    'Minimum interval must be finite and with a positive length'
                 );
             }
             if (min > minInterval) {
@@ -71,7 +71,7 @@ export default class LinearScale extends Scale<number> {
             let min = constraints.minInterval.location;
             if (min < 0 || isNaN(min) || !isFinite(min)) {
                 throw new Error(
-                    'Minimum interval must be finite and with a positive length',
+                    'Minimum interval must be finite and with a positive length'
                 );
             }
             if (min > minInterval) {
@@ -86,7 +86,7 @@ export default class LinearScale extends Scale<number> {
             }
             if (maxCount < 0 || isNaN(maxCount)) {
                 throw new Error(
-                    'Max count must be greater than or equal to zero',
+                    'Max count must be greater than or equal to zero'
                 );
             }
             let min = len / maxCount;
@@ -97,7 +97,7 @@ export default class LinearScale extends Scale<number> {
 
         if (minInterval <= 0) {
             throw new Error(
-                'Must specify either a minimum interval or a maximum interval count',
+                'Must specify either a minimum interval or a maximum interval count'
             );
         }
 
@@ -120,7 +120,7 @@ export default class LinearScale extends Scale<number> {
 
         let exponent = Math.pow(
             radix,
-            Math.floor(Math.log10(minInterval) / radixLog10),
+            Math.floor(Math.log10(minInterval) / radixLog10)
         );
         let startScaled = Math.floor(start / exponent);
         let endScaled = Math.ceil(end / exponent);

@@ -45,7 +45,7 @@ export const getCalendarFormat = (
         dateFormat?: string;
         timeFormat?: string;
         locale?: string;
-    } = {},
+    } = {}
 ): CalendarSpec | undefined => {
     const { dateFormat = 'L', timeFormat, locale = moment.locale() } = options;
     const defaultCal = defaultCalendarFormatWithoutTime(locale);
@@ -145,8 +145,7 @@ export const shortLocalizedDateFormat = () => {
             moment().format(format);
         } catch (err) {
             console.warn(
-                'Failed to format moment with "ll", falling back to "L". ' +
-                    err,
+                'Failed to format moment with "ll", falling back to "L". ' + err
             );
             format = 'L';
         }
@@ -214,7 +213,7 @@ const DATE_UNIT_FORMAT_INDEX_TABLE_DEFAULT: { [unit: string]: number } = {
 };
 
 const _dateUnitFormatIndexTable = (
-    locale?: string,
+    locale?: string
 ): { [unit: string]: number } => {
     locale = locale || moment.locale();
     let order = _localeData[locale]?.dateUnitFormatIndexTable;

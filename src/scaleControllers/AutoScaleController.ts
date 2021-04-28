@@ -40,7 +40,7 @@ export default class AutoScaleController<
                 this.anchor < this.defaultMin
             ) {
                 console.warn(
-                    `Autoscale anchor (${this.anchor}) is below defaultMin value (${this.defaultMin})`,
+                    `Autoscale anchor (${this.anchor}) is below defaultMin value (${this.defaultMin})`
                 );
             }
             if (
@@ -48,7 +48,7 @@ export default class AutoScaleController<
                 this.anchor > this.defaultMax
             ) {
                 console.warn(
-                    `Autoscale anchor (${this.anchor}) is above defaultMax value (${this.defaultMax})`,
+                    `Autoscale anchor (${this.anchor}) is above defaultMax value (${this.defaultMax})`
                 );
             }
         }
@@ -89,7 +89,7 @@ export default class AutoScaleController<
     }
 
     getContentLimits(
-        options: ContentLimitOptions,
+        options: ContentLimitOptions
     ): [number, number] | undefined {
         const hasAnchor = typeof this.anchor !== 'undefined';
         let anchor = this.anchor || 0;
@@ -143,7 +143,7 @@ export default class AutoScaleController<
 
     private _getDataSouceLimits(
         dataSource: DataSource,
-        visibleRange: [IPoint, IPoint],
+        visibleRange: [IPoint, IPoint]
     ): [number, number] | undefined {
         // Get data range
         let rect = dataSource.getDataBoundingRectInRange(visibleRange);

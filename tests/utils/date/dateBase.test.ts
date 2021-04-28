@@ -1,12 +1,11 @@
 import {
-    compareDateUnits, kDateUnitUniformDecimalMs,
+    compareDateUnits,
+    kDateUnitUniformDecimalMs,
 } from '../../../src/utils/date/dateBase';
 
 describe('dateBase', () => {
-
     describe('kDateUnitUniformDecimalMs', () => {
-
-        it ('should have correct values', () => {
+        it('should have correct values', () => {
             const ms = kDateUnitUniformDecimalMs;
             expect(ms['year'].div(ms['month']).toNumber()).toBe(12);
             expect(ms['month'].div(ms['day']).toNumber()).toBe(30);
@@ -19,7 +18,6 @@ describe('dateBase', () => {
     });
 
     describe('compareDateUnits', () => {
-
         it('should compare correctly', () => {
             expect(compareDateUnits('hour', 'second')).toBe(2);
             expect(compareDateUnits('hour', 'minute')).toBe(1);

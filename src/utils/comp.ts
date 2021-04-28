@@ -17,7 +17,7 @@ export interface IMatcher<T = any> {
 export const isMatch = (
     object: any,
     source: any,
-    matchers?: IMatcher[],
+    matchers?: IMatcher[]
 ): boolean => {
     if (!matchers) {
         return isMatchWith(object, source, () => undefined);

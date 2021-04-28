@@ -32,7 +32,7 @@ export const formatDate = (
         locale?: string;
         showYear?: boolean;
         style?: 'compact' | 'long';
-    },
+    }
 ): string => {
     const {
         relativeDay = false,
@@ -74,7 +74,7 @@ export const formatDate = (
 
         const withoutCurrentYear = (
             dateFormat: string,
-            timeFormat?: string,
+            timeFormat?: string
         ) => {
             let cleanTimeFormat = timeFormat ? ', ' + timeFormat : '';
             let format = dateFormat + cleanTimeFormat;
@@ -136,7 +136,7 @@ export const formatDateDelta = (
         now?: Moment;
         weekdays?: boolean;
         locale?: string;
-    } = {},
+    } = {}
 ): {
     title: string;
     unit?: DateUnit;

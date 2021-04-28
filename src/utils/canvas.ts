@@ -8,7 +8,7 @@ export type LinePath = d3.Line<IPoint>;
 
 const kLine: LinePath = d3.line<IPoint>(
     p => p.x,
-    p => p.y,
+    p => p.y
 );
 
 export namespace CanvasUtil {
@@ -47,7 +47,7 @@ export namespace CanvasUtil {
         points: IPoint[],
         options?: {
             curve?: PathCurve;
-        },
+        }
     ): string => {
         let line = createLinePath(options);
         return line(points) || '';

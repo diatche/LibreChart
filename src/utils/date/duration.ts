@@ -21,7 +21,7 @@ export interface IRoundingOptions extends IRoundingBaseOptions {
 export const dateIntervalLength = (
     origin: Moment,
     date: Moment,
-    unit: DateUnit,
+    unit: DateUnit
 ): number => {
     let days = 0;
     if (compareDateUnits(unit, 'day') < 0) {
@@ -68,7 +68,7 @@ export const dateIntervalLength = (
 export const stepDateLinear = (
     date: Moment,
     step: number,
-    unit: DateUnit,
+    unit: DateUnit
 ): Moment => {
     if (Math.abs(step) > 1) {
         date = date.clone();
@@ -110,7 +110,7 @@ export const stepDateLinear = (
 export const interpolatedDate = (
     date1: Moment,
     date2: Moment,
-    position: number,
+    position: number
 ): Moment => {
     // TODO: use decimal for position
     let length = date2.diff(date1, 'ms');
@@ -131,7 +131,7 @@ export const roundDate = (
     date: Moment,
     value: number,
     unit: DateUnit,
-    options: IRoundingOptions = {},
+    options: IRoundingOptions = {}
 ): Moment => {
     if (value <= 0) {
         throw new Error('Rounding value must be positive');
@@ -231,7 +231,7 @@ export const floorDate = (
     date: Moment,
     value: number,
     unit: DateUnit,
-    options: IRoundingBaseOptions = {},
+    options: IRoundingBaseOptions = {}
 ): Moment => {
     if (value <= 0) {
         throw new Error('Rounding value must be positive');
@@ -250,7 +250,7 @@ export const ceilDate = (
     date: Moment,
     value: number,
     unit: DateUnit,
-    options?: IRoundingBaseOptions,
+    options?: IRoundingBaseOptions
 ): Moment => {
     let fDate = floorDate(date, value, unit, options);
     if (fDate.isSame(date)) {
@@ -297,7 +297,7 @@ export const getRoundingOriginUnit = (unit: DateUnit): DateUnit | undefined => {
 export const getRoundingOriginDate = (
     date: Moment,
     unit: DateUnit,
-    options: IRoundingBaseOptions = {},
+    options: IRoundingBaseOptions = {}
 ): Moment => {
     if (options.originDate) {
         return options.originDate;
@@ -312,7 +312,7 @@ export const getRoundingOriginDate = (
 };
 
 export const dateUnitsWithDuration = (
-    duration: moment.Duration,
+    duration: moment.Duration
 ): [number, DateUnit] => {
     let dateUnit: DateUnit | undefined;
     let unitValue = 0;
@@ -324,7 +324,7 @@ export const dateUnitsWithDuration = (
         if (isDateUnit(calUnit)) {
             if (dateUnit) {
                 throw new Error(
-                    `Durations with multiple units is not supported`,
+                    `Durations with multiple units is not supported`
                 );
             }
             dateUnit = calUnit;
@@ -353,7 +353,7 @@ export const addUniformMs = (
     ms: number,
     options?: {
         maxDateUnit?: DateUnit;
-    },
+    }
 ): Moment => {
     let d = date.clone();
     if (ms === 0) {

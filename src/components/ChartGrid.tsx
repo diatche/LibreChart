@@ -44,11 +44,11 @@ const ChartGrid = React.memo((props: ChartGridProps) => {
     for (let i = 0; i < props.majorCountX; i++) {
         xMajorGridItems.push(<View key={`xa${i}`} style={xMajorGridStyle} />);
         xMinorGridItems.push(
-            <View key={`xa${i}`} style={styles.placeholder} />,
+            <View key={`xa${i}`} style={styles.placeholder} />
         );
         for (let j = 0; j < props.minorCountX; j++) {
             xMinorGridItems.push(
-                <View key={`xi${i},${j}`} style={xMinorGridStyle} />,
+                <View key={`xi${i},${j}`} style={xMinorGridStyle} />
             );
         }
     }
@@ -58,11 +58,11 @@ const ChartGrid = React.memo((props: ChartGridProps) => {
     for (let i = 0; i < props.majorCountY; i++) {
         yMajorGridItems.push(<View key={`ya${i}`} style={yMajorGridStyle} />);
         yMinorGridItems.push(
-            <View key={`ya${i}`} style={styles.placeholder} />,
+            <View key={`ya${i}`} style={styles.placeholder} />
         );
         for (let j = 0; j < props.minorCountY; j++) {
             yMinorGridItems.push(
-                <View key={`yi${i},${j}`} style={yMinorGridStyle} />,
+                <View key={`yi${i},${j}`} style={yMinorGridStyle} />
             );
         }
     }

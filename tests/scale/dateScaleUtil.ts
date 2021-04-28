@@ -26,18 +26,19 @@ export const getExpectedDateTicks = (input: DateTickInput): string[] => {
     }
     expect(expectedTicks.length).toBeGreaterThan(0);
     return expectedTicks;
-}
+};
 
-export const getDateTicks = (input: DateTickInput & IDateScaleOptions): string[] => {
-    let constraints: IDateScaleOptions & ITickScaleConstraints<moment.Duration> = {
+export const getDateTicks = (
+    input: DateTickInput & IDateScaleOptions
+): string[] => {
+    let constraints: IDateScaleOptions &
+        ITickScaleConstraints<moment.Duration> = {
         minInterval: {
             value: input.stride,
         },
         ...input.constraints,
     };
-    return new DateScale(constraints).getTicks(
-        input.start,
-        input.end,
-        constraints
-    ).map(({ value: date }) => date.format(input.format));
-}
+    return new DateScale(constraints)
+        .getTicks(input.start, input.end, constraints)
+        .map(({ value: date }) => date.format(input.format));
+};
