@@ -4,6 +4,9 @@ export * from './utils/colors';
 
 export * from './utils/date';
 
+import { Observable } from './utils/observable';
+export { Observable };
+
 export { default as Scale } from './scale/Scale';
 export * from './scale/Scale';
 
