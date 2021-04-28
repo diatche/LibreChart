@@ -544,6 +544,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
                 });
             } else {
                 this.layoutInfo.thickness$.setValue(thickness);
+                this.plot.didChangePlotSize();
             }
 
             this.onThicknessChange?.(thickness, previousThickness);
