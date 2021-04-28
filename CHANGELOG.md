@@ -6,7 +6,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 
 ### Bug Fixes
 
--   Fixed a bug where the axis background would not fill completely when an axis thickness was specified.
+-   [[#40](https://github.com/diatche/LibreChart/pull/40)] Fixed a bug where the axis background would not fill completely when an axis thickness was specified.
 
 ## 0.9.0
 
