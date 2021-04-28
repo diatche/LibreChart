@@ -76,10 +76,10 @@ export default abstract class DataSource<T = any, X = number, Y = number>
         // FIXME: Do only one update if both x and y layouts change.
         this._scaleLayoutUpdates = {
             x: plot.xLayout.updates.addObserver(() =>
-                this.update(updateOptions),
+                this.update(updateOptions)
             ),
             y: plot.yLayout.updates.addObserver(() =>
-                this.update(updateOptions),
+                this.update(updateOptions)
             ),
         };
     }
@@ -94,7 +94,7 @@ export default abstract class DataSource<T = any, X = number, Y = number>
         }
     }
 
-    update(updateOptions: IItemUpdateManyOptions) {
+    update(updateOptions?: IItemUpdateManyOptions) {
         this.layout?.updateItems(updateOptions);
     }
 
@@ -105,7 +105,7 @@ export default abstract class DataSource<T = any, X = number, Y = number>
     abstract createLayoutSource(): LayoutSource;
 
     getDataBoundingRectInRange(
-        pointRange: [IPoint, IPoint],
+        pointRange: [IPoint, IPoint]
     ): [IPoint, IPoint] | undefined {
         // Get data range
         let rects = this.getDataRectsInRange(pointRange, { partial: true });
@@ -142,7 +142,7 @@ export default abstract class DataSource<T = any, X = number, Y = number>
 
     getDataRectsInRange(
         pointRange: [IPoint, IPoint],
-        options?: IItemsInLocationRangeOptions,
+        options?: IItemsInLocationRangeOptions
     ): IDataRect[] {
         let points: IDataRect[] = [];
         let xLen = pointRange[1].x - pointRange[0].x;
@@ -161,7 +161,7 @@ export default abstract class DataSource<T = any, X = number, Y = number>
                           pointRange[0].x,
                           pointRange[0].y,
                           xLen,
-                          yLen,
+                          yLen
                       )
             ) {
                 points.push({
@@ -191,7 +191,7 @@ export default abstract class DataSource<T = any, X = number, Y = number>
                           pointRange[0].x,
                           pointRange[0].y,
                           xLen,
-                          yLen,
+                          yLen
                       )
             ) {
                 indexes.push(i);
