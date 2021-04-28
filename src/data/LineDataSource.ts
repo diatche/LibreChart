@@ -8,7 +8,7 @@ import { VectorUtil } from '../utils/vectorUtil';
 import { LinePath, PathCurve, CanvasUtil } from '../utils/canvas';
 import PlotLayout from '../layout/PlotLayout';
 import _ from 'lodash';
-import { Animated } from 'react-native';
+import { Animated, InteractionManager } from 'react-native';
 
 export interface ILinePoint extends IDataRect {
     clipped: boolean;
@@ -32,7 +32,7 @@ export default class LineDataSource<
 > extends DataSource<T, X, Y> {
     style: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
-    renderOnScaleDebounceInterval = 50;
+    renderOnScaleDebounceInterval = 200;
 
     private _scale$?: Animated.ValueXY;
     private _scaleUpdates?: string;
@@ -67,7 +67,10 @@ export default class LineDataSource<
     }
 
     private _updateOnScaleDebounced = _.debounce(
-        () => this.update({ visible: true, forceRender: true }),
+        () =>
+            InteractionManager.runAfterInteractions(() =>
+                this.update({ visible: true, forceRender: true })
+            ),
         this.renderOnScaleDebounceInterval
     );
 
