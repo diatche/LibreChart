@@ -279,13 +279,7 @@ export default class Chart extends React.PureComponent<PlotProps, ChartState> {
         if (axis.hidden) {
             return null;
         }
-        return (
-            <ChartAxisBackground
-                {...axis.style}
-                axisType={axis.axisType}
-                targetThickness={axis.layoutInfo.targetThickness}
-            />
-        );
+        return <ChartAxisBackground {...axis.style} axisType={axis.axisType} />;
     }
 
     renderGrid(plot: PlotLayout): React.ReactNode {

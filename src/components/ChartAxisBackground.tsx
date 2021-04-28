@@ -5,7 +5,6 @@ import { AxisType, IAxisBackgroundStyle } from '../layout/axis/axisTypes';
 export interface ChartAxisBackgroundProps
     extends Omit<IAxisBackgroundStyle, 'axisThickness'> {
     axisType: AxisType;
-    targetThickness?: number;
 }
 
 const ChartAxisBackground = React.memo((props: ChartAxisBackgroundProps) => {
@@ -13,20 +12,6 @@ const ChartAxisBackground = React.memo((props: ChartAxisBackgroundProps) => {
         borderColor: props.axisLineColor,
         backgroundColor: props.axisBackgroundColor,
     };
-    switch (props.axisType) {
-        case 'topAxis':
-        case 'bottomAxis':
-            if (props.targetThickness) {
-                containerStyle.height = props.targetThickness;
-            }
-            break;
-        case 'leftAxis':
-        case 'rightAxis':
-            if (props.targetThickness) {
-                containerStyle.width = props.targetThickness;
-            }
-            break;
-    }
     switch (props.axisType) {
         case 'topAxis':
             containerStyle.borderBottomWidth = props.axisLineThickness;
