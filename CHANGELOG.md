@@ -7,7 +7,7 @@ Changes on the `main` branch, but not yet released, will be listed here.
 ### Bug Fixes
 
 -   [[#40](https://github.com/diatche/LibreChart/pull/40)] Fixed a bug where the axis background would not fill completely when an axis thickness was specified.
--   Fixed a bug where zooming in would sometimes freeze on iOS when using `LineDataSource`.
+-   [[#41](https://github.com/diatche/LibreChart/pull/41)] Fixed a bug where zooming in would sometimes freeze on iOS when using `LineDataSource`.
 
 ## 0.9.0
 
