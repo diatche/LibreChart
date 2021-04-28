@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Bug Fixes
+
+-   Fixed a bug where the axis background would not fill completely when an axis thickness was specified.
+
 ## 0.9.0
 
 **27 Apr 2021**
