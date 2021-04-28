@@ -27,7 +27,7 @@ interface IScaleLayoutLengthBaseInfo {
     /** Number of major axis intervals per axis container. */
     majorCount: number;
 
-    /** Number of minor axis intervals per axis container. */
+    /** Number of minor axis intervals per major axis interval. */
     minorCount: number;
 
     /** Grid container length in content coordinates. */
