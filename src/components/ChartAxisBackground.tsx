@@ -1,16 +1,32 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, Animated, ViewProps } from 'react-native';
 import { AxisType, IAxisBackgroundStyle } from '../layout/axis/axisTypes';
 
-export interface ChartAxisBackgroundProps extends IAxisBackgroundStyle {
+export interface ChartAxisBackgroundProps
+    extends Omit<IAxisBackgroundStyle, 'axisThickness'> {
     axisType: AxisType;
+    targetThickness?: number;
 }
 
 const ChartAxisBackground = React.memo((props: ChartAxisBackgroundProps) => {
-    let containerStyle: ViewStyle = {
+    let containerStyle: Animated.AnimatedProps<ViewProps>['style'] = {
         borderColor: props.axisLineColor,
         backgroundColor: props.axisBackgroundColor,
     };
+    switch (props.axisType) {
+        case 'topAxis':
+        case 'bottomAxis':
+            if (props.targetThickness) {
+                containerStyle.height = props.targetThickness;
+            }
+            break;
+        case 'leftAxis':
+        case 'rightAxis':
+            if (props.targetThickness) {
+                containerStyle.width = props.targetThickness;
+            }
+            break;
+    }
     switch (props.axisType) {
         case 'topAxis':
             containerStyle.borderBottomWidth = props.axisLineThickness;
@@ -26,7 +42,7 @@ const ChartAxisBackground = React.memo((props: ChartAxisBackgroundProps) => {
             break;
     }
 
-    return <View style={[styles.container, containerStyle]} />;
+    return <Animated.View style={[styles.container, containerStyle]} />;
 });
 
 const styles = StyleSheet.create({
