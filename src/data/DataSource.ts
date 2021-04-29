@@ -3,13 +3,23 @@ import {
     IPoint,
     isPointInRange,
     LayoutSource,
-    weakref,
     zeroPoint,
 } from 'evergrid';
-import { ChartDataType, IDataSourceRect, IDataRect, IRect } from '../types';
+import {
+    ChartDataType,
+    IDataSourceRect,
+    IDataRect,
+    IRect,
+    Cancelable,
+} from '../types';
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
 import { VectorUtil } from '../utils/vectorUtil';
+import { InteractionManager } from 'react-native';
+import debounce from 'lodash.debounce';
+import { WeakRef } from '@ungap/weakrefs';
+
+const kUpdateDebounceInterval = 100;
 
 let _idCounter = 0;
 
@@ -34,7 +44,7 @@ export default abstract class DataSource<T = any, X = number, Y = number>
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     layout?: LayoutSource;
 
-    private _plotWeakRef = weakref<PlotLayout<X, Y>>();
+    private _plotWeakRef?: WeakRef<PlotLayout<X, Y>>;
     private _scaleLayoutUpdates?: {
         x: Observable.IObserver;
         y: Observable.IObserver;
@@ -54,14 +64,18 @@ export default abstract class DataSource<T = any, X = number, Y = number>
     }
 
     get plot(): PlotLayout<X, Y> {
-        return this._plotWeakRef.getOrFail();
+        let plot = this._plotWeakRef?.deref();
+        if (!plot) {
+            throw new Error('Trying to access a released object');
+        }
+        return plot;
     }
 
     set plot(plot: PlotLayout<X, Y>) {
         if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
-        this._plotWeakRef.set(plot);
+        this._plotWeakRef = new WeakRef(plot);
     }
 
     configure(plot: PlotLayout<X, Y>) {
@@ -94,7 +108,44 @@ export default abstract class DataSource<T = any, X = number, Y = number>
         }
     }
 
+    setNeedsUpdate(updateOptions?: IItemUpdateManyOptions) {
+        this._mergedUpdateOptions = {
+            ...this._mergedUpdateOptions,
+            ...updateOptions,
+        };
+
+        if (this._scheduledUpdate) {
+            return;
+        }
+
+        this._scheduledUpdate = InteractionManager.runAfterInteractions(() =>
+            this._debouncedUpdate()
+        );
+    }
+
+    cancelUpdate() {
+        this._mergedUpdateOptions = {};
+        if (this._scheduledUpdate) {
+            this._scheduledUpdate.cancel();
+            this._scheduledUpdate = undefined;
+        }
+        this._debouncedUpdate.cancel();
+    }
+
+    private _scheduledUpdate?: Cancelable;
+    private _mergedUpdateOptions: IItemUpdateManyOptions = {};
+
+    private _debouncedUpdate = debounce(
+        () => this.update(),
+        kUpdateDebounceInterval
+    );
+
     update(updateOptions?: IItemUpdateManyOptions) {
+        updateOptions = {
+            ...this._mergedUpdateOptions,
+            ...updateOptions,
+        };
+        this.cancelUpdate();
         this.layout?.updateItems(updateOptions);
     }
 

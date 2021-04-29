@@ -4,13 +4,13 @@ import {
     LayoutSource,
     FlatLayoutSource,
     LayoutSourceProps,
-    weakref,
 } from 'evergrid';
 import { kChartGridStyleLightDefaults, kGridReuseID } from '../const';
 import { IChartGridStyle, IChartGridStyleInput } from '../types';
 import { PlotLayout } from '../internal';
 import { Observable } from '../utils/observable';
 import { PartialChartTheme } from '../theme';
+import { WeakRef } from '@ungap/weakrefs';
 
 export interface IChartGridInput {
     /**
@@ -43,7 +43,7 @@ export default class Grid {
 
     layout?: LayoutSource;
 
-    private _plotWeakRef = weakref<PlotLayout>();
+    private _plotWeakRef?: WeakRef<PlotLayout>;
     private _scaleLayoutUpdates?: {
         x: Observable.IObserver;
         y: Observable.IObserver;
@@ -63,14 +63,18 @@ export default class Grid {
     }
 
     get plot(): PlotLayout {
-        return this._plotWeakRef.getOrFail();
+        let plot = this._plotWeakRef?.deref();
+        if (!plot) {
+            throw new Error('Trying to access a released object');
+        }
+        return plot;
     }
 
     set plot(plot: PlotLayout) {
         if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
-        this._plotWeakRef.set(plot);
+        this._plotWeakRef = new WeakRef(plot);
     }
 
     configure(plot: PlotLayout) {

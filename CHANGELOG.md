@@ -4,11 +4,20 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Features
+
+-   [[#42](https://github.com/diatche/LibreChart/pull/42)] Added update scheduling to `DataSource`.
+
 ### Bug Fixes
 
--   [[#41](https://github.com/diatche/LibreChart/pull/41)] Fixed a bug where zooming in would sometimes freeze on iOS when using `LineDataSource`.
+-   [[#41](https://github.com/diatche/LibreChart/pull/41), [#42](https://github.com/diatche/LibreChart/pull/42)] Fixed a bug where zooming in would sometimes freeze on iOS when using `LineDataSource`.
 -   Added missing `Observable` export.
 -   Fix a bug when using `scrollTo` with scale controllers.
+-   [[#42](https://github.com/diatche/LibreChart/pull/42)] Fixed bugs with shared scale layouts by upgrading to [Evergrid v0.3.0](https://github.com/diatche/evergrid/blob/master/CHANGELOG.md#030)).
+
+### Breaking Changes
+
+-   [[#42](https://github.com/diatche/LibreChart/pull/42)] See [Evergrid v0.3.0 breaking changes](https://github.com/diatche/evergrid/blob/master/CHANGELOG.md#030).
 
 ## 0.9.0
 

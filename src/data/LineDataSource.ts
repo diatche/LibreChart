@@ -7,8 +7,7 @@ import { ChartDataType, IDataRect, IPointStyle, IStrokeStyle } from '../types';
 import { VectorUtil } from '../utils/vectorUtil';
 import { LinePath, PathCurve, CanvasUtil } from '../utils/canvas';
 import PlotLayout from '../layout/PlotLayout';
-import _ from 'lodash';
-import { Animated, InteractionManager } from 'react-native';
+import { Animated } from 'react-native';
 
 export interface ILinePoint extends IDataRect {
     clipped: boolean;
@@ -32,7 +31,6 @@ export default class LineDataSource<
 > extends DataSource<T, X, Y> {
     style: ILineDataStyle;
     itemStyle?: (item: T, info: ILinePoint) => ILineDataStyle | undefined;
-    renderOnScaleDebounceInterval = 200;
 
     private _scale$?: Animated.ValueXY;
     private _scaleUpdates?: string;
@@ -55,7 +53,7 @@ export default class LineDataSource<
         super.configure(plot);
         this._scale$ = plot.scale$;
         this._scaleUpdates = this._scale$.addListener(() =>
-            this._updateOnScaleDebounced()
+            this.setNeedsUpdate({ visible: true, forceRender: true })
         );
     }
 
@@ -65,14 +63,6 @@ export default class LineDataSource<
             this._scale$?.removeListener(this._scaleUpdates);
         }
     }
-
-    private _updateOnScaleDebounced = _.debounce(
-        () =>
-            InteractionManager.runAfterInteractions(() =>
-                this.update({ visible: true, forceRender: true })
-            ),
-        this.renderOnScaleDebounceInterval
-    );
 
     getDataRectsInRange(
         pointRange: [IPoint, IPoint],

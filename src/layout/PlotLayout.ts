@@ -2,7 +2,6 @@ import {
     LayoutSource,
     IPoint,
     zeroPoint,
-    weakref,
     LayoutSourceProps,
     EvergridLayoutCallbacks,
     EvergridLayoutProps,
@@ -22,15 +21,9 @@ import {
     IChartGridInput,
     ScaleLayout,
 } from '../internal';
-import { Animated, InteractionManager } from 'react-native';
-import { Cancelable } from '../types';
-import debounce from 'lodash.debounce';
+import { Animated } from 'react-native';
 import { PartialChartTheme } from '../theme';
-
-const kGridUpdateDebounceInterval = 100;
-const kDefaultUpdateInfo: IUpdateInfo = {
-    initial: false,
-};
+import { WeakRef } from '@ungap/weakrefs';
 
 export interface PlotLayoutOptions<X = any, Y = any, DX = any, DY = any>
     extends EvergridLayoutCallbacks,
@@ -75,7 +68,7 @@ export default class PlotLayout<
     // /** Reference grid layout (not displayed). */
     // refLayout?: GridLayoutSource;
 
-    private _chartWeakRef = weakref<ChartLayout>();
+    private _chartWeakRef?: WeakRef<ChartLayout>;
 
     constructor(options?: PlotLayoutOptions<X, Y, DX, DY>) {
         super(options);
@@ -95,11 +88,12 @@ export default class PlotLayout<
     /**
      * Normalizes or creates plots from options.
      *
-     * By default, plots with no index are distributed into rows.
-     * Set `columns` to `true` to distribute into columns.
+     * @param input Plot layouts or options.
      *
-     * @param input
-     * @param options
+     * @param options.columns
+     * By default, plots with no index are distributed into rows. Set `columns` to `true` to distribute into columns.
+     *
+     * @returns Plot layouts.
      */
     static createMany(
         input: PlotLayoutManyInput | undefined,
@@ -151,14 +145,18 @@ export default class PlotLayout<
     }
 
     get chart(): ChartLayout {
-        return this._chartWeakRef.getOrFail();
+        let chart = this._chartWeakRef?.deref();
+        if (!chart) {
+            throw new Error('Trying to access a released object');
+        }
+        return chart;
     }
 
     set chart(chart: ChartLayout) {
         if (!chart || !(chart instanceof ChartLayout)) {
             throw new Error('Invalid chart');
         }
-        this._chartWeakRef.set(chart);
+        this._chartWeakRef = new WeakRef(chart);
     }
 
     configurePlot(chart: ChartLayout) {
@@ -257,12 +255,12 @@ export default class PlotLayout<
         this.xLayout.update();
         this.yLayout.update();
 
-        this.scrollBy({
-            offset: {
-                x: this.xLayout.layoutInfo.recenteringOffset,
-                y: this.yLayout.layoutInfo.recenteringOffset,
-            },
-        });
+        // this.scrollBy({
+        //     offset: {
+        //         x: this.xLayout.layoutInfo.recenteringOffset,
+        //         y: this.yLayout.layoutInfo.recenteringOffset,
+        //     },
+        // });
     }
 
     scrollToValueRange(

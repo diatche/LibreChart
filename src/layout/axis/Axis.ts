@@ -4,8 +4,6 @@ import {
     FlatLayoutSourceProps,
     IItemUpdateManyOptions,
     isRangeEmpty,
-    normalizeAnimatedValue,
-    weakref,
 } from 'evergrid';
 import { WeakRef } from '@ungap/weakrefs';
 import {
@@ -124,7 +122,7 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
      */
     backgroundLayout?: FlatLayoutSource;
 
-    private _plotWeakRef = weakref<PlotLayout>();
+    private _plotWeakRef?: WeakRef<PlotLayout>;
     private _scaleLayout?: ScaleLayout<T, DT>;
     private _scaleLayoutUpdates?: Observable.IObserver;
     private _axisThicknessUpdates?: string;
@@ -279,14 +277,18 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     }
 
     get plot(): PlotLayout {
-        return this._plotWeakRef.getOrFail();
+        let plot = this._plotWeakRef?.deref();
+        if (!plot) {
+            throw new Error('Trying to access a released object');
+        }
+        return plot;
     }
 
     set plot(plot: PlotLayout) {
         if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
-        this._plotWeakRef.set(plot);
+        this._plotWeakRef = new WeakRef(plot);
     }
 
     get scaleLayout(): ScaleLayout<T, DT> | undefined {

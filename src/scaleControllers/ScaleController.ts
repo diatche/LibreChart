@@ -1,4 +1,5 @@
-import { IAnimationBaseOptions, IInsets, IPoint, weakref } from 'evergrid';
+import { WeakRef } from '@ungap/weakrefs';
+import { IAnimationBaseOptions, IInsets, IPoint } from 'evergrid';
 import debounce from 'lodash.debounce';
 import { InteractionManager } from 'react-native';
 import { ScaleLayout } from '../internal';
@@ -42,7 +43,7 @@ export default abstract class ScaleController<T = any, D = any> {
 
     private _min = 0;
     private _max = 0;
-    private _scaleLayoutWeakRef = weakref<ScaleLayout<T, D>>();
+    private _scaleLayoutWeakRef?: WeakRef<ScaleLayout<T, D>>;
     private _containerSize?: IPoint;
 
     constructor(options: ScaleControllerOptions) {
@@ -97,18 +98,22 @@ export default abstract class ScaleController<T = any, D = any> {
     ): [number, number] | undefined;
 
     get scaleLayout(): ScaleLayout<T, D> {
-        return this._scaleLayoutWeakRef.getOrFail();
+        let layout = this._scaleLayoutWeakRef?.deref();
+        if (!layout) {
+            throw new Error('Trying to access a released object');
+        }
+        return layout;
     }
 
     set scaleLayout(scaleLayout: ScaleLayout<T, D>) {
         if (!scaleLayout || !(scaleLayout instanceof ScaleLayout)) {
             throw new Error('Invalid scale layout');
         }
-        this._scaleLayoutWeakRef.set(scaleLayout);
+        this._scaleLayoutWeakRef = new WeakRef(scaleLayout);
     }
 
     private get _maybeScaleLayout(): ScaleLayout<T, D> | undefined {
-        return this._scaleLayoutWeakRef.get();
+        return this._scaleLayoutWeakRef?.deref();
     }
 
     configure(scaleLayout: ScaleLayout<T, D>) {
