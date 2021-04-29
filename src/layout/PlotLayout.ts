@@ -88,11 +88,12 @@ export default class PlotLayout<
     /**
      * Normalizes or creates plots from options.
      *
-     * By default, plots with no index are distributed into rows.
-     * Set `columns` to `true` to distribute into columns.
+     * @param input Plot layouts or options.
      *
-     * @param input
-     * @param options
+     * @param options.columns
+     * By default, plots with no index are distributed into rows. Set `columns` to `true` to distribute into columns.
+     *
+     * @returns Plot layouts.
      */
     static createMany(
         input: PlotLayoutManyInput | undefined,
