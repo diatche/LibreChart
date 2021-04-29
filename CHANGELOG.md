@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+## 0.10.0
+
+**30 Apr 2021**
+
 ### Features
 
 -   [[#42](https://github.com/diatche/LibreChart/pull/42)] Added update scheduling to `DataSource`.
