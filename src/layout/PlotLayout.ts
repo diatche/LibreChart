@@ -254,12 +254,12 @@ export default class PlotLayout<
         this.xLayout.update();
         this.yLayout.update();
 
-        this.scrollBy({
-            offset: {
-                x: this.xLayout.layoutInfo.recenteringOffset,
-                y: this.yLayout.layoutInfo.recenteringOffset,
-            },
-        });
+        // this.scrollBy({
+        //     offset: {
+        //         x: this.xLayout.layoutInfo.recenteringOffset,
+        //         y: this.yLayout.layoutInfo.recenteringOffset,
+        //     },
+        // });
     }
 
     scrollToValueRange(
