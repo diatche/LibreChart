@@ -213,7 +213,8 @@ export default class PlotLayout<
     }
 
     didChangePlotSize() {
-        this.schedulePlotUpdate();
+        this.xLayout?.setNeedsUpdate();
+        this.yLayout?.setNeedsUpdate();
         this.xLayout?.controller?.setNeedsUpdate();
         this.yLayout?.controller?.setNeedsUpdate();
     }
@@ -223,62 +224,27 @@ export default class PlotLayout<
         // to avoid drawing extra item views
         if (Math.abs(newScale.x) < Math.abs(oldScale.x)) {
             this.xLayout.update();
-            this.xLayout?.controller?.setNeedsUpdate();
         }
         if (Math.abs(newScale.y) < Math.abs(oldScale.y)) {
             this.yLayout.update();
-            this.yLayout?.controller?.setNeedsUpdate();
         }
     }
 
     didChangeScale(oldScale: IPoint, newScale: IPoint) {
-        this.schedulePlotUpdate();
         if (newScale.x !== oldScale.x) {
-            this.xLayout?.controller?.setNeedsUpdate();
+            this.xLayout?.setNeedsUpdate();
         }
         if (newScale.y !== oldScale.y) {
-            this.yLayout?.controller?.setNeedsUpdate();
+            this.yLayout?.setNeedsUpdate();
         }
-    }
-
-    willChangeLocationOffsetBase(oldLocation: IPoint, newLocation: IPoint) {
-        if (newLocation.x !== oldLocation.x) {
-            this.xLayout?.controller?.update();
-        }
-        if (newLocation.y !== oldLocation.y) {
-            this.yLayout?.controller?.update();
-        }
+        this.xLayout?.controller?.setNeedsUpdate();
+        this.yLayout?.controller?.setNeedsUpdate();
     }
 
     didChangeLocationOffsetBase(oldLocation: IPoint, newLocation: IPoint) {
         this.xLayout?.controller?.setNeedsUpdate();
         this.yLayout?.controller?.setNeedsUpdate();
     }
-
-    schedulePlotUpdate() {
-        if (this._scheduledPlotUpdate) {
-            return;
-        }
-
-        this._scheduledPlotUpdate = InteractionManager.runAfterInteractions(
-            () => this._debouncedPlotUpdate()
-        );
-    }
-
-    cancelPlotUpdate() {
-        if (this._scheduledPlotUpdate) {
-            this._scheduledPlotUpdate.cancel();
-            this._scheduledPlotUpdate = undefined;
-        }
-        this._debouncedPlotUpdate.cancel();
-    }
-
-    private _scheduledPlotUpdate?: Cancelable;
-
-    private _debouncedPlotUpdate = debounce(
-        () => this.updatePlot(kDefaultUpdateInfo),
-        kGridUpdateDebounceInterval
-    );
 
     didUpdate(info: IUpdateInfo) {
         super.didUpdate(info);
@@ -288,8 +254,6 @@ export default class PlotLayout<
     }
 
     updatePlot(info: IUpdateInfo) {
-        this.cancelPlotUpdate();
-
         this.xLayout.update();
         this.yLayout.update();
 

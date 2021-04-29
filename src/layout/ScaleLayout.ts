@@ -1,8 +1,8 @@
-import { Animated } from 'react-native';
-import { isRangeEmpty, normalizeAnimatedValue, weakref } from 'evergrid';
+import { Animated, InteractionManager } from 'react-native';
+import { isRangeEmpty, weakref } from 'evergrid';
 import Scale from '../scale/Scale';
 import LinearScale from '../scale/LinearScale';
-import { PlotLayout } from '../internal';
+import { Cancelable, PlotLayout } from '../internal';
 import { IAxisStyle, IAxisStyleInput } from './axis/axisTypes';
 import { kAxisStyleLightDefaults } from './axis/axisConst';
 import { Observable } from '../utils/observable';
@@ -11,6 +11,9 @@ import DiscreteScale from '../scale/DiscreteScale';
 import AutoScaleController from '../scaleControllers/AutoScaleController';
 import _ from 'lodash';
 import { mergeAxisStyles } from './axis/axisUtil';
+import debounce from 'lodash.debounce';
+
+const kUpdateDebounceInterval = 100;
 
 export interface IScaleLayoutOptions<T = any, D = T> {
     /**
@@ -178,7 +181,34 @@ export default class ScaleLayout<T = number, D = T> {
         this.controller?.unconfigure();
     }
 
+    setNeedsUpdate() {
+        if (this._scheduledUpdate) {
+            return;
+        }
+
+        this._scheduledUpdate = InteractionManager.runAfterInteractions(() =>
+            this._debouncedUpdate()
+        );
+    }
+
+    cancelUpdate() {
+        if (this._scheduledUpdate) {
+            this._scheduledUpdate.cancel();
+            this._scheduledUpdate = undefined;
+        }
+        this._debouncedUpdate.cancel();
+    }
+
+    private _scheduledUpdate?: Cancelable;
+
+    private _debouncedUpdate = debounce(
+        () => this.update(),
+        kUpdateDebounceInterval
+    );
+
     update(): boolean {
+        this.cancelUpdate();
+
         let axisLengthInfo = this._getNewLengthInfo();
         if (!axisLengthInfo) {
             // No changes
