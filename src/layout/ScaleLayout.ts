@@ -1,5 +1,5 @@
 import { Animated, InteractionManager } from 'react-native';
-import { isRangeEmpty, weakref } from 'evergrid';
+import { isRangeEmpty } from 'evergrid';
 import Scale from '../scale/Scale';
 import LinearScale from '../scale/LinearScale';
 import { Cancelable, PlotLayout } from '../internal';
@@ -12,6 +12,7 @@ import AutoScaleController from '../scaleControllers/AutoScaleController';
 import _ from 'lodash';
 import { mergeAxisStyles } from './axis/axisUtil';
 import debounce from 'lodash.debounce';
+import { WeakRef } from '@ungap/weakrefs';
 
 const kUpdateDebounceInterval = 100;
 
@@ -98,7 +99,7 @@ export default class ScaleLayout<T = number, D = T> {
     layoutInfo: IScaleLayoutInfo;
     updates = Observable.create();
 
-    private _plotWeakRef = weakref<PlotLayout>();
+    private _plotWeakRef?: WeakRef<PlotLayout>;
     private _isHorizontalStrict = false;
 
     constructor(options?: IScaleLayoutOptions<T, D>) {
@@ -136,14 +137,18 @@ export default class ScaleLayout<T = number, D = T> {
     }
 
     get plot(): PlotLayout {
-        return this._plotWeakRef.getOrFail();
+        let plot = this._plotWeakRef?.deref();
+        if (!plot) {
+            throw new Error('Trying to access a released object');
+        }
+        return plot;
     }
 
     set plot(plot: PlotLayout) {
         if (!plot || !(plot instanceof PlotLayout)) {
             throw new Error('Invalid plot');
         }
-        this._plotWeakRef.set(plot);
+        this._plotWeakRef = new WeakRef(plot);
     }
 
     configure(
