@@ -288,9 +288,20 @@ export default class ScaleLayout<T = number, D = T> {
                 },
             ],
         });
+
         if (!scaleUpdated && this.layoutInfo.majorCount !== 0) {
             return undefined;
         }
+
+        // Snap values, to avoid extra major interval
+        startLocation = this.scale.snapLocation(
+            this.scale.locationOfValue(startValue)
+        );
+        endLocation = this.scale.snapLocation(
+            this.scale.locationOfValue(endValue)
+        );
+        startValue = this.scale.valueAtLocation(startLocation);
+        endValue = this.scale.valueAtLocation(endLocation);
 
         // Count ticks
         let valueRange = this.scale.spanValueRange(startValue, endValue);
@@ -317,7 +328,7 @@ export default class ScaleLayout<T = number, D = T> {
         // Check if recentering is needed
         let newMidLocation = this.scale.locationOfValue(midValue);
         let recenteringOffset =
-            Math.round((midLocation - newMidLocation) / viewScale) * viewScale;
+            Math.round((midLocation - newMidLocation) * viewScale) / viewScale;
 
         return {
             majorCount,

@@ -4,6 +4,10 @@
 
 Changes on the `main` branch, but not yet released, will be listed here.
 
+### Bug Fixes
+
+-   [[#44](https://github.com/diatche/LibreChart/pull/44)] Fixed a bug where the grid and axes would not align with data points.
+
 ## 0.10.0
 
 **30 Apr 2021**

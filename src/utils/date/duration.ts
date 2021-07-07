@@ -73,6 +73,16 @@ export const stepDateLinear = (
     if (Math.abs(step) > 1) {
         date = date.clone();
 
+        // // Step whole months
+        // if (unit === 'month') {
+        //     // First step whole months
+        //     let months = Math.floor(step);
+        //     if (months >= 1) {
+        //         date.add(months, 'month');
+        //         step -= moment.duration(months, 'month').as(unit);
+        //     }
+        // }
+
         // Step whole days
         if (compareDateUnits(unit, 'day') < 0) {
             // Unit is smaller than a day.
