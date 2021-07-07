@@ -319,9 +319,10 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
             );
 
             if (this.style.axisThickness) {
-                this._axisThicknessUpdates = this.style.axisThickness.addListener(
-                    ({ value }) => this.setThickness(value)
-                );
+                this._axisThicknessUpdates =
+                    this.style.axisThickness.addListener(({ value }) =>
+                        this.setThickness(value)
+                    );
                 // @ts-ignore: _value is private
                 this.setThickness(this.style.axisThickness._value);
             }
@@ -464,9 +465,10 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
         if (!this.contentLayout || this._scheduledThicknessUpdate) {
             return;
         }
-        this._scheduledThicknessUpdate = InteractionManager.runAfterInteractions(
-            () => this._debouncedThicknessUpdate()
-        );
+        this._scheduledThicknessUpdate =
+            InteractionManager.runAfterInteractions(() =>
+                this._debouncedThicknessUpdate()
+            );
     }
 
     cancelThicknessUpdate() {
@@ -577,9 +579,8 @@ export default class Axis<T = any, DT = any> implements IAxisProps<T> {
     onContainerDequeue(fromIndex: number, toIndex: number) {
         // Move optimal axis
         if (this.layoutInfo.optimalThicknesses[fromIndex]) {
-            this.layoutInfo.optimalThicknesses[
-                toIndex
-            ] = this.layoutInfo.optimalThicknesses[fromIndex];
+            this.layoutInfo.optimalThicknesses[toIndex] =
+                this.layoutInfo.optimalThicknesses[fromIndex];
             delete this.layoutInfo.optimalThicknesses[fromIndex];
         }
     }

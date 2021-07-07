@@ -38,7 +38,8 @@ export interface IItemsInLocationRangeOptions {
 }
 
 export default abstract class DataSource<T = any, X = number, Y = number>
-    implements DataSourceProps<T, X, Y> {
+    implements DataSourceProps<T, X, Y>
+{
     id: string;
     data: T[];
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;

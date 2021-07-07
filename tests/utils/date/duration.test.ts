@@ -707,16 +707,16 @@ describe('duration', () => {
                 'millisecond',
             ]);
 
-            expect(
-                dateUnitsWithDuration(moment.duration(2, 'second'))
-            ).toEqual([2, 'second']);
-            expect(
-                dateUnitsWithDuration(moment.duration(0, 'second'))
-            ).toEqual([0, 'millisecond']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'second'))).toEqual(
+                [2, 'second']
+            );
+            expect(dateUnitsWithDuration(moment.duration(0, 'second'))).toEqual(
+                [0, 'millisecond']
+            );
 
-            expect(
-                dateUnitsWithDuration(moment.duration(2, 'minute'))
-            ).toEqual([2, 'minute']);
+            expect(dateUnitsWithDuration(moment.duration(2, 'minute'))).toEqual(
+                [2, 'minute']
+            );
             expect(dateUnitsWithDuration(moment.duration(2, 'hour'))).toEqual([
                 2,
                 'hour',

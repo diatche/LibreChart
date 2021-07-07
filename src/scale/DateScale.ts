@@ -55,7 +55,8 @@ type DateTickScaleType = ITickScale<Moment, Duration>;
 
 export default class DateScale
     extends Scale<Moment, Duration>
-    implements Required<IDateScaleOptions> {
+    implements Required<IDateScaleOptions>
+{
     baseUnit: DateUnit;
     originDate: Moment;
     minUnitDuration: number;
@@ -70,8 +71,11 @@ export default class DateScale
     ) {
         super(options);
 
-        let { baseUnit = 'day', minUnitDuration = 0.6, originDate } =
-            options || {};
+        let {
+            baseUnit = 'day',
+            minUnitDuration = 0.6,
+            originDate,
+        } = options || {};
         if (!isDateUnit(baseUnit)) {
             throw new Error('Invalid base date unit');
         }

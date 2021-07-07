@@ -50,8 +50,11 @@ export default class Grid {
     };
 
     constructor(options?: IChartGridInput) {
-        let { hidden = false, vertical = false, horizontal = false } =
-            options || {};
+        let {
+            hidden = false,
+            vertical = false,
+            horizontal = false,
+        } = options || {};
         this.hidden = hidden;
         this.vertical = vertical;
         this.horizontal = horizontal;

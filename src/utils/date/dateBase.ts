@@ -47,16 +47,17 @@ export const kCalendarUnitsLength = kCalendarUnitsAsc.length;
  * Conversion table for using with moment().get() and moment().set().
  * Do not use these for moment.duration().get() and moment.duration().set().
  */
-export const kCalendaryUnitMomentMap: ImmutableCalendarUnitMapping<moment.unitOfTime.All> = {
-    millisecond: 'millisecond',
-    second: 'second',
-    minute: 'minute',
-    hour: 'hour',
-    day: 'date',
-    week: 'week',
-    month: 'month',
-    year: 'year',
-};
+export const kCalendaryUnitMomentMap: ImmutableCalendarUnitMapping<moment.unitOfTime.All> =
+    {
+        millisecond: 'millisecond',
+        second: 'second',
+        minute: 'minute',
+        hour: 'hour',
+        day: 'date',
+        week: 'week',
+        month: 'month',
+        year: 'year',
+    };
 
 /**
  * Iterates through all date units in ascending order

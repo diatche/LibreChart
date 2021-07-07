@@ -43,7 +43,8 @@ export interface LabelDataSourceInput<T, X = number, Y = number>
 
 export default class LabelDataSource<T = any, X = number, Y = number>
     extends DataSource<T, X, Y>
-    implements LabelDataSourceInput<T, X, Y> {
+    implements LabelDataSourceInput<T, X, Y>
+{
     transform: (item: T, index: number) => IDataSourceRect<X, Y>;
     getLabel: LabelDataSourceInput<T, X, Y>['getLabel'];
     style: ILabelStyle;
@@ -144,24 +145,28 @@ export default class LabelDataSource<T = any, X = number, Y = number>
                         );
                     }
                     if (itemStyle?.viewLayout?.size?.x) {
-                        item.animated.viewLayout.size.x = normalizeAnimatedValueOrInterpolation(
-                            itemStyle.viewLayout.size.x
-                        );
+                        item.animated.viewLayout.size.x =
+                            normalizeAnimatedValueOrInterpolation(
+                                itemStyle.viewLayout.size.x
+                            );
                     }
                     if (itemStyle?.viewLayout?.size?.y) {
-                        item.animated.viewLayout.size.y = normalizeAnimatedValueOrInterpolation(
-                            itemStyle.viewLayout.size.y
-                        );
+                        item.animated.viewLayout.size.y =
+                            normalizeAnimatedValueOrInterpolation(
+                                itemStyle.viewLayout.size.y
+                            );
                     }
                     if (itemStyle?.viewLayout?.anchor?.x) {
-                        item.animated.viewLayout.anchor.x = normalizeAnimatedValueOrInterpolation(
-                            itemStyle.viewLayout.anchor.x
-                        );
+                        item.animated.viewLayout.anchor.x =
+                            normalizeAnimatedValueOrInterpolation(
+                                itemStyle.viewLayout.anchor.x
+                            );
                     }
                     if (itemStyle?.viewLayout?.anchor?.y) {
-                        item.animated.viewLayout.anchor.y = normalizeAnimatedValueOrInterpolation(
-                            itemStyle.viewLayout.anchor.y
-                        );
+                        item.animated.viewLayout.anchor.y =
+                            normalizeAnimatedValueOrInterpolation(
+                                itemStyle.viewLayout.anchor.y
+                            );
                     }
                 }
             },
